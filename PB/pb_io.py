@@ -1,19 +1,18 @@
 # coding: utf-8
-from contextlib import contextmanager
-from datetime import datetime
 import errno
 import os
 import random
 import re
-import time
+from contextlib import contextmanager
 
-from configobj import ConfigObj
 import h5py
-import yaml
-
 import numpy as np
+import time
+import yaml
+from configobj import ConfigObj
+from datetime import datetime
 
-__description__ = u'IO处理的函数'
+__description__ = 'IO处理的函数'
 __author__ = 'wangpeng'
 __date__ = '2018-01-25'
 __version__ = '1.0.0_beat'
@@ -52,7 +51,7 @@ def find_file(path, reg):
                 if m:
                     FileLst.append(os.path.join(root, name))
     except Exception as e:
-        print str(e)
+        print(str(e))
 
     return sorted(FileLst)
 
@@ -96,7 +95,7 @@ def copy_attrs_h5py(pre_object, out_object):
     :param out_object: 复制属性的 dataset 或者 group
     :return:
     """
-    for akey in pre_object.attrs.keys():
+    for akey in list(pre_object.attrs.keys()):
         out_object.attrs[akey] = pre_object.attrs[akey]
 
 
@@ -140,7 +139,7 @@ def attrs2dict(attrs):
     :return:
     """
     d = {}
-    for k, v in attrs.items():
+    for k, v in list(attrs.items()):
         d[k] = v
     return d
 
@@ -176,7 +175,7 @@ class Config(object):
         finally:
             if len(self.config_data) == 0:
                 self.error = True
-                print "Load config file error: {}".format(self.config_file)
+                print("Load config file error: {}".format(self.config_file))
 
     def load_yaml_file(self):
         """
@@ -273,9 +272,9 @@ def write_txt(in_file, head, bodys, keylens=8):
             DICT_D[Line[:keylens]] = Line[keylens:]
         # 按照时间排序
         newLines = sorted(
-            DICT_D.iteritems(), key=lambda d: d[0], reverse=False)
+            iter(DICT_D.items()), key=lambda d: d[0], reverse=False)
 
-        for i in xrange(len(newLines)):
+        for i in range(len(newLines)):
             allLines.append(str(newLines[i][0]) + str(newLines[i][1]))
         fp = open(in_file, 'w')
         fp.write(head)
@@ -295,10 +294,10 @@ def str_format(string, values):
     :param values:(dict) {"sat_sensor": sat_sensor, "resolution": str(resolution), "ymd": ymd}
     :return: DCC: FY3D+MERSI_Projection_201712（分辨率 1 度）
     """
-    if not isinstance(string, (str, unicode)):
+    if not isinstance(string, str):
         return
 
-    for k, v in values.iteritems():
+    for k, v in values.items():
         string = string.replace("%" + str(k), str(v))
     return string
 
@@ -340,6 +339,7 @@ class ReadOrbitCrossFile(object):
     """
     test
     """
+
     @staticmethod
     def read_cross_file(in_file, file_type):
         """
@@ -358,15 +358,15 @@ class ReadOrbitCrossFile(object):
         }
 
         if not os.path.isfile(in_file):
-            print '***WARNING***File is not exist: {}'.format(in_file)
+            print('***WARNING***File is not exist: {}'.format(in_file))
             return data
-#         with open(in_file, 'r') as fp:
-#             lines_10 = fp.readlines()[0: 10]
-#
-#             count = 0
-#             for line in lines_10:
-#                 print count, line.split()
-#                 count += 1
+        #         with open(in_file, 'r') as fp:
+        #             lines_10 = fp.readlines()[0: 10]
+        #
+        #             count = 0
+        #             for line in lines_10:
+        #                 print count, line.split()
+        #                 count += 1
 
         if file_type == 'leo_area':
 
@@ -378,8 +378,8 @@ class ReadOrbitCrossFile(object):
                 ymd = data_raw['d1']
                 hms1 = data_raw['d2']
                 hms2 = data_raw['d3']
-                ymdhms1 = map(ymdhms2date, ymd, hms1)
-                ymdhms2 = map(ymdhms2date, ymd, hms2)
+                ymdhms1 = list(map(ymdhms2date, ymd, hms1))
+                ymdhms2 = list(map(ymdhms2date, ymd, hms2))
 
                 data['ymdhms1'] = ymdhms1
                 data['ymdhms2'] = ymdhms2
@@ -398,8 +398,8 @@ class ReadOrbitCrossFile(object):
                 ymd = data_raw['d1']
                 hms1 = data_raw['d2']
                 hms2 = data_raw['d5']
-                ymdhms1 = map(ymdhms2date, ymd, hms1)
-                ymdhms2 = map(ymdhms2date, ymd, hms2)
+                ymdhms1 = list(map(ymdhms2date, ymd, hms1))
+                ymdhms2 = list(map(ymdhms2date, ymd, hms2))
                 data['ymdhms1'] = ymdhms1
                 data['ymdhms2'] = ymdhms2
                 data['lat1'] = data_raw['d3']
@@ -415,12 +415,11 @@ class ReadOrbitCrossFile(object):
                 'formats': ('S8', 'S8', 'S8', 'f4', 'f4', 'f4', 'f4', 'f4')})
 
             if data_raw.size != 0:
-
                 ymd = data_raw['d1']
                 hms1 = data_raw['d2']
                 hms2 = data_raw['d2']
-                ymdhms1 = map(ymdhms2date, ymd, hms1)
-                ymdhms2 = map(ymdhms2date, ymd, hms2)
+                ymdhms1 = list(map(ymdhms2date, ymd, hms1))
+                ymdhms2 = list(map(ymdhms2date, ymd, hms2))
 
                 data['ymdhms1'] = ymdhms1
                 data['ymdhms2'] = ymdhms2
@@ -441,8 +440,8 @@ class ReadOrbitCrossFile(object):
                 ymd = data_raw['d1']
                 hms1 = data_raw['d2']
                 hms2 = data_raw['d3']
-                ymdhms1 = map(ymdhms2date, ymd, hms1)
-                ymdhms2 = map(ymdhms2date, ymd, hms2)
+                ymdhms1 = list(map(ymdhms2date, ymd, hms1))
+                ymdhms2 = list(map(ymdhms2date, ymd, hms2))
 
                 data['ymdhms1'] = ymdhms1
                 data['ymdhms2'] = ymdhms2
@@ -466,14 +465,14 @@ def ymdhms2date(ymd, hms):
 
 
 def CombineTimeList(TimeList):
-        # 将时间段list中有重叠的时间段进行融合为新的时间段
+    # 将时间段list中有重叠的时间段进行融合为新的时间段
     newTimeList = []
     # 默认排序,升序
     TimeList.sort()
     # 标记有时间融合的时间
     stime = TimeList[0][0]
     etime = TimeList[0][1]
-    for i in xrange(1, len(TimeList), 1):
+    for i in range(1, len(TimeList), 1):
         if TimeList[i][1] <= etime:
             continue
         elif TimeList[i][0] <= etime <= TimeList[i][1]:
@@ -487,6 +486,7 @@ def CombineTimeList(TimeList):
 
     return newTimeList
 
+
 if __name__ == '__main__':
     pass
     path_out_map = str_format('/abc/%YYYY%MM%DD', {
@@ -494,32 +494,32 @@ if __name__ == '__main__':
         'MM': '01',
         'DD': '01',
     })
-    print path_out_map
+    print(path_out_map)
 #     path1 = "E:/projects/ocrs/cfg/global.cfg"
 #     path2 = "E:/projects/ocrs/cfg/FY3B+MERSI.yaml"
-    # c = Config(path1)
-    # c = Config(path2)
-    # print c.error
-    # l = c.__dict__.keys()
-    # l = sorted(l)
-    # for k in l:
-    # print k, ":", c.__dict__[k]
-    # print k
+# c = Config(path1)
+# c = Config(path2)
+# print c.error
+# l = c.__dict__.keys()
+# l = sorted(l)
+# for k in l:
+# print k, ":", c.__dict__[k]
+# print k
 
-    # ################# test ReadOrbitCrossFile ################
-    # LEO_AREA
+# ################# test ReadOrbitCrossFile ################
+# LEO_AREA
 #     leo_area_name = r'C:\Users\wangpeng\Desktop\tmp\cross\AQUA_australia_LEO_AREA_20171221.txt'
 #     read_data = ReadOrbitCrossFile.read_cross_file(leo_area_name, 'leo_area')
 
-    # LEO_LEO
+# LEO_LEO
 #     leo_leo_name = r'C:\Users\wangpeng\Desktop\tmp\cross\FENGYUN-3D_NPP_LEO_LEO_20180901.txt'
 #     read_data = ReadOrbitCrossFile.read_cross_file(leo_leo_name, 'leo_leo')
 
-    # LEO_FIX
+# LEO_FIX
 #     leo_fix_name = r'C:\Users\wangpeng\Desktop\tmp\cross\AQUA_FIX_LEO_FIX_20181101.txt'
 #     read_data = ReadOrbitCrossFile.read_cross_file(leo_fix_name, 'leo_fix')
 
-    # GEO_LEO
+# GEO_LEO
 #     geo_leo_name = r'C:\Users\wangpeng\Desktop\tmp\cross\FENGYUN-2F_METOP-A_GEO_LEO20181101.txt'
 #     read_data = ReadOrbitCrossFile.read_cross_file(geo_leo_name, 'geo_leo')
 
