@@ -104,3 +104,4 @@ venv.bak/
 
 # Pycharm
 .idea
+.pytest_cache
