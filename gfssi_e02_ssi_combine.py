@@ -11,23 +11,22 @@ import shutil
 import os
 import h5py
 import numpy as np
-
-
-from lib.lib_initialize import load_yaml_file
-
+import json
+from lib.lib_read import FY4ASSI
 
 FULL_VALUE = 65532
 LOG_FILE = 'a01.log'
 
 
-def main(yaml_file):
+def main(interface_json):
     """
-    :param yaml_file: (str) 接口yaml文件
+    :param interface_json: (json) json数据
     :return:
     """
     # ######################## 初始化 ###########################
     # 加载接口文件
-    logging.debug("main: interface file <<< {}".format(yaml_file))
+
+    interface = json.load(data_json)
 
     # interface_config = load_yaml_file(yaml_file)
     # i_pair = interface_config['INFO']['pair']  # 卫星+传感器 or 卫星+传感器_卫星+传感器（str）
@@ -89,9 +88,9 @@ def combine(in_files, out_file, scalar=1., offset=0.):
     dirssi = None
     for in_file in in_files:
         reader = FY4ASSI(in_file)
-        ssi_tem = reader.read_ssi()
-        difssi_tem = reader.read_difssi()
-        dirssi_tem = reader.read_dirssi()
+        ssi_tem = reader.get_ssi()
+        difssi_tem = reader.get_difssi()
+        dirssi_tem = reader.get_dirssi()
 
         ssi = add_data(ssi, ssi_tem)
         difssi = add_data(difssi, difssi_tem)
@@ -118,41 +117,6 @@ def add_data(data, data_tem):
     else:
         data += data_tem
     return data
-
-
-class FY4ASSI(object):
-    def __init__(self, in_file):
-        self.in_file = in_file
-        self.full_value = -999
-
-    def read_ssi(self):
-        with h5py.File(self.in_file, 'r') as hdf:
-            dataset = hdf.get('SSI')[:]
-            index = np.logical_or.reduce((dataset == self.full_value, dataset < 0, dataset > 1500))
-            dataset[index] = 0
-            return dataset
-
-    def read_difssi(self):
-        with h5py.File(self.in_file, 'r') as hdf:
-            dataset = hdf.get('DifSSI')[:]
-            index = np.logical_or.reduce((dataset == self.full_value, dataset < 0, dataset > 1500))
-            dataset[index] = 0
-            return dataset
-
-    def read_dirssi(self):
-        with h5py.File(self.in_file, 'r') as hdf:
-            dataset = hdf.get('DirSSI')[:]
-            index = np.logical_or.reduce((dataset == self.full_value, dataset < 0, dataset > 1500))
-            dataset[index] = 0
-            return dataset
-
-    @staticmethod
-    def modify_data(out_file, ssi, difssi, dirssi):
-        with h5py.File(out_file, 'a') as hdf:
-            for k, v in zip(('SSI', 'DifSSI', 'DirSSI'), (ssi, difssi, dirssi)):
-                dataset = hdf.get(k)
-                dataset[...] = v
-                dataset.attrs.modify('units', np.array('KW/m2', dtype=h5py.special_dtype(vlen=str)))
 
 
 if __name__ == '__main__':

@@ -3,6 +3,11 @@
 """
 @Time    : 2019/8/1
 @Author  : AnNing
+功能：
+1、计算G0、Gt、DNI
+2、补全缺失的整点时次数据的Itol、Ib、Id
+
+优化
 1、修改为矩阵运算
 2、优化assignE
 3、DEBUG函数assignTime，原来的函数直接在hour加8可能超过24
@@ -32,6 +37,9 @@ def isleap(y):
 
 
 def calDoy(y, m, d):
+    y = int(y)
+    m = int(m)
+    d = int(d)
     Doy = 0
     a = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     if isleap(y):
@@ -76,7 +84,7 @@ def assignTime(ymdhms):
     date += relativedelta(hours=8)  # 修改时间为北京时
     datestrf = date.strftime('%Y-%m-%d-%H-%M-%S')
     y, m, d, h, mm, s = datestrf.split('-')
-    return y, m, d, h, mm
+    return [int(i) for i in (y, m, d, h, mm)]
 
 def assignE(y, m, d):
     """
@@ -104,27 +112,27 @@ def assignE(y, m, d):
         raise ValueError('没有找到E值： {}'.format((y, m, d)))
 
 
-def _write_out_file(in_file, out_file, result):
+def _write_out_file(out_file, result):
     out_dir = os.path.dirname(out_file)
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
-
-    if not os.path.isfile(out_file):
-        copyfile(in_file, out_file)
 
     try:
         compression = 'gzip'
         compression_opts = 5
         shuffle = True
-        with h5py.File(out_file, 'a') as hdf5:
+        with h5py.File(out_file, 'w') as hdf5:
             for dataset in result.keys():
+                data = result[dataset]
+                data[np.isnan(data)] = FULL_VALUE
                 hdf5.create_dataset(dataset,
                                     dtype=np.float32, data=result[dataset], compression=compression,
                                     compression_opts=compression_opts,
                                     shuffle=shuffle)
-        print('成功生成HDF文件{}'.format(out_file))
+        print('>>> 成功生成HDF文件{}'.format(out_file))
     except Exception as why:
         print(why)
+        print('HDF写入数据错误')
         os.remove(out_file)
 
 
@@ -154,6 +162,8 @@ def itcal(in_file, out_file):
         print('读取lons和lats错误')
         return
 
+    DQF = np.ones_like(lons, dtype=np.int8)  # 标识数据集
+
     Omega = calOmega(hr, minus, lons, e)
     cos_the_taz = calCosThetaz(lats, delta, Omega)
     G0 = calG0(doy, cos_the_taz)
@@ -162,6 +172,9 @@ def itcal(in_file, out_file):
     print((G0 > 0).sum())
     index_invalid_g0 = np.logical_or(G0 >= 1400, G0 <= 0)  # ########################## G0的无效值赋值为nan
     G0[index_invalid_g0] = np.nan
+
+    # G0无效
+    DQF[index_invalid_g0] = 0
 
     # 校正总直散数据
     if os.path.isfile(in_file):
@@ -180,11 +193,16 @@ def itcal(in_file, out_file):
         Ib[index_invalid_g0] = np.nan
         Id[index_invalid_g0] = np.nan
 
+        # Itol 有效
+        index_valid_itol = np.logical_and(np.isfinite(Itol), Itol < G0)
+        DQF[index_valid_itol] = 1
+
         # 校正G0有效，但是Itol无效的数据
-        index_invalid = np.logical_or(Itol > G0, np.logical_and(np.isnan(Itol), np.isfinite(G0)))
-        Itol[index_invalid] = 0.5 * G0[index_invalid]
-        Ib[index_invalid] = 0.3 * Itol[index_invalid]
-        Id[index_invalid] = 0.7 * Itol[index_invalid]
+        index_invalid_itol = np.logical_or(Itol > G0, np.logical_and(np.isnan(Itol), np.isfinite(G0)))
+        Itol[index_invalid_itol] = 0.5 * G0[index_invalid_itol]
+        Ib[index_invalid_itol] = 0.3 * Itol[index_invalid_itol]
+        Id[index_invalid_itol] = 0.7 * Itol[index_invalid_itol]
+        DQF[index_invalid_itol] = 2
     else:
         Itol = 0.5 * G0
         Ib = 0.3 * Itol
@@ -199,12 +217,13 @@ def itcal(in_file, out_file):
     # 校正Gt
     index_invalid_gt = np.logical_and(Gt < 0, np.isfinite(G0))
     Gt[index_invalid_gt] = 0.8 * G0[index_invalid_gt]
+    DQF[index_invalid_gt] = 3
 
     # 输出数据
-    result = {'G0': G0, 'Gt': Gt, 'DNI': DNI, 'SSI': Itol, 'DirSSI': Ib, 'DifSSI': Id}
+    result = {'G0': G0, 'Gt': Gt, 'DNI': DNI, 'SSI': Itol, 'DirSSI': Ib, 'DifSSI': Id, 'DQF': DQF}
 
     try:
-        _write_out_file(in_file, out_file, result)
+        _write_out_file(out_file, result)
     except Exception as why:
         print(why)
         print('输出结果文件错误')
@@ -225,7 +244,7 @@ if __name__ == '__main__':
     #         out_file = os.path.join(out_dir, file_name)
     #         itcal(in_file, out_file)
     in_dir = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KM/Orbit/20190630'
-    out_dir = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KM/Orbit/20190630'
+    out_dir = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KMCorrect/Orbit/20190630'
     file_name = 'FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_20190630000000_20190630001459_4000M_V0001.NC'
     in_file = os.path.join(in_dir, file_name)
     out_file = os.path.join(out_dir, file_name)

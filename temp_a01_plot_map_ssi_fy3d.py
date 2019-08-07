@@ -12,11 +12,8 @@ import os
 import sys
 import matplotlib
 matplotlib.use('agg')
-import matplotlib.pyplot as plt
 import gdal
 import numpy as np
-
-from load import TanSatCO2
 
 from DV import dv_map
 
@@ -54,17 +51,22 @@ def main():
         os.makedirs(out_dir)
     file_names = os.listdir(in_dir)
     file_names.sort()
+    print(file_names)
     for file_name in file_names:
+        print(file_name)
         if 'dat' not in file_name:
+            continue
+        if 'Sz' not in file_name:
             continue
         name, ext = os.path.splitext(file_name)
         ssi_type, date = name.split('_')
         ssi_type_dict = {
-            'Bc': ('Ib', 0, 1500),
-            'Gc': ('Itol', 0, 3000),
-            'Dc': ('Id', 0, 500)
+            'Bc': ('Ib', 0, 1400, 'w/m2'),
+            'Gc': ('Itol', 0, 1400, 'w/m2'),
+            'Dc': ('Id', 0, 1400, 'w/m2'),
+            'Sz': ('Sz', 0, 90, '')
         }
-        ssi_type, vmin, vmax = ssi_type_dict[ssi_type]
+        ssi_type, vmin, vmax, unit = ssi_type_dict[ssi_type]
         in_file = os.path.join(in_dir, file_name)
         print(in_file)
         data_loader = ReadFY3DNEVISSI(in_file)
@@ -79,7 +81,7 @@ def main():
         print(lats.min(), lats.max())
         out_file = os.path.join(out_dir, file_name + '.jpg')
         plot_map_project(lats, lons, ssi, out_file, title='{} {}'.format(ssi_type, date),
-                         vmin=vmin, vmax=vmax)
+                         vmin=vmin, vmax=vmax, unit=unit)
 
 
 def plot_map_project(
@@ -92,7 +94,8 @@ def plot_map_project(
         title='title',
         ptype='pcolor',
         marker='.',
-        markersize=3):
+        markersize=3,
+        unit=''):
 
     print(value.min(), value.max())
     p = dv_map.dv_map()
@@ -101,7 +104,7 @@ def plot_map_project(
     p.easyplot(latitude, longitude, value, vmin=vmin, vmax=vmax,
                ptype=ptype, markersize=markersize, marker=marker, box=box)
     p.title = title
-    p.colorbar_unit = 'w/m2'
+    p.colorbar_unit = unit
     p.savefig(out_file)
     print('>>> {}'.format(out_file))
 
