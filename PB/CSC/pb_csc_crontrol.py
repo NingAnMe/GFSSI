@@ -1,44 +1,44 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime
-from multiprocessing import Pool
 import argparse
 import os
 import subprocess
 import sys
 import time
+from datetime import datetime
+from multiprocessing import Pool
+
 from dateutil.relativedelta import relativedelta
+
 from PB import pb_io
 
-python = 'python2.7 -W ignore'
+python = 'python -W ignore'
 mpi_run = 'mpirun'
 mpi_main = 'mpi.py'
 cores = 56
 
 
 def get_args():
-
     # 输入
     parser = argparse.ArgumentParser()
-    parser.add_argument('-n', '--name', help = u'作业名称')
-    parser.add_argument('-j', '--job', help = u'作业步骤')
-    parser.add_argument('-t', '--time', help = u'开始时间-结束时间(yyymmdd)')
-    parser.add_argument('-c', '--config', help = u'配置文件')
-    parser.add_argument('-p', '--port', type = int, help = u'端口大于10000')
-    parser.add_argument('-m', '--multiple', type = int, help = u'进程数量')
-    parser.add_argument('--histdays', type = int, help = u'数据补下时每次订购天数')
-    args = parser.parse_args()
+    parser.add_argument('-n', '--name', help='作业名称')
+    parser.add_argument('-j', '--job', help='作业步骤')
+    parser.add_argument('-t', '--time', help='开始时间-结束时间(yyymmdd)')
+    parser.add_argument('-c', '--config', help='配置文件')
+    parser.add_argument('-p', '--port', type=int, help='端口大于10000')
+    parser.add_argument('-m', '--multiple', type=int, help='进程数量')
+    args_ = parser.parse_args()
 
-    name = args.name
-    job = args.job
-    time = args.time
-    cfg = args.config
-    port = args.port
-    threads = args.multiple
-    histdays = args.histdays
+    name = args_.name
+    job = args_.job
+    time_ = args_.time
+    cfg = args_.config
+    port = args_.port
+    threads = args_.multiple
+    histdays = args_.histdays
 
-    print name, job, time, cfg, port, threads, histdays
-    return name, job, time, cfg, port, threads, histdays
+    print(name, job, time_, cfg, port, threads, histdays)
+    return name, job, time_, cfg, port, threads, histdays
 
 
 def get_job_name_list(name, g_var_cfg):
@@ -48,7 +48,7 @@ def get_job_name_list(name, g_var_cfg):
     """
 
     if name.lower() == 'all':
-        job_name_list = g_var_cfg['PAIRS'].keys()
+        job_name_list = list(g_var_cfg['PAIRS'].keys())
     else:
         job_name_list = name.split(',')
     return job_name_list
@@ -71,8 +71,8 @@ def get_job_time_list(job_name_list, job_time, g_var_cfg):
         if job_time.lower() == 'auto':  # 日期滚动
             for rday in cfg_rolldays:
                 rd = int(rday)
-                date_start = (datetime.utcnow() - relativedelta(days = rd))
-#                 date_end = datetime.utcnow()
+                date_start = (datetime.utcnow() - relativedelta(days=rd))
+                #                 date_end = datetime.utcnow()
                 job_time_list[job_name].append((date_start, date_start))
 
         else:  # 手动输入的日期
@@ -109,7 +109,7 @@ def get_cmd_list(job_exe, job_name, job_id, date_s, date_e, g_path_interface):
     cmd_list = []
     while date_s <= date_e:
         ymd = date_s.strftime('%Y%m%d')
-        date_s = date_s + relativedelta(days = 1)
+        date_s = date_s + relativedelta(days=1)
         path_yaml = os.path.join(g_path_interface, job_name, job_id, ymd)
         if os.path.isdir(path_yaml):
             file_list_yaml = pb_io.find_file(path_yaml, '.*.yaml')
@@ -121,9 +121,8 @@ def get_cmd_list(job_exe, job_name, job_id, date_s, date_e, g_path_interface):
 
 
 def run_command(cmd_list, threads):
-
     # 开启进程池
-    pool = Pool(processes = int(threads))
+    pool = Pool(processes=int(threads))
     for cmd in cmd_list:
         pool.apply_async(command, (cmd,))
 
@@ -132,37 +131,35 @@ def run_command(cmd_list, threads):
 
 
 def command(cmd):
-    '''
+    """
     args_cmd: python a.py 20180101  (完整的执行参数)
-    '''
-    print cmd
+    """
+    print(cmd)
     status = False
     try:
-        P1 = subprocess.Popen(cmd.split(), stderr = subprocess.PIPE)
-    except Exception, e:
-        print (e)
+        p1 = subprocess.Popen(cmd.split(), stderr=subprocess.PIPE)
+    except Exception as e:
+        print(e)
         return
 
     timeout = 3600 * 5
     t_beginning = time.time()
-    seconds_passed = 0
 
-    while (P1.poll() is None):
+    while p1.poll() is None:
         seconds_passed = time.time() - t_beginning
         if timeout and seconds_passed > timeout:
-            print seconds_passed
-            P1.kill()
+            print(seconds_passed)
+            p1.kill()
         time.sleep(0.1)
-    _, stderr = P1.communicate()
+    _, stderr = p1.communicate()
 
-    if P1.returncode == 0 and stderr is not None:
+    if p1.returncode == 0 and stderr is not None:
         status = True
 
     return status
 
 
 def run_command_parallel(arg_list):
-
     arg_list = [each + '\n' for each in arg_list]
     fp = open('filelist.txt', 'w')
     fp.writelines(arg_list)
@@ -174,7 +171,6 @@ def run_command_parallel(arg_list):
 
 
 if __name__ == '__main__':
-
     args = sys.argv[1:]
 
     get_args()

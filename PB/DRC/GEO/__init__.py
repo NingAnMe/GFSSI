@@ -11,3 +11,7 @@ main_dir = os.path.dirname(os.path.abspath(__file__))
 
 def get_fy4_lon_lat_lut():
     return os.path.join(main_dir, 'FY4X_LON_LAT_LUT.H5')
+
+
+if __name__ == '__main__':
+    print(get_fy4_lon_lat_lut())
