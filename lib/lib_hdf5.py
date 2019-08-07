@@ -4,6 +4,7 @@
 @Time    : 2018/9/12
 @Author  : AnNing
 """
+from __future__ import print_function
 import os
 
 import h5py
@@ -34,7 +35,7 @@ def write_hdf5(out_file, datas):
                 data = datas[dataset_name]
                 # 处理
                 hdf5.create_dataset(dataset_name, data=data)
-    print '>>> {}'.format(out_file)
+    print('>>> {}'.format(out_file))
 
 
 def write_hdf5_and_compress(out_file, datas):
@@ -68,7 +69,7 @@ def write_hdf5_and_compress(out_file, datas):
                 hdf5.create_dataset(dataset_name, data=data, compression=compression,
                                     compression_opts=compression_opts,
                                     shuffle=shuffle)
-    print '>>> {}'.format(out_file)
+    print('>>> {}'.format(out_file))
 
 
 def read_hdf5(in_file):
@@ -176,7 +177,6 @@ class ReadHDF5(object):
         """
         with h5py.File(self.file_path, 'r') as hdf5_file:
             for dataset in datasets:
-                print dataset
                 hdf5_dataset = hdf5_file[dataset]
                 self.read_dataset(hdf5_dataset)
 

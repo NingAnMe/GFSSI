@@ -40,14 +40,14 @@ class FY4ASSI(object):
 
     def get_gt(self):
         with h5py.File(self.in_file, 'r') as hdf:
-            dataset = hdf.get('G0')[:]
+            dataset = hdf.get('Gt')[:]
             index = np.logical_or(dataset <= 0, dataset >= 1500)
             dataset[index] = np.nan
             return dataset
 
     def get_dni(self):
         with h5py.File(self.in_file, 'r') as hdf:
-            dataset = hdf.get('G0')[:]
+            dataset = hdf.get('DNI')[:]
             index = np.logical_or(dataset <= 0, dataset >= 1500)
             dataset[index] = np.nan
             return dataset
@@ -75,6 +75,7 @@ class FY4ASSI(object):
 
     @staticmethod
     def get_latitude():
+        # -81, 81
         full_value = -999
         with h5py.File(FY4_LON_LAT_LUT, 'r') as hdf:
             dataset = hdf.get('Latitude')[:]
@@ -83,6 +84,7 @@ class FY4ASSI(object):
 
     @staticmethod
     def get_longitude():
+        # 23, 186
         full_value = -639
         offset = 104.7
         with h5py.File(FY4_LON_LAT_LUT, 'r') as hdf:
