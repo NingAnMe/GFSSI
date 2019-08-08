@@ -33,45 +33,57 @@ class FY4ASSI(object):
 
     def get_g0(self):
         with h5py.File(self.in_file, 'r') as hdf:
-            dataset = hdf.get('G0')[:]
-            index = np.logical_or(dataset <= 0, dataset >= 1500)
-            dataset[index] = np.nan
-            return dataset
+            dataset = hdf.get('G0')
+            if dataset is not None:
+                data = dataset[:]
+                index = np.logical_or(data <= 0, data >= 1500)
+                data[index] = np.nan
+                return data
 
     def get_gt(self):
         with h5py.File(self.in_file, 'r') as hdf:
-            dataset = hdf.get('Gt')[:]
-            index = np.logical_or(dataset <= 0, dataset >= 1500)
-            dataset[index] = np.nan
-            return dataset
+            dataset = hdf.get('Gt')
+            if dataset is not None:
+                data = dataset[:]
+                index = np.logical_or(data <= 0, data >= 1500)
+                data[index] = np.nan
+                return data
 
     def get_dni(self):
         with h5py.File(self.in_file, 'r') as hdf:
-            dataset = hdf.get('DNI')[:]
-            index = np.logical_or(dataset <= 0, dataset >= 1500)
-            dataset[index] = np.nan
-            return dataset
+            dataset = hdf.get('DNI')
+            if dataset is not None:
+                data = dataset[:]
+                index = np.logical_or(data <= 0, data >= 1500)
+                data[index] = np.nan
+                return data
 
     def get_ssi(self):
         with h5py.File(self.in_file, 'r') as hdf:
-            dataset = hdf.get('SSI')[:]
-            index = np.logical_or(dataset <= 0, dataset >= 1500)
-            dataset[index] = np.nan
-            return dataset
+            dataset = hdf.get('SSI')
+            if dataset is not None:
+                data = dataset[:]
+                index = np.logical_or(data <= 0, data >= 1500)
+                data[index] = np.nan
+                return data
 
     def get_difssi(self):
         with h5py.File(self.in_file, 'r') as hdf:
-            dataset = hdf.get('DifSSI')[:]
-            index = np.logical_or(dataset <= 0, dataset >= 1500)
-            dataset[index] = np.nan
-            return dataset
+            dataset = hdf.get('DifSSI')
+            if dataset is not None:
+                data = dataset[:]
+                index = np.logical_or(data <= 0, data >= 1500)
+                data[index] = np.nan
+                return data
 
     def get_dirssi(self):
         with h5py.File(self.in_file, 'r') as hdf:
-            dataset = hdf.get('DirSSI')[:]
-            index = np.logical_or(dataset <= 0, dataset >= 1500)
-            dataset[index] = np.nan
-            return dataset
+            dataset = hdf.get('DirSSI')
+            if dataset is not None:
+                data = dataset[:]
+                index = np.logical_or(data <= 0, data >= 1500)
+                data[index] = np.nan
+                return data
 
     @staticmethod
     def get_latitude():

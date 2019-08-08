@@ -126,7 +126,10 @@ def main(ffy,fddem,outfile,range=None,draw=0):
     ddem,geoRefer = readASCIIfile(fddem)
     nx,ny = geoRefer2xy(geoRefer)
     print(1,geoRefer)
+    ddemArr = np.array(ddem)
+    print('ddemArr', ddemArr.shape)
     ddemArr = np.array(ddem)[::-1]
+    print('ddemArr', ddemArr.shape)
     ddemArr[ddemArr==-9999]=np.nan
     
     if range:   
@@ -182,7 +185,7 @@ def maparray(value1,value2,value3):
     
 def test():
     
-    ddem_path = r'I:\do\FY4\D_DEM.txt'
+    ddem_path = r'D_DEM.txt'
     '''
     x,y = np.meshgrid(np.arange(70, 140, 0.05), np.arange(10, 50, 0.05)) 
     value = np.sqrt(x ** 2 + y ** 2)
@@ -207,14 +210,21 @@ def test():
     plt.contourf(xv,yv,ddemArr)
     #plt.imshow(ddemArr, vmax=abs(ddemArr).max(), vmin=-abs(ddemArr).max(),cmap=cm.RdYlGn,origin='lower')
     plt.show()
+
+    # print(ddemArr,array)
+    fig = plt.figure()
+    y = np.arange(ddemArr.shape[0])
+    x = np.arange(ddemArr.shape[1])
+    xv, yv = np.meshgrid(x, y)
+    print(x, y)
+    plt.contourf(xv, yv, f[::-1])
+    # plt.imshow(ddemArr, vmax=abs(ddemArr).max(), vmin=-abs(ddemArr).max(),cmap=cm.RdYlGn,origin='lower')
+    plt.show()
     
 if __name__ == '__main__':
-    ffy = r'I:\python\data\201711030400_ssi.txt'
-    fddem = r'I:\python\data\FY4\D_DEM.txt'
-    outfile = r'I:\python\data\FY4\outdata_01.txt'
-    #outfile = r'I:\python\data\FY4\outdata_01.nc'
-    main(ffy,fddem,outfile,range=[100,110,30,40],draw=0)
-    
-    
-    
-
+    # ffy = r'201711030400_ssi.txt'
+    # fddem = r'D_DEM.txt'
+    # outfile = r'outdata_01.nc'
+    # #outfile = r'I:\python\data\FY4\outdata_01.nc'
+    # main('20190630050000' + '_ssi.txt',fddem,outfile,range=[100,110,30,40],draw=0)
+    test()

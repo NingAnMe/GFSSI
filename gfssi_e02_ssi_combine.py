@@ -6,107 +6,12 @@
 """
 from __future__ import print_function, division
 
-import logging
-import shutil
 import os
 import h5py
 import numpy as np
-import json
+
 from lib.lib_read import FY4ASSI
-
-FULL_VALUE = 65532
-LOG_FILE = 'a01.log'
-
-
-def main(interface_json):
-    """
-    :param interface_json: (json) json数据
-    :return:
-    """
-    # ######################## 初始化 ###########################
-    # 加载接口文件
-
-    interface = json.load(data_json)
-
-    # interface_config = load_yaml_file(yaml_file)
-    # i_pair = interface_config['INFO']['pair']  # 卫星+传感器 or 卫星+传感器_卫星+传感器（str）
-    # i_in_files = interface_config['PATH']['ipath']  # 待处理文件绝对路径列表（list）
-    # i_out_file = interface_config['PATH']['opath']  # 输出文件绝对路径（str）
-    # i_ymdhms_start = interface_config['INFO']['ymdhms_start']  # 日期 YYYYMMDDHHMMDD
-    # i_ymdhms_end = interface_config['INFO']['ymdhms_end']  # 日期 YYYYMMDDHHMMDD
-    # i_is_orbit = interface_config['INFO'].get('is_orbit', False)  # 如果是轨道产品转其他产品，这一项需要设置为True
-    # i_log_path = interface_config['INFO']['log']
-
-    # ######################## 开始处理 ###########################
-    # ######################## 加载数据 ###########################
-    i_pair = 'FY4A+AGRI'
-    i_in_files = ['/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KM/Orbit/20190630/FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_20190630000000_20190630001459_4000M_V0001.NC',
-                  '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KM/Orbit/20190630/FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_20190630001500_20190630002959_4000M_V0001.NC'
-                  ]
-    i_out_file = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KM/Daily/20190630/FY4A-_AGRI--_N_DISK_1047E_L3-_SSI-_MULT_NOM_20190630000000_20190630235959_4000M_V0001.NC'
-    i_is_orbit = True
-    i_log_path = '/home/gfssi/GFData/log'
-
-    log_file = os.path.join(i_log_path, LOG_FILE)
-
-    in_files = np.sort(i_in_files)
-
-    # 统计有效文件的数量
-    file_count = 0
-    for in_file in in_files:
-        if os.path.isfile(in_file):
-            logging.debug("main: data file <<< {}".format(in_file))
-            file_count += 1
-        else:
-            continue
-    if file_count == 0:
-        logging.warning("***Warning***Don't have valid file, file count is {}".format(file_count))
-        return
-
-    # 如果是轨道产品合成日产品，单位需要转为 KW/m2，scalar=0.001
-    if i_is_orbit:
-        result = combine(in_files, i_out_file, scalar=0.001)
-    else:
-        result = combine(in_files, i_out_file)
-
-    if result:
-        logging.info("Out file >>>: {}".format(i_out_file))
-    else:
-        logging.error("Can't create the file: {}".format(i_out_file))
-
-
-def combine(in_files, out_file, scalar=1., offset=0.):
-    out_path = os.path.dirname(out_file)
-    if not os.path.isdir(out_path):
-        os.makedirs(out_path)
-
-    if not os.path.isfile(out_file):
-        shutil.copyfile(in_files[0], out_file)
-
-    ssi = None
-    difssi = None
-    dirssi = None
-    for in_file in in_files:
-        reader = FY4ASSI(in_file)
-        ssi_tem = reader.get_ssi()
-        difssi_tem = reader.get_difssi()
-        dirssi_tem = reader.get_dirssi()
-
-        ssi = add_data(ssi, ssi_tem)
-        difssi = add_data(difssi, difssi_tem)
-        dirssi = add_data(dirssi, dirssi_tem)
-
-    # 从时次产品转为日产品的时候，单位变为kw/m2
-    ssi = ssi * scalar + offset
-    difssi = difssi * scalar + offset
-    dirssi = dirssi * scalar + offset
-
-    ssi[ssi == 0] = FULL_VALUE
-    difssi[difssi == 0] = FULL_VALUE
-    dirssi[dirssi == 0] = FULL_VALUE
-
-    FY4ASSI.modify_data(out_file, ssi, difssi, dirssi)
-    return True
+from lib.lib_constant import FULL_VALUE
 
 
 def add_data(data, data_tem):
@@ -115,10 +20,85 @@ def add_data(data, data_tem):
     if data is None:
         data = data_tem
     else:
-        data += data_tem
+        index_add = np.logical_and(np.isfinite(data_tem), np.isfinite(data))
+        data[index_add] += data_tem[index_add]
+        index_equal = np.logical_and(np.isfinite(data_tem), np.isnan(data))
+        data[index_equal] = data_tem[index_equal]
     return data
 
 
-if __name__ == '__main__':
-    yaml = ''
-    main(yaml)
+def _write_out_file(out_file, result):
+    out_dir = os.path.dirname(out_file)
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+
+    try:
+        compression = 'gzip'
+        compression_opts = 5
+        shuffle = True
+        with h5py.File(out_file, 'w') as hdf5:
+            for dataset in result.keys():
+                data = result[dataset]
+                if data is not None:
+                    data[np.isnan(data)] = FULL_VALUE
+                    hdf5.create_dataset(dataset,
+                                        dtype=np.float32, data=result[dataset], compression=compression,
+                                        compression_opts=compression_opts,
+                                        shuffle=shuffle)
+        print('>>> 成功生成HDF文件{}'.format(out_file))
+    except Exception as why:
+        print(why)
+        print('HDF写入数据错误')
+        os.remove(out_file)
+
+
+def combine(in_files, out_file, day=False):
+    out_path = os.path.dirname(out_file)
+    if not os.path.isdir(out_path):
+        os.makedirs(out_path)
+
+    data_all = {
+        'SSI': None,
+        'DirSSI': None,
+        'DifSSI': None,
+        'G0': None,
+        'Gt': None,
+        'DNI': None,
+    }
+
+    for in_file in in_files:
+        try:
+            datas = FY4ASSI(in_file)
+            data_get = {
+                'SSI': datas.get_ssi,
+                'DirSSI': datas.get_ib,
+                'DifSSI': datas.get_id,
+                'G0': datas.get_g0,
+                'Gt': datas.get_gt,
+                'DNI': datas.get_dni,
+            }
+            for dataname in data_all:
+                data_all[dataname] = add_data(data_all[dataname], data_get[dataname]())
+        except Exception as why:
+            print(why)
+            print('合成数据过程出错，文件为：{}'.format(in_file))
+            continue
+
+    # 从时次产品转为日产品的时候，单位变为kw/m2
+    try:
+        if day:
+            print('从时次产品转为日产品的时候，单位变为kw/m2')
+            for dataname in data_all:
+                data = data_all[dataname]
+                if data is not None:
+                    data_all[dataname] = data * 0.001
+    except Exception as why:
+        print(why)
+        print('转换单位出错')
+
+    try:
+        _write_out_file(out_file, data_all)
+    except Exception as why:
+        print(why)
+        print('输出结果文件错误')
+        return

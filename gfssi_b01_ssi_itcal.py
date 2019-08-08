@@ -230,7 +230,7 @@ def itcal(in_file, out_file):
         return
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     #     in_dir = '/home/gfssi/GFData/Source/FY4A+AGRI/SSI_4KM/Orbit/20190630/'
     # out_dir = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KM/Orbit/20190630/'
     # filenames = os.listdir(in_dir)
@@ -243,9 +243,9 @@ if __name__ == '__main__':
     #         in_file = os.path.join(in_dir, file_name)
     #         out_file = os.path.join(out_dir, file_name)
     #         itcal(in_file, out_file)
-    in_dir = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KM/Orbit/20190630'
-    out_dir = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KMCorrect/Orbit/20190630'
-    file_name = 'FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_20190630000000_20190630001459_4000M_V0001.NC'
-    in_file = os.path.join(in_dir, file_name)
-    out_file = os.path.join(out_dir, file_name)
-    itcal(in_file, out_file)
+    # in_dir = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KM/Orbit/20190630'
+    # out_dir = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KMCorrect/Orbit/20190630'
+    # file_name = 'FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_20190630000000_20190630001459_4000M_V0001.NC'
+    # in_file = os.path.join(in_dir, file_name)
+    # out_file = os.path.join(out_dir, file_name)
+    # itcal(in_file, out_file)

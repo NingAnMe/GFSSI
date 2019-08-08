@@ -55,14 +55,14 @@ def assignE(fileName_str):
         if x[0] == fileName_str[4:8]:
             return float(x[1])
 
-def readAndWrite(files,fileName_str):
+def readAndWrite(fileName_str):
     y,m,d,hr,min = assignTime(fileName_str)
     E = assignE(fileName_str)
   #  print "E is %d" % E
     Beta = 35.0
-    wfd = open(save_path + fileName_str + '_ssi.txt','w')
+    wfd = open('20190630050000' + '_ssi_new.txt', 'w')
     wfd.write("lon lat Itotal Ib Id G0 Ai Rb Gt Dni\n")
-    with open(files[0]) as fd:
+    with open('20190630050000' + '_ssi.txt') as fd:
         for line in fd:
             oriData = line.split()
             lon,lat,Itol,Ib,Id = assignOriData(oriData)
@@ -112,40 +112,10 @@ def readAndWrite(files,fileName_str):
 
             #sys.exit()
 
-data_path = 'I:\\FY4\\unzipNC\\2017\\'
-output_path = 'F:\\FY4\\GT\\'
-year = "2017"
-
-
-
-if not os.path.exists(output_path + year):
-    os.makedirs(output_path + year)
-
-dt_from = datetime.strptime("20170901","%Y%m%d")
-dt_to = datetime.strptime("20170902","%Y%m%d")
-delta = timedelta(minutes = 15)
 
 eData = []
 with open('ep.txt') as fd:
     for line in fd:
         eData.append(line.split())
-
-fileName = dt_from
-
-while fileName <= dt_to:
-    path = data_path + fileName.strftime("%Y%m%d") + '//'
-    save_path = output_path + year + '//' + fileName.strftime("%Y%m%d") + '//'
-    fileName_str = fileName.strftime("%Y%m%d%H%M")
-
-  #  print "fileName_str is %s " % fileName_str
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-
-    try:
-        files = glob.glob(path+ '*' + fileName_str + '*.txt')
-        if len(files) == 1:
-            readAndWrite(files,fileName_str)
-
-    except:
-        print('No' + fileName_str + 'datafiles.')
-    fileName += delta
+filestr = '20190630050000'
+readAndWrite(filestr)
