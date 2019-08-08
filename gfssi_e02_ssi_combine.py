@@ -67,6 +67,7 @@ def combine(in_files, out_file, day=False):
     }
 
     for in_file in in_files:
+        print('combine <<< :{}'.format(in_file))
         try:
             datas = FY4ASSI(in_file)
             data_get = {

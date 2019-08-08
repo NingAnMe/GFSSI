@@ -19,6 +19,10 @@ g_path, _ = os.path.split(os.path.realpath(__file__))
 os.chdir(g_path)
 
 
+def date2ymdhms(date):
+    return date.strftime('%Y%m%d%H%M%S')
+
+
 def get_files_by_date(dir_path, time_start, time_end, ext=None, pattern=None):
     """
     :param dir_path: 文件夹
@@ -62,14 +66,13 @@ def job_01(date_start=None, date_end=None):
     """
     from gfssi_e01_ssi_plot_map_orbit import plot_map_orbit
     in_dir = '/home/gfssi/GFData/SSIData/FY4A/SSI_4KM/Full/Orbit'
-    date_end_str = date_end.strftime('%Y%m%d%H%M%S')
+    date_end_str = date2ymdhms(date_end)
     pattern = r'FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_(\d{14})_\d{14}_4000M_V0001.NC'
     in_files = []
     while date_start <= date_end:
         ymd = date_start.strftime('%Y%m%d')
         in_dir_tem = os.path.join(in_dir, ymd)
-        date_start_str = date_start.strftime('%Y%m%d%H%M%S')
-        print(in_dir_tem, date_start_str, date_end_str)
+        date_start_str = date2ymdhms(date_start)
         in_files_tem = get_files_by_date(in_dir_tem, date_start_str, date_end_str, ext='.NC', pattern=pattern)
         in_files.extend(in_files_tem)
         date_start += relativedelta(days=1)
@@ -77,7 +80,6 @@ def job_01(date_start=None, date_end=None):
     print('找到的文件总数:{}'.format(in_files_length))
     p = Pool(4)
     for in_file in in_files:
-        print(in_file)
         p.apply_async(plot_map_orbit, args=(in_file, '4km'))
     p.close()
     p.join()
@@ -94,24 +96,90 @@ def job_02(date_start=None, date_end=None):
     :return:
     """
     from gfssi_e02_ssi_combine import combine
-    from gfssi_e01_ssi_plot_map_orbit import plot_map_orbit
     in_dir = '/home/gfssi/GFData/SSIData/FY4A/SSI_4KM/Full/Orbit'
-    date_end_str = date_end.strftime('%Y%m%d%H%M%S')
-    pattern = r'FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_(\d{14})_\d{14}_4000M_V0001.NC'
 
-    out_dir = '/home/gfssi/GFData/SSIData/FY4A/SSI_4KM/Full/Daily/{ym}'
+    out_dir = '/home/gfssi/GFData/SSIData/FY4A/SSI_4KM/Full/Daily/'
     out_name = 'FY4A-_AGRI--_N_DISK_1047E_L3-_SSI-_MULT_NOM_{ymd}_4000M_V0001.NC'
 
     in_files_all = []
     while date_start <= date_end:
         ymd = date_start.strftime('%Y%m%d')
         in_dir_tem = os.path.join(in_dir, ymd)
-        date_start_str = date_start.strftime('%Y%m%d%H%M%S')
-        print(in_dir_tem, date_start_str, date_end_str)
-        in_files_tem = get_files_by_date(in_dir_tem, date_start_str, date_end_str, ext='.NC', pattern=pattern)
-        out_file = os.path.join(out_dir.format(ym=ymd[:6]), out_name.format(ymd=ymd))
+        filenames = os.listdir(in_dir_tem)
+        in_files_tem = [os.path.join(in_dir_tem, i) for i in filenames if os.path.splitext(i)[1].lower() == '.nc']
+        out_file = os.path.join(out_dir, ymd[:6], out_name.format(ymd=ymd))
         in_files_all.append((in_files_tem, out_file))
         date_start += relativedelta(days=1)
+
+    p = Pool(4)
+    for in_files, out_file in in_files_all:
+        in_files_length = len(in_files)
+        print('找到的文件总数:{}'.format(in_files_length))
+        p.apply_async(combine, args=(in_files, out_file, True))
+    p.close()
+    p.join()
+    print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
+
+
+def job_03(date_start=None, date_end=None):
+    """
+    4KM数据月合成
+    绘制原始4KM数据的图像
+    3个产品，每个产品2张图像，共6张图像
+    :param date_start: 开始日期 datetime
+    :param date_end: 结束日期 datetime
+    :return:
+    """
+    from gfssi_e02_ssi_combine import combine
+    in_dir = '/home/gfssi/GFData/SSIData/FY4A/SSI_4KM/Full/Daily'
+
+    out_dir = '/home/gfssi/GFData/SSIData/FY4A/SSI_4KM/Full/Monthly/'
+    out_name = 'FY4A-_AGRI--_N_DISK_1047E_L3-_SSI-_MULT_NOM_{ym}_4000M_V0001.NC'
+
+    in_files_all = []
+    while date_start <= date_end:
+        ym = date_start.strftime('%Y%m')
+        in_dir_tem = os.path.join(in_dir, ym)
+        filenames = os.listdir(in_dir_tem)
+        in_files_tem = [os.path.join(in_dir_tem, i) for i in filenames if os.path.splitext(i)[1].lower() == '.nc']
+        out_file = os.path.join(out_dir, ym[:4], out_name.format(ym=ym))
+        in_files_all.append((in_files_tem, out_file))
+        date_start += relativedelta(months=1)
+
+    p = Pool(4)
+    for in_files, out_file in in_files_all:
+        in_files_length = len(in_files)
+        print('找到的文件总数:{}'.format(in_files_length))
+        p.apply_async(combine, args=(in_files, out_file, True))
+    p.close()
+    p.join()
+    print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
+
+
+def job_04(date_start=None, date_end=None):
+    """
+    4KM数据年合成
+    绘制原始4KM数据的图像
+    3个产品，每个产品2张图像，共6张图像
+    :param date_start: 开始日期 datetime
+    :param date_end: 结束日期 datetime
+    :return:
+    """
+    from gfssi_e02_ssi_combine import combine
+    in_dir = '/home/gfssi/GFData/SSIData/FY4A/SSI_4KM/Full/Monthly'
+
+    out_dir = '/home/gfssi/GFData/SSIData/FY4A/SSI_4KM/Full/Yearly/'
+    out_name = 'FY4A-_AGRI--_N_DISK_1047E_L3-_SSI-_MULT_NOM_{y}_4000M_V0001.NC'
+
+    in_files_all = []
+    while date_start <= date_end:
+        y = date_start.strftime('%Y')
+        in_dir_tem = os.path.join(in_dir, y)
+        filenames = os.listdir(in_dir_tem)
+        in_files_tem = [os.path.join(in_dir_tem, i) for i in filenames if os.path.splitext(i)[1].lower() == '.nc']
+        out_file = os.path.join(out_dir, out_name.format(y=y))
+        in_files_all.append((in_files_tem, out_file))
+        date_start += relativedelta(years=1)
 
     p = Pool(4)
     for in_files, out_file in in_files_all:
@@ -187,7 +255,15 @@ def main():
 
 
 if __name__ == '__main__':
-    start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190630010000', '%Y%m%d%H%M%S')
+    # start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190630005959', '%Y%m%d%H%M%S')
     # job_01(start, end)
-    job_02(start, end)
+    # start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
+    # job_02(start, end)
+    # start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
+    # job_03(start, end)
+    start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
+    job_04(start, end)

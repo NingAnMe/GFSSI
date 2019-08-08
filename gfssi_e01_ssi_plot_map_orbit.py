@@ -19,6 +19,7 @@ def plot_image_map(data, out_file='test.jpg', figsize=(2.748, 2.748), res='4km')
 
 
 def plot_map_orbit(in_file, res=None):
+    print('plot_map_orbit <<<:{}'.format(in_file))
     if not os.path.isfile(in_file):
         print('数据不存在:{}'.format(in_file))
         return
@@ -43,7 +44,6 @@ def plot_map_orbit(in_file, res=None):
             data = None
 
         if data is not None:
-
             out_filename = in_filename + '_{}.jpg'.format(dataname)
             out_file = os.path.join(dir_, out_filename)
             try:
