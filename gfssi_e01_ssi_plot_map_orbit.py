@@ -9,13 +9,17 @@ import matplotlib.pyplot as plt
 from lib.lib_read import FY4ASSI
 
 
-def plot_image_map(data, out_file='test.jpg', figsize=(2.748, 2.748), res='4km'):
+def plot_image_disk(data, out_file='test.jpg', figsize=(2.748, 2.748), res='4km'):
     ditu = plt.imread('Aid/ditu_{}.jpg'.format(res.lower()))
     fig = plt.figure(figsize=figsize, dpi=1000)
     fig.figimage(ditu)
     fig.figimage(data, vmin=0, vmax=1000, cmap='jet', alpha=0.7)
     plt.savefig(out_file)
     print('>>> :{}'.format(out_file))
+
+
+def plot_image_map(data, out_file='test.jpg', filesize=(), res='4km'):
+    pass
 
 
 def plot_map_orbit(in_file, res=None):
@@ -48,7 +52,7 @@ def plot_map_orbit(in_file, res=None):
             out_file = os.path.join(dir_, out_filename)
             try:
                 import numpy as np
-                plot_image_map(data, out_file=out_file, res=res)
+                plot_image_disk(data, out_file=out_file, res=res)
             except Exception as why:
                 print(why)
                 print('绘制图像错误:{}'.format(out_file))
