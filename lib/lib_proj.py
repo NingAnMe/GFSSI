@@ -34,7 +34,7 @@ def degree2meter(degree):
 
 
 def meter2degree(meter):
-    return (meter * 180) / (np.pi * EARTH_EQUATOR_RADIUS_KM * 100)
+    return (meter * 180) / (np.pi * EARTH_EQUATOR_RADIUS_KM * 1000)
 
 
 class ProjCore:
@@ -241,6 +241,7 @@ class ProjCore:
 if __name__ == '__main__':
     ps = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
     r = meter2degree(4000)
+    print(r)
     p = ProjCore(ps, r, unit="deg", pt_tl=(-179.5, 89.5), pt_br=(179.5, -89.5))  # 角点也要放在格点中心位置
     print(p.col)
     print(p.row)

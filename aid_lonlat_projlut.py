@@ -7,7 +7,7 @@
 import os
 import h5py
 import numpy as np
-from lib.lib_read import FY4ASSI
+from lib.lib_read_ssi import FY4ASSI
 from lib.lib_proj import ProjCore, meter2degree
 
 
@@ -40,15 +40,19 @@ lats = FY4ASSI.get_latitude()
 lons = FY4ASSI.get_longitude()
 
 projstr = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-res = meter2degree(4000)
-proj = ProjCore(projstr, res, unit="deg", pt_tl=(-179.5, 89.5), pt_br=(179.5, -89.5))  # 角点也要放在格点中心位置
-result = proj.create_lut(lats=lats, lons=lons)
-result['row_col'] = np.array([proj.row, proj.col], dtype=np.int32)
-print(type(result['row_col']))
-print(result['row_col'])
 
-out_file = 'Aid/lonlatlut_4km_{}row_{}col.hdf'.format(proj.row, proj.col)
-_write_out_file(out_file, result)
+for res, res_int in [('1km', 1000), ('4km', 4000)]:
+
+    res_degree = meter2degree(res_int)
+    proj = ProjCore(projstr, res_degree, unit="deg", pt_tl=(-179.5, 89.5), pt_br=(179.5, -89.5))  # 角点也要放在格点中心位置
+    result = proj.create_lut(lats=lats, lons=lons)
+    print(proj.row, proj.col)
+    result['row_col'] = np.array([proj.row, proj.col], dtype=np.int32)
+    print(type(result['row_col']))
+    print(result['row_col'])
+
+    out_file = 'Aid/lonlat_projlut_{}_{}row_{}col.hdf'.format(res_int, proj.row, proj.col)
+    _write_out_file(out_file, result)
 
 
 # # 使用
