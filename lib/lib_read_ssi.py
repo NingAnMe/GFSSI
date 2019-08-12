@@ -8,7 +8,6 @@ import os
 import numpy as np
 import h5py
 from lib.lib_path import get_aid_path
-from lib.lib_constant import FULL_VALUE
 from PB.DRC.GEO import get_fy4_lon_lat_lut
 FY4_LON_LAT_LUT = get_fy4_lon_lat_lut()
 FY4_LONLAT_PROJLUT = os.path.join(get_aid_path(), 'lonlat_projlut_4km_499row_1000col.hdf')
@@ -105,19 +104,23 @@ class FY4ASSI(object):
             dataset = hdf.get('Longitude')[:]
             dataset[dataset == full_value] = np.nan
             dataset += offset  # 由于经纬度查找表的问题，这里有一个偏移量
-            dataset[dataset > 180] -= 360
+            dataset[dataset > 180] -= 360  # 加上偏移量以后，原来的值会超过180，需要恢复其正常位置
             return dataset
 
     @staticmethod
     def get_latitude_area():
+        full_value = -999
         with h5py.File(FY4_LON_LAT_LUT, 'r') as hdf:
             dataset = hdf.get('Latitude')[:]
+            dataset[dataset == full_value] = np.nan
             return dataset
 
     @staticmethod
     def get_longitude_area():
+        full_value = -999
         with h5py.File(FY4_LON_LAT_LUT, 'r') as hdf:
             dataset = hdf.get('Longitude')[:]
+            dataset[dataset == full_value] = np.nan
             return dataset
 
     @staticmethod

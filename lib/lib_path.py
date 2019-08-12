@@ -9,60 +9,28 @@ import os
 
 CURRENT_FILE = os.path.realpath(__file__)
 CURRENT_DIR = os.path.dirname(CURRENT_FILE)
-GSICS_DIR = os.path.dirname(CURRENT_DIR)
+GFSSI_DIR = os.path.dirname(CURRENT_DIR)
 
 
-def get_gsics_cfg_path():
+def get_cfg_path():
     """
-    获取gsics cfg目录的路径
+    获取gfssi cfg目录的路径
     :return:
     """
-    return os.path.join(GSICS_DIR, 'cfg')
+    return os.path.join(GFSSI_DIR, 'cfg')
 
 
-def get_gsics_lib_path():
+def get_lib_path():
     """
-    获取gsics lib目录的路径
+    获取gfssi lib目录的路径
     :return:
     """
-    return os.path.join(GSICS_DIR, 'lib_gsics')
+    return os.path.join(GFSSI_DIR, 'lib')
 
 
-def get_pics_cfg_path():
+def get_aid_path():
     """
-    获取mod_pics cfg目录的路径
+    获取gfssi Aid目录的路径
     :return:
     """
-    return os.path.join(GSICS_DIR, 'mod_pics', 'cfg')
-
-
-def get_proj_cfg_path():
-    """
-    获取mod_proj cfg目录的路径
-    :return:
-    """
-    return os.path.join(GSICS_DIR, 'mod_proj', 'cfg')
-
-
-def get_accurate_cfg_path():
-    """
-    获取mod_accurate cfg目录的路径
-    :return:
-    """
-    return os.path.join(GSICS_DIR, 'mod_acosp', 'cfg')
-
-
-def get_dcc_cfg_path():
-    """
-    获取mod_accurate cfg目录的路径
-    :return:
-    """
-    return os.path.join(GSICS_DIR, 'mod_dcc', 'cfg')
-
-
-def get_stdnc_cfg_path():
-    """
-    获取mod_accurate cfg目录的路径
-    :return:
-    """
-    return os.path.join(GSICS_DIR, 'mod_stdnc', 'cfg')
+    return os.path.join(GFSSI_DIR, 'Aid')
