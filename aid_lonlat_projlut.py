@@ -8,6 +8,7 @@ import os
 import h5py
 import numpy as np
 from lib.lib_read_ssi import FY4ASSI
+from lib.lib_constant import FULL_VALUE
 from lib.lib_proj import ProjCore, meter2degree
 
 
@@ -37,7 +38,7 @@ def _write_out_file(out_file, result):
                 else:
                     dtype = np.int32
                 data = result[dataset]
-                data[np.isnan(data)] = -999
+                data[np.isnan(data)] = FULL_VALUE
                 hdf5.create_dataset(dataset,
                                     dtype=dtype, data=result[dataset], compression=compression,
                                     compression_opts=compression_opts,
@@ -49,13 +50,15 @@ def _write_out_file(out_file, result):
         os.remove(out_file)
 
 
-lats = FY4ASSI.get_latitude()
-lons = FY4ASSI.get_longitude()
-
-projstr = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-
-for res, res_int in [('10km', 10000), ('4km', 4000)]:
+def make_disk_projlut(res='4km', out_file=None):
+    if res == '4km':
+        res_int = 4000
+        lats = FY4ASSI.get_latitude()
+        lons = FY4ASSI.get_longitude()
+    else:
+        raise ValueError('不支持此分辨率: {}'.format(res))
     res_degree = meter2degree(res_int)
+    projstr = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
     proj = ProjCore(projstr, res_degree, unit="deg", pt_tl=(23, 81), pt_br=(179.5, -81))  # 角点也要放在格点中心位置
     result = proj.create_lut(lats=lats, lons=lons)
     proj.grid_lonslats()
@@ -63,14 +66,4 @@ for res, res_int in [('10km', 10000), ('4km', 4000)]:
     result['Latitude'] = proj.lats
     result['row_col'] = np.array([proj.row, proj.col], dtype=np.int32)
     print(result['row_col'])
-
-    out_file = 'Aid/lonlat_projlut_{}_{}row_{}col.hdf'.format(res, proj.row, proj.col)
     _write_out_file(out_file, result)
-
-
-# # 使用
-# proj_row = proj.row
-# proj_col = proj.col
-# data = None
-# proj_data = np.array((row, col), dtype=data.dtype)
-# proj_data[proj_i, proj_j] = data[pre_i, pre_j]
