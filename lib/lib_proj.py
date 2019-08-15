@@ -198,28 +198,28 @@ class ProjCore:
 
         # 投影后必是2维的，行列 proj1_i,proj1_j
         prj_i, prj_j = self.lonslats2ij(lons, lats)
-
-        valid_index = np.logical_and.reduce((prj_i >= 0, prj_i < self.row,
-                                             prj_j >= 0, prj_j < self.col))
+        #
+        # valid_index = np.logical_and.reduce((prj_i >= 0, prj_i < self.row,
+        #                                      prj_j >= 0, prj_j < self.col))
 
         if lons.ndim == 1:
             pre_n = np.arange(0, lons.size, 1, "i4")
 
-            # 投影方格以外的数据过滤掉
-            prj_i = prj_i[valid_index]
-            prj_j = prj_j[valid_index]
-            pre_n = pre_n[valid_index]
+            # # 投影方格以外的数据过滤掉
+            # prj_i = prj_i[valid_index]
+            # prj_j = prj_j[valid_index]
+            # pre_n = pre_n[valid_index]
             return {"pre_n": pre_n, "prj_i": prj_i, "prj_j": prj_j}
 
         elif lons.ndim == 2:
             pre_row, pre_col = lons.shape
             pre_i, pre_j = np.mgrid[0:pre_row:1, 0:pre_col:1]
 
-            # 投影方格以外的数据过滤掉
-            prj_i = prj_i[valid_index]
-            prj_j = prj_j[valid_index]
-            pre_i = pre_i[valid_index]
-            pre_j = pre_j[valid_index]
+            # # 投影方格以外的数据过滤掉
+            # prj_i = prj_i[valid_index]
+            # prj_j = prj_j[valid_index]
+            # pre_i = pre_i[valid_index]
+            # pre_j = pre_j[valid_index]
 
             return {"pre_i": pre_i, "pre_j": pre_j, "prj_i": prj_i, "prj_j": prj_j}
 

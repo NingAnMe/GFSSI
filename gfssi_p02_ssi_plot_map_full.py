@@ -10,20 +10,23 @@ import numpy as np
 from lib.lib_read_ssi import FY4ASSI
 
 
-def plot_image_disk(data, out_file='test.jpg', res='4km'):
+def plot_image_disk(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
     ditu = plt.imread('Aid/ditu_{}.png'.format(res.lower()))
     row, col, _ = ditu.shape
     fig = plt.figure(figsize=(col / 100, row / 100), dpi=100)
     fig.figimage(ditu)
-    fig.figimage(data, vmin=0, vmax=1000, cmap='jet', alpha=0.7)
+    fig.figimage(data, vmin=vmin, vmax=vmax, cmap='jet', alpha=0.7)
     fig.patch.set_alpha(0)
     plt.savefig(out_file, transparent=True)
+    print("监测到数据的最小值和最大值：{}， {}".format(np.nanmin(data), np.nanmax(data)))
     print('>>> :{}'.format(out_file))
 
 
-def plot_image_map(data, out_file='test.jpg', res='4km'):
-    projlut_file = 'Aid/lonlat_projlut_{}_4509row_4356col.hdf'.format(res.lower())
-    projlut = FY4ASSI.get_lonlat_projlut(projlut_file)
+def plot_image_map(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
+    if res == '4km':
+        projlut = FY4ASSI.get_lonlat_projlut()
+    else:
+        raise ValueError('不支持此分辨率: {}'.format(res))
     row, col = projlut['row_col']
     image_data = np.full((row, col), np.nan, dtype=np.float32)
     proj_i = projlut['prj_i']
@@ -41,13 +44,14 @@ def plot_image_map(data, out_file='test.jpg', res='4km'):
 
     image_data[proj_i, proj_j] = data[pre_i, pre_j]
     fig = plt.figure(figsize=(col/100, row/100), dpi=100)
-    fig.figimage(image_data, vmin=0, vmax=1000, cmap='jet')
+    fig.figimage(image_data, vmin=vmin, vmax=vmax, cmap='jet')
     fig.patch.set_alpha(0)
     plt.savefig(out_file, transparent=True)
+    print("监测到数据的最小值和最大值：{}， {}".format(np.nanmin(data), np.nanmax(data)))
     print('>>> :{}'.format(out_file))
 
 
-def plot_map_full(in_file, res='4km'):
+def plot_map_full(in_file, res='4km', vmin=0, vmax=1000):
     print('plot_map_orbit <<<:{}'.format(in_file))
     if not os.path.isfile(in_file):
         print('数据不存在:{}'.format(in_file))
@@ -76,8 +80,12 @@ def plot_map_full(in_file, res='4km'):
             # 快视图绘制
             out_filename1 = in_filename + '_{}.jpg'.format(dataname)
             out_file1 = os.path.join(dir_, out_filename1)
+
             try:
-                plot_image_disk(data, out_file=out_file1, res=res)
+                if not os.path.isfile(out_file1):
+                    plot_image_disk(data, out_file=out_file1, res=res, vmin=vmin, vmax=vmax)
+                else:
+                    print('文件已经存在，跳过:{}'.format(out_file1))
             except Exception as why:
                 print(why)
                 print('绘制图像错误:{}'.format(out_file1))
@@ -86,7 +94,10 @@ def plot_map_full(in_file, res='4km'):
             out_filename2 = in_filename + '_latlon_{}.png'.format(dataname)
             out_file2 = os.path.join(dir_, out_filename2)
             try:
-                plot_image_map(data, out_file=out_file2)
+                if not os.path.isfile(out_file2):
+                    plot_image_map(data, out_file=out_file2, res=res, vmin=vmin, vmax=vmax)
+                else:
+                    print('文件已经存在，跳过:{}'.format(out_file2))
             except Exception as why:
                 print(why)
                 print('绘制图像错误:{}'.format(out_file2))

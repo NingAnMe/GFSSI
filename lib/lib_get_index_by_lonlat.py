@@ -11,8 +11,6 @@ import numpy as np
 from pykdtree import kdtree
 
 
-
-
 def make_point_index_lut(lons_data, lats_data):
     condition = np.logical_and(np.isfinite(lons_data), np.isfinite(lats_data))
     idx = np.where(condition)

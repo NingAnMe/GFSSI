@@ -7,10 +7,8 @@
 import os
 import numpy as np
 import h5py
-from lib.lib_path import get_aid_path
 from PB.DRC.GEO import get_fy4_lon_lat_lut
-FY4_LON_LAT_LUT = get_fy4_lon_lat_lut()
-FY4_LONLAT_PROJLUT = os.path.join(get_aid_path(), 'lonlat_projlut_4km_499row_1000col.hdf')
+from lib.lib_constant import PROJ_LUT_4KM, FY4_LON_LAT_LUT
 
 
 class FY4ASSI(object):
@@ -24,15 +22,31 @@ class FY4ASSI(object):
         return ymdhms
 
     def get_itol(self):
+        """
+        总
+        :return:
+        """
         return self.get_ssi()
 
     def get_ib(self):
+        """
+        直
+        :return:
+        """
         return self.get_dirssi()
 
     def get_id(self):
+        """
+        散
+        :return:
+        """
         return self.get_difssi()
 
     def get_g0(self):
+        """
+        天
+        :return:
+        """
         with h5py.File(self.in_file, 'r') as hdf:
             dataset = hdf.get('G0')
             if dataset is not None:
@@ -42,6 +56,10 @@ class FY4ASSI(object):
                 return data
 
     def get_gt(self):
+        """
+        斜
+        :return:
+        """
         with h5py.File(self.in_file, 'r') as hdf:
             dataset = hdf.get('Gt')
             if dataset is not None:
@@ -51,6 +69,10 @@ class FY4ASSI(object):
                 return data
 
     def get_dni(self):
+        """
+        角
+        :return:
+        """
         with h5py.File(self.in_file, 'r') as hdf:
             dataset = hdf.get('DNI')
             if dataset is not None:
@@ -104,29 +126,44 @@ class FY4ASSI(object):
             dataset = hdf.get('Longitude')[:]
             dataset[dataset == full_value] = np.nan
             dataset += offset  # 由于经纬度查找表的问题，这里有一个偏移量
-            dataset[dataset > 180] -= 360  # 加上偏移量以后，原来的值会超过180，需要恢复其正常位置
+            idx_finite = np.isfinite(dataset)
+            dataset[idx_finite][dataset > 180] -= 360  # 加上偏移量以后，原来的值会超过180，需要恢复其正常位置
             return dataset
 
-    @staticmethod
-    def get_latitude_area():
+    def get_latitude_area(self):
         full_value = -999
-        with h5py.File(FY4_LON_LAT_LUT, 'r') as hdf:
+        with h5py.File(self.in_file, 'r') as hdf:
             dataset = hdf.get('Latitude')[:]
             dataset[dataset == full_value] = np.nan
             return dataset
 
-    @staticmethod
-    def get_longitude_area():
+    def get_longitude_area(self):
         full_value = -999
-        with h5py.File(FY4_LON_LAT_LUT, 'r') as hdf:
+        with h5py.File(self.in_file, 'r') as hdf:
             dataset = hdf.get('Longitude')[:]
             dataset[dataset == full_value] = np.nan
             return dataset
 
     @staticmethod
-    def get_lonlat_projlut(proj_file):
+    def get_longitude_proj():
+        full_value = -999
+        with h5py.File(PROJ_LUT_4KM, 'r') as hdf:
+            dataset = hdf.get('Longitude')[:]
+            dataset[dataset == full_value] = np.nan
+            return dataset
+
+    @staticmethod
+    def get_latitude_proj():
+        full_value = -999
+        with h5py.File(PROJ_LUT_4KM, 'r') as hdf:
+            dataset = hdf.get('Latitude')[:]
+            dataset[dataset == full_value] = np.nan
+            return dataset
+
+    @staticmethod
+    def get_lonlat_projlut():
         result = {}
-        with h5py.File(proj_file, 'r') as hdf:
+        with h5py.File(PROJ_LUT_4KM, 'r') as hdf:
             for dataset in hdf:
                 result[dataset] = hdf.get(dataset)[:]
             return result
