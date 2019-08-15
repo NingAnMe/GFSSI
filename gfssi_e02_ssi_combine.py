@@ -10,11 +10,17 @@ import os
 import h5py
 import numpy as np
 
-from lib.lib_read import FY4ASSI
+from lib.lib_read_ssi import FY4ASSI
 from lib.lib_constant import FULL_VALUE
 
 
 def add_data(data, data_tem):
+    """
+    combine太阳能数据
+    :param data:
+    :param data_tem:
+    :return:
+    """
     if data_tem is None:
         return data
     if data is None:
@@ -31,6 +37,16 @@ def _write_out_file(out_file, result):
     out_dir = os.path.dirname(out_file)
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
+
+    valid_count = 0
+    for key in result:
+        if result[key] is None:
+            continue
+        else:
+            valid_count += 1
+    if valid_count == 0:
+        print('没有足够的有效数据，不生成结果文件')
+        return
 
     try:
         compression = 'gzip'
@@ -52,10 +68,20 @@ def _write_out_file(out_file, result):
         os.remove(out_file)
 
 
-def combine(in_files, out_file, day=False):
+def combine_full(in_files, out_file, day=False):
+    """
+    :param in_files:
+    :param out_file:
+    :param day: 是否日合成，因为日合成的时候，要改变数据的单位为KW/m2
+    :return:
+    """
     out_path = os.path.dirname(out_file)
     if not os.path.isdir(out_path):
         os.makedirs(out_path)
+
+    if os.path.isfile(out_file):
+        print('文件已经存在，跳过:{}'.format(out_file))
+        return
 
     data_all = {
         'SSI': None,
@@ -77,6 +103,73 @@ def combine(in_files, out_file, day=False):
                 'G0': datas.get_g0,
                 'Gt': datas.get_gt,
                 'DNI': datas.get_dni,
+            }
+            for dataname in data_all:
+                data_all[dataname] = add_data(data_all[dataname], data_get[dataname]())
+        except Exception as why:
+            print(why)
+            print('合成数据过程出错，文件为：{}'.format(in_file))
+            continue
+
+    # 从时次产品转为日产品的时候，单位变为kw/m2
+    try:
+        if day:
+            print('从时次产品转为日产品的时候，单位变为kw/m2')
+            for dataname in data_all:
+                data = data_all[dataname]
+                if data is not None:
+                    data_all[dataname] = data * 0.001
+    except Exception as why:
+        print(why)
+        print('转换单位出错')
+
+    try:
+        _write_out_file(out_file, data_all)
+    except Exception as why:
+        print(why)
+        print('输出结果文件错误')
+        return
+
+
+def combine_area(in_files, out_file, day=False):
+    """
+    :param in_files:
+    :param out_file:
+    :param day: 是否日合成，因为日合成的时候，要改变数据的单位为KW/m2
+    :return:
+    """
+    out_path = os.path.dirname(out_file)
+    if not os.path.isdir(out_path):
+        os.makedirs(out_path)
+
+    if os.path.isfile(out_file):
+        print('文件已经存在，跳过:{}'.format(out_file))
+        return
+
+    data_all = {
+        'SSI': None,
+        'DirSSI': None,
+        'DifSSI': None,
+        'G0': None,
+        'Gt': None,
+        'DNI': None,
+        'Latitude': None,
+        'Longitude': None,
+    }
+
+    for in_file in in_files:
+        print('combine <<< :{}'.format(in_file))
+        try:
+            datas = FY4ASSI(in_file)
+            data_get = {
+                'SSI': datas.get_ssi,
+                'DirSSI': datas.get_ib,
+                'DifSSI': datas.get_id,
+                'G0': datas.get_g0,
+                'Gt': datas.get_gt,
+                'DNI': datas.get_dni,
+                'Latitude': datas.get_latitude_area,
+                'Longitude': datas.get_longitude_area,
             }
             for dataname in data_all:
                 data_all[dataname] = add_data(data_all[dataname], data_get[dataname]())
