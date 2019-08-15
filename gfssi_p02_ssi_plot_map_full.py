@@ -8,6 +8,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 from lib.lib_read_ssi import FY4ASSI
+from lib.lib_database import add_result_data
 
 
 def plot_image_disk(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
@@ -51,7 +52,7 @@ def plot_image_map(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
     print('>>> :{}'.format(out_file))
 
 
-def plot_map_full(in_file, res='4km', vmin=0, vmax=1000):
+def plot_map_full(in_file, resultid='', planid='', datatime='', res='4km', vmin=0, vmax=1000):
     print('plot_map_orbit <<<:{}'.format(in_file))
     if not os.path.isfile(in_file):
         print('数据不存在:{}'.format(in_file))
@@ -84,6 +85,10 @@ def plot_map_full(in_file, res='4km', vmin=0, vmax=1000):
             try:
                 if not os.path.isfile(out_file1):
                     plot_image_disk(data, out_file=out_file1, res=res, vmin=vmin, vmax=vmax)
+                    # 入库
+                    if os.path.isfile(out_file1):
+                        resultid_tem = resultid.format(proj_type='DISK', data_id=dataname.upper())
+                        add_result_data(resultid=resultid_tem, planid=planid, address=out_file1, datatime=datatime)
                 else:
                     print('文件已经存在，跳过:{}'.format(out_file1))
             except Exception as why:
@@ -96,6 +101,10 @@ def plot_map_full(in_file, res='4km', vmin=0, vmax=1000):
             try:
                 if not os.path.isfile(out_file2):
                     plot_image_map(data, out_file=out_file2, res=res, vmin=vmin, vmax=vmax)
+                    # 入库
+                    if os.path.isfile(out_file2):
+                        resultid_tem = resultid.format(proj_type='LATLON', data_id=dataname.upper())
+                        add_result_data(resultid=resultid_tem, planid=planid, address=out_file2, datatime=datatime)
                 else:
                     print('文件已经存在，跳过:{}'.format(out_file2))
             except Exception as why:

@@ -59,7 +59,7 @@ def job_01(date_start=None, date_end=None):
     :param date_end: 结束日期 datetime
     :return:
     """
-    from gfssi_e01_ssi_plot_map_orbit import plot_map_orbit
+    from gfssi_p02_ssi_plot_map_full import plot_map_full
     in_dir = '/home/gfssi/GFData/SSIData/FY4A'
     date_end_str = date_end.strftime('%Y%m%d%H%M%S')
     pattern = r'FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_(\d{14})_YYYYmmddHHMMSS_4000M_V0001.NC'
@@ -74,7 +74,7 @@ def job_01(date_start=None, date_end=None):
     print('找到的文件总数:{}'.format(in_files_length))
     p = Pool(4)
     for in_file in range(5):
-        result = p.apply_async(plot_map_orbit, args=(in_file,))
+        result = p.apply_async(plot_map_full, args=(in_file,))
         result.get()
     p.close()
     p.join()

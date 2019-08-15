@@ -13,14 +13,14 @@
 3、DEBUG函数assignTime，原来的函数直接在hour加8可能超过24
 """
 import os
-import sys
+from datetime import datetime
+
 import h5py
 import numpy as np
-from lib.lib_read import FY4ASSI
-from shutil import copyfile
-from lib.lib_constant import FULL_VALUE
-from datetime import datetime
 from dateutil.relativedelta import relativedelta
+
+from lib.lib_constant import FULL_VALUE, ER_TXT, EP_TXT
+from lib.lib_read_ssi import FY4ASSI
 
 
 def cos(x):
@@ -74,6 +74,7 @@ def calRb(lat, Beta, Delta, Omega, CosThetaz):
 def calGt(Ib, Id, Ai, Rb, Beta, Itol):
     return (Ib + Id * Ai) * Rb + Id * (1 - Ai) * (1 + cos(Beta)) / 2.0 + Itol * 0.2 * (1 - cos(Beta)) / 2.0
 
+
 def assignTime(ymdhms):
     """
     DEBUG函数assignTime，原来的函数直接在hour加8可能超过24
@@ -85,6 +86,7 @@ def assignTime(ymdhms):
     datestrf = date.strftime('%Y-%m-%d-%H-%M-%S')
     y, m, d, h, mm, s = datestrf.split('-')
     return [int(i) for i in (y, m, d, h, mm)]
+
 
 def assignE(y, m, d):
     """
@@ -98,9 +100,9 @@ def assignE(y, m, d):
     m = int(m)
     d = int(d)
     if isleap(y):
-        e_file = 'step2/er.txt'
+        e_file = ER_TXT
     else:
-        e_file = 'step2/ep.txt'
+        e_file = EP_TXT
     e_data = np.loadtxt(e_file)
     md = int('{:02d}{:02d}'.format(m, d))
 
@@ -116,6 +118,16 @@ def _write_out_file(out_file, result):
     out_dir = os.path.dirname(out_file)
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
+
+    valid_count = 0
+    for key in result:
+        if result[key] is None:
+            continue
+        else:
+            valid_count += 1
+    if valid_count == 0:
+        print('没有足够的有效数据，不生成结果文件')
+        return
 
     try:
         compression = 'gzip'
@@ -229,23 +241,22 @@ def itcal(in_file, out_file):
         print('输出结果文件错误')
         return
 
-
 # if __name__ == '__main__':
-    #     in_dir = '/home/gfssi/GFData/Source/FY4A+AGRI/SSI_4KM/Orbit/20190630/'
-    # out_dir = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KM/Orbit/20190630/'
-    # filenames = os.listdir(in_dir)
-    # filenames.sort()
-    #
-    # for file_name in filenames:
-    #     if file_name[-2:] != 'NC':
-    #         continue
-    #     else:
-    #         in_file = os.path.join(in_dir, file_name)
-    #         out_file = os.path.join(out_dir, file_name)
-    #         itcal(in_file, out_file)
-    # in_dir = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KM/Orbit/20190630'
-    # out_dir = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KMCorrect/Orbit/20190630'
-    # file_name = 'FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_20190630000000_20190630001459_4000M_V0001.NC'
-    # in_file = os.path.join(in_dir, file_name)
-    # out_file = os.path.join(out_dir, file_name)
-    # itcal(in_file, out_file)
+#     in_dir = '/home/gfssi/GFData/Source/FY4A+AGRI/SSI_4KM/Orbit/20190630/'
+# out_dir = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KM/Orbit/20190630/'
+# filenames = os.listdir(in_dir)
+# filenames.sort()
+#
+# for file_name in filenames:
+#     if file_name[-2:] != 'NC':
+#         continue
+#     else:
+#         in_file = os.path.join(in_dir, file_name)
+#         out_file = os.path.join(out_dir, file_name)
+#         itcal(in_file, out_file)
+# in_dir = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KM/Orbit/20190630'
+# out_dir = '/home/gfssi/GFData/Result/FY4A+AGRI/SSI_4KMCorrect/Orbit/20190630'
+# file_name = 'FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_20190630000000_20190630001459_4000M_V0001.NC'
+# in_file = os.path.join(in_dir, file_name)
+# out_file = os.path.join(out_dir, file_name)
+# itcal(in_file, out_file)

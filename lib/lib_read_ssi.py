@@ -4,6 +4,7 @@
 @Time    : 2019/8/1
 @Author  : AnNing
 """
+from datetime import datetime
 import os
 import numpy as np
 import h5py
@@ -16,10 +17,11 @@ class FY4ASSI(object):
         self.in_file = in_file
         self.lon_lat_lut = get_fy4_lon_lat_lut()
 
-    def get_date_time(self):
-        filename = os.path.basename(self.in_file)
+    @staticmethod
+    def get_date_time_orbit(in_file):
+        filename = os.path.basename(in_file)
         ymdhms = filename.split('_')[-4]
-        return ymdhms
+        return datetime.strptime(ymdhms, '%Y%m%d%H%M%S')
 
     def get_itol(self):
         """

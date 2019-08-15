@@ -16,6 +16,8 @@ from gfssi_p01_ssi_plot_map_area import plot_map_area
 from gfssi_e02_ssi_combine import combine_full
 from gfssi_e03_ssi_area import area
 
+from lib.lib_read_ssi import FY4ASSI
+
 # 获取程序所在目录位置
 g_path, _ = os.path.split(os.path.realpath(__file__))
 # 进入该目录
@@ -69,6 +71,8 @@ def product_4km_disk_full_image_orbit(date_start=None, date_end=None, thread=3):
     in_dir = os.path.join(data_root_dir, 'SSIData/FY4A/SSI_4KM/Full/Orbit')
     date_end_str = date_end.strftime('%Y%m%d%H%M%S')
     pattern = r'.*FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_(\d{14})_\d{14}_4000M_V0001.NC'
+    resultid = 'FY4A_AGRI_L2_SSI_Full_{proj_type}_4KM_15Min_{data_id}'
+    planid = 1
     in_files = []
     while date_start <= date_end:
         ymd = date_start.strftime('%Y%m%d')
@@ -83,7 +87,8 @@ def product_4km_disk_full_image_orbit(date_start=None, date_end=None, thread=3):
     print('开始绘图')
     p = Pool(thread)
     for in_file in in_files[:]:
-        p.apply_async(plot_map_full, args=(in_file, '4km'))
+        datatime = FY4ASSI.get_date_time_orbit(in_file)
+        p.apply_async(plot_map_full, args=(in_file, resultid, planid, datatime, '4km', 0, 1000))
     p.close()
     p.join()
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
@@ -272,8 +277,8 @@ def product_4km_disk_china_data_and_image(date_start=None, date_end=None, thread
 
 if __name__ == '__main__':
     # 测试生产4KM时次的绘图
-    start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    start = datetime.strptime('20190701000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190701015959', '%Y%m%d%H%M%S')
 
     # product_4km_disk_full_image_orbit(start, end)  # 圆盘轨道
     # product_4km_disk_full_data_and_image(start, end, frequency='Daily')  # 圆盘日

@@ -10,9 +10,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = 'mysql+pymysql://hzqx:PassWord@1234@183.230.93.188:3306/solar'
+from lib.lib_constant import DATABASE_URL
 
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL, echo=False)
 Session = sessionmaker(engine)
 
 Base = declarative_base()
@@ -51,7 +51,4 @@ def add_result_data(resultid, planid, address, datatime):
     session = Session()
     session.add(result_data)
     session.commit()
-
-
-add_result_data(1, 1, 'test/test.txt', datetime.now())
-
+    print(result_data)
