@@ -18,10 +18,9 @@ import numpy as np
 from DV import dv_map
 
 
-class ReadFY3DNEVISSI:
+class FY3DSSIENVI:
     def __init__(self, in_file):
         self.in_file = in_file
-
         dataset = gdal.Open(self.in_file)
         self.XSize = dataset.RasterXSize
         self.YSize = dataset.RasterYSize
@@ -46,17 +45,16 @@ class ReadFY3DNEVISSI:
 
 def main():
     in_dir = '/home/gfssi/GFData/tem'
-    out_dir = '/home/gfssi/GFData/fy3d_ssi_pic'
+    out_dir = '/home/gfssi/GFData/fy3d_ssi_pic2'
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
     file_names = os.listdir(in_dir)
     file_names.sort()
-    print(file_names)
     for file_name in file_names:
         print(file_name)
         if 'dat' not in file_name:
             continue
-        if 'Sz' not in file_name:
+        if '20190530' not in file_name:
             continue
         name, ext = os.path.splitext(file_name)
         ssi_type, date = name.split('_')
@@ -69,17 +67,17 @@ def main():
         ssi_type, vmin, vmax, unit = ssi_type_dict[ssi_type]
         in_file = os.path.join(in_dir, file_name)
         print(in_file)
-        data_loader = ReadFY3DNEVISSI(in_file)
+        data_loader = FY3DSSIENVI(in_file)
         ssi = data_loader.get_ssi()
 
         lons, lats = data_loader.get_lon_lat()
-        ssi = ssi[::3, ::3]
-        lons = lons[::3, ::3]
-        lats = lats[::3, ::3]
+        # ssi = ssi[::3, ::3]
+        # lons = lons[::3, ::3]
+        # lats = lats[::3, ::3]
         print(ssi.min(), ssi.max())
         print(lons.min(), lons.max())
         print(lats.min(), lats.max())
-        out_file = os.path.join(out_dir, file_name + '.jpg')
+        out_file = os.path.join(out_dir, file_name + '_FY3D' + '.jpg')
         plot_map_project(lats, lons, ssi, out_file, title='{} {}'.format(ssi_type, date),
                          vmin=vmin, vmax=vmax, unit=unit)
 
@@ -100,9 +98,21 @@ def plot_map_project(
     print(value.min(), value.max())
     p = dv_map.dv_map()
     p.colorbar_fmt = '%d'
-    box = [54., 18., 73., 135.]  # 经纬度范围 NSWE
+    p.delat = 1
+    p.delon = 1
+    # box = [54., 18., 73., 135.]  # 经纬度范围 NSWE
+    box = [34., 31., 90., 93.]  # 经纬度范围 NSWE
+    index = np.logical_and.reduce((latitude > box[1], latitude < box[0], longitude > box[2], longitude < box[3]))
+    latitude = latitude[index]
+    longitude = longitude[index]
+    value = value[index]
+    ptype = 'pcolormesh'
+    markersize = None
+    # p.easyplot(latitude, longitude, value, vmin=vmin, vmax=vmax,
+    #            ptype=ptype, markersize=markersize, marker=marker, box=box)
+
     p.easyplot(latitude, longitude, value, vmin=vmin, vmax=vmax,
-               ptype=ptype, markersize=markersize, marker=marker, box=box)
+               ptype='pcolormesh',  box=box)
     p.title = title
     p.colorbar_unit = unit
     p.savefig(out_file)
