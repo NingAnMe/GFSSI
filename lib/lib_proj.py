@@ -238,6 +238,143 @@ class ProjCore:
         return i.reshape(args_shape), j.reshape(args_shape)
 
 
+class ProjGLL:
+    """
+    等经纬度区域类
+    """
+
+    def __init__(self, nlat=90., slat=-90., wlon=-180., elon=180., res_lat=None, res_lon=None, row_max=None,
+                 col_max=None):
+        """
+        nlat, slat, wlon, elon: 北纬, 南纬, 西经, 东经
+        resLat: 纬度分辨率（度）
+        resLon: 经度分辨率（度）
+        """
+        self.nlat = float(nlat)  # 北纬
+        self.slat = float(slat)  # 南纬
+        self.wlon = float(wlon)  # 西经
+        self.elon = float(elon)  # 东经
+
+        if res_lat is None and row_max is None:
+            raise ValueError("resLat and rowMax must set one")
+
+        if res_lon is None and col_max is None:
+            raise ValueError("resLon and colMax must set one")
+
+        if res_lat is None:
+            self.rowMax = int(row_max)
+            self.resLat = (self.nlat - self.slat) / self.rowMax
+        else:
+            self.resLat = float(res_lat)
+            self.rowMax = int(
+                round((self.nlat - self.slat) / self.resLat))  # 最大行数
+
+        if res_lon is None:
+            self.colMax = int(col_max)
+            self.resLon = (self.elon - self.wlon) / self.colMax
+        else:
+            self.resLon = float(res_lon)
+            self.colMax = int(
+                round((self.elon - self.wlon) / self.resLon))  # 最大列数
+
+    def generate_lats_lons(self):
+        lats, lons = np.mgrid[
+            self.nlat - self.resLat / 2.: self.slat + self.resLat * 0.1:-self.resLat,
+            self.wlon + self.resLon / 2.: self.elon - self.resLon * 0.1: self.resLon]
+        return lats, lons
+
+    def lonslats2ij(self, lons, lats):
+        j = self.lons2j(lons)
+        i = self.lats2i(lats)
+        return i, j
+
+    def lons2j(self, lons):
+        """
+        lons: 输入经度
+        ret: 返回 输入经度在等经纬度网格上的列号，以左上角为起点0,0
+        """
+        if isinstance(lons, (list, tuple)):
+            lons = np.array(lons)
+        if isinstance(lons, np.ndarray):
+            idx = np.isclose(lons, 180.)
+            lons[idx] = -180.
+        return np.floor((lons - self.wlon) / self.resLon).astype(int)  # 列号
+
+    def lats2i(self, lats):
+        """
+        lats: 输入纬度
+        ret: 返回 输入纬度在等经纬度网格上的行号，以左上角为起点0,0
+        """
+        if isinstance(lats, (list, tuple)):
+            lats = np.array(lats)
+        return np.floor((self.nlat - lats) / self.resLat).astype(int)  # 行号
+
+
+def fill_2d(array2d, mask, use_from):
+    """
+    2维矩阵无效值补点
+    array2d  2维矩阵
+    mask     无效值掩模矩阵
+    useFrom  u/d/l/r, 用上/下/左/右的点来补点
+    """
+    assert len(array2d.shape) == 2, \
+        "array2d must be 2d array."
+    assert array2d.shape == mask.shape, \
+        "array2d and musk must have same shape."
+
+    condition = np.empty_like(mask)
+    # 用上方的有效点补点
+    if use_from == 'up' or use_from == 'u':
+        condition[1:, :] = mask[1:, :] * (~mask)[:-1, :]
+        condition[0, :] = False
+        index = np.where(condition)
+        array2d[index[0], index[1]] = array2d[index[0] - 1, index[1]]
+
+    # 用右方的有效点补点
+    elif use_from == 'right' or use_from == 'r':
+        condition[:, :-1] = mask[:, :-1] * (~mask)[:, 1:]
+        condition[:, -1] = False
+        index = np.where(condition)
+        array2d[index[0], index[1]] = array2d[index[0], index[1] + 1]
+
+    # 用下方的有效点补点
+    elif use_from == 'down' or use_from == 'd':
+        condition[:-1, :] = mask[:-1, :] * (~mask)[1:, :]
+        condition[-1, :] = False
+        index = np.where(condition)
+        array2d[index[0], index[1]] = array2d[index[0] + 1, index[1]]
+
+    # 用左方的有效点补点
+    elif use_from == 'left' or use_from == 'l':
+        condition[:, 1:] = mask[:, 1:] * (~mask)[:, :-1]
+        condition[:, 0] = False
+        index = np.where(condition)
+        array2d[index[0], index[1]] = array2d[index[0], index[1] - 1]
+
+
+def fill_points_2d(array2d, invalid_value=0):
+    """
+    2维矩阵无效值补点
+    array2d  2维矩阵
+    invalidValue  无效值
+    """
+    # 用右方的有效点补点
+    mask = np.isclose(array2d, invalid_value)
+    fill_2d(array2d, mask, 'r')
+
+    # 用左方的有效点补点
+    mask = np.isclose(array2d, invalid_value)
+    fill_2d(array2d, mask, 'l')
+
+    # 用上方的有效点补点
+    mask = np.isclose(array2d, invalid_value)
+    fill_2d(array2d, mask, 'u')
+
+    # 用下方的有效点补点
+    mask = np.isclose(array2d, invalid_value)
+    fill_2d(array2d, mask, 'd')
+
+
 if __name__ == '__main__':
     ps = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
     r = meter2degree(4000)
