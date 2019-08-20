@@ -19,6 +19,8 @@ def plot_image_disk(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
     fig.figimage(data, vmin=vmin, vmax=vmax, cmap='jet', alpha=0.7)
     fig.patch.set_alpha(0)
     plt.savefig(out_file, transparent=True)
+    fig.clear()
+    plt.close()
     print("监测到数据的最小值和最大值：{}， {}".format(np.nanmin(data), np.nanmax(data)))
     print('>>> :{}'.format(out_file))
 
@@ -48,11 +50,13 @@ def plot_image_map(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
     fig.figimage(image_data, vmin=vmin, vmax=vmax, cmap='jet')
     fig.patch.set_alpha(0)
     plt.savefig(out_file, transparent=True)
+    fig.clear()
+    plt.close()
     print("监测到数据的最小值和最大值：{}， {}".format(np.nanmin(data), np.nanmax(data)))
     print('>>> :{}'.format(out_file))
 
 
-def plot_map_full(in_file, resultid='', planid='', datatime='', res='4km', vmin=0, vmax=1000):
+def plot_map_full(in_file, res='4km', vmin=0, vmax=1000, resultid='', planid='', datatime=''):
     print('plot_map_orbit <<<:{}'.format(in_file))
     if not os.path.isfile(in_file):
         print('数据不存在:{}'.format(in_file))
@@ -79,7 +83,7 @@ def plot_map_full(in_file, resultid='', planid='', datatime='', res='4km', vmin=
 
         if data is not None:
             # 快视图绘制
-            out_filename1 = in_filename + '_{}.jpg'.format(dataname)
+            out_filename1 = in_filename + '_{}.png'.format(dataname)
             out_file1 = os.path.join(dir_, out_filename1)
 
             try:

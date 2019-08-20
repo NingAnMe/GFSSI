@@ -13,7 +13,6 @@ from lib.lib_proj import ProjCore, meter2degree
 import os
 import matplotlib
 matplotlib.use('agg')
-import gdal
 import numpy as np
 
 from DV import dv_map

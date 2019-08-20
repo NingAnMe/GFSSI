@@ -34,3 +34,5 @@ def make_basemap_fy4a(res='4km', out_file=None):
     plt.margins(0, 0)
     fig.patch.set_alpha(0)
     plt.savefig(out_file, transparent=True)
+    fig.clear()
+    plt.close()

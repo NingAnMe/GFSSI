@@ -6,22 +6,75 @@
 """
 from datetime import datetime
 import os
+import re
 import numpy as np
+import gdal
 import h5py
-from PB.DRC.GEO import get_fy4_lon_lat_lut
 from lib.lib_constant import PROJ_LUT_4KM, FY4_LON_LAT_LUT
+
+
+class FY3DSSIENVI:
+    def __init__(self, in_file):
+        self.in_file = in_file
+
+        dataset = gdal.Open(self.in_file)
+        self.XSize = dataset.RasterXSize
+        self.YSize = dataset.RasterYSize
+        self.GeoTransform = dataset.GetGeoTransform()
+        self.ProjectionInfo = dataset.GetProjection()
+
+    def get_ssi(self):
+        dataset = gdal.Open(self.in_file)
+        band = dataset.GetRasterBand(1)
+        data = band.ReadAsArray(0, 0, self.XSize, self.YSize).astype(np.float32)
+        return data
+
+    def get_lon_lat(self):
+        gtf = self.GeoTransform
+        x_range = range(0, self.XSize)
+        y_range = range(0, self.YSize)
+        x, y = np.meshgrid(x_range, y_range)
+        lon = gtf[0] + x * gtf[1] + y * gtf[2]
+        lat = gtf[3] + x * gtf[4] + y * gtf[5]
+        return lon, lat
 
 
 class FY4ASSI(object):
     def __init__(self, in_file):
         self.in_file = in_file
-        self.lon_lat_lut = get_fy4_lon_lat_lut()
+        self.lon_lat_lut = FY4_LON_LAT_LUT
 
     @staticmethod
     def get_date_time_orbit(in_file):
         filename = os.path.basename(in_file)
-        ymdhms = filename.split('_')[-4]
-        return datetime.strptime(ymdhms, '%Y%m%d%H%M%S')
+        p = r'.*NOM_(\d{14})_\d{14}_'
+        r = re.match(p, filename)
+        date_time = r.groups()[0]
+        return datetime.strptime(date_time, '%Y%m%d%H%M%S')
+
+    @staticmethod
+    def get_date_time_daily(in_file):
+        filename = os.path.basename(in_file)
+        p = r'.*NOM_(\d{8})_'
+        r = re.match(p, filename)
+        date_time = r.groups()[0]
+        return datetime.strptime(date_time, '%Y%m%d')
+
+    @staticmethod
+    def get_date_time_monthly(in_file):
+        filename = os.path.basename(in_file)
+        p = r'.*NOM_(\d{6})_'
+        r = re.match(p, filename)
+        date_time = r.groups()[0]
+        return datetime.strptime(date_time, '%Y%m')
+
+    @staticmethod
+    def get_date_time_yearly(in_file):
+        filename = os.path.basename(in_file)
+        p = r'.*NOM_(\d{4})_'
+        r = re.match(p, filename)
+        date_time = r.groups()[0]
+        return datetime.strptime(date_time, '%Y')
 
     def get_itol(self):
         """
@@ -128,8 +181,15 @@ class FY4ASSI(object):
             dataset = hdf.get('Longitude')[:]
             dataset[dataset == full_value] = np.nan
             dataset += offset  # 由于经纬度查找表的问题，这里有一个偏移量
-            idx_finite = np.isfinite(dataset)
-            dataset[idx_finite][dataset > 180] -= 360  # 加上偏移量以后，原来的值会超过180，需要恢复其正常位置
+            dataset[dataset > 180] -= 360  # 加上偏移量以后，原来的值会超过180，需要恢复其正常位置
+            return dataset
+
+    @staticmethod
+    def get_sz(geo_file):
+        full_value = 65535
+        with h5py.File(geo_file, 'r') as hdf:
+            dataset = hdf.get('NOMSunZenith')[:]
+            dataset[dataset == full_value] = np.nan
             return dataset
 
     def get_latitude_area(self):

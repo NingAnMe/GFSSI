@@ -12,6 +12,7 @@ import numpy as np
 
 from lib.lib_read_ssi import FY4ASSI
 from lib.lib_constant import FULL_VALUE
+from lib.lib_database import add_result_data
 
 
 def add_data(data, data_tem):
@@ -68,7 +69,7 @@ def _write_out_file(out_file, result):
         os.remove(out_file)
 
 
-def combine_full(in_files, out_file, day=False):
+def combine_full(in_files, out_file, day=False, resultid='', planid='', datatime=''):
     """
     :param in_files:
     :param out_file:
@@ -125,6 +126,9 @@ def combine_full(in_files, out_file, day=False):
 
     try:
         _write_out_file(out_file, data_all)
+        if os.path.isfile(out_file):
+            resultid_tem = resultid
+            add_result_data(resultid=resultid_tem, planid=planid, address=out_file, datatime=datatime)
     except Exception as why:
         print(why)
         print('输出结果文件错误')
