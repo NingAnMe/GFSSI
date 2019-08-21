@@ -59,19 +59,21 @@ def get_files_by_date(dir_path, time_start, time_end, ext=None, pattern=None):
     return files_found
 
 
-def product_4km_disk_full_image_orbit(date_start=None, date_end=None, thread=2):
+def product_disk_full_image_orbit(date_start=None, date_end=None, thread=2, resolution_type=None):
     """
     绘制原始4KM数据的图像
     3个产品，每个产品2张图像，共6张图像
     :param date_start: 开始日期 datetime
     :param date_end: 结束日期 datetime
     :param thread:
+    :param resolution_type:
     :return:
     """
-    in_dir = os.path.join(data_root_dir, 'SSIData/FY4A/SSI_4KM/Full/Orbit')
+    in_dir = os.path.join(data_root_dir, 'SSIData/FY4A/SSI_{}/Full/Orbit'.format(resolution_type))
     date_end_str = date_end.strftime('%Y%m%d%H%M%S')
-    pattern = r'.*FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_(\d{14})_\d{14}_4000M_V0001.NC'
-    resultid = 'FY4A_AGRI_L2_SSI_Full_{proj_type}_4KM_15Min_{data_id}'
+    pattern = r'.*FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_(\d{14})_\d{14}' + \
+              '_{resolution_type}_V0001.NC'.format(resolution_type=resolution_type)
+    resultid = 'FY4A_AGRI_L2_SSI_15Min_IMG'
     planid = 1
     vmin = 0
     vmax = 1000
@@ -90,7 +92,7 @@ def product_4km_disk_full_image_orbit(date_start=None, date_end=None, thread=2):
     p = Pool(thread)
     for in_file in in_files[:]:
         datatime = FY4ASSI.get_date_time_orbit(in_file)
-        p.apply_async(plot_map_full, args=(in_file, '4km', vmin, vmax, resultid, planid, datatime))
+        p.apply_async(plot_map_full, args=(in_file, resolution_type, vmin, vmax, resultid, planid, datatime))
     p.close()
     p.join()
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
@@ -186,6 +188,93 @@ def product_4km_disk_full_data_and_image(date_start=None, date_end=None, frequen
     for in_files, out_file in in_files_all[:]:
         datatime = get_date_time(out_file)
         p.apply_async(plot_map_full, args=(out_file, '4km', vmin, vmax, resultid_image, planid, datatime))
+    p.close()
+    p.join()
+    print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
+
+
+def product_4km_disk_china_data(date_start=None, date_end=None, thread=3, frequency='Orbit'):
+    """
+    生成原始数据的中国区时次数据
+    3个产品，每个产品1张图像，共3张图像
+    :param date_start: 开始日期 datetime
+    :param date_end: 结束日期 datetime
+    :param thread:
+    :param frequency:
+    :return:
+    """
+    left_up_lon = 70
+    left_up_lat = 50
+    right_down_lon = 140
+    right_down_lat = 0
+
+    in_dir = os.path.join(data_root_dir, 'SSIData/FY4A/SSI_4KM/Full/{}'.format(frequency))
+    out_dir = os.path.join(data_root_dir, 'SSIData/FY4A/SSI_4KM/China/{}'.format(frequency))
+
+    if frequency == 'Orbit':
+        pattern = r'.*FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_(\d{14})_\d{14}_4000M_V0001'
+        strf_name = '%Y%m%d%H%M%S'
+        date_end_str = date_end.strftime(strf_name)
+        strf_dir = '%Y%m%d'
+        date_relativedelta = relativedelta(days=1)
+        resultid_data = 'FY4A_AGRI_L2_SSI_China_DISK_4KM_15Min'
+        planid = 1
+        get_date_time = FY4ASSI.get_date_time_orbit
+    elif frequency == 'Daily':
+        pattern = r'.*FY4A-_AGRI--_N_DISK_1047E_L3-_SSI-_MULT_NOM_(\d{8})_4000M_V0001'
+        strf_name = '%Y%m%d'
+        date_end_str = date_end.strftime(strf_name)
+        strf_dir = '%Y%m'
+        date_relativedelta = relativedelta(months=1)
+        resultid_data = 'FY4A_AGRI_L3_SSI_China_DISK_4KM_1Day'
+        planid = 1
+        get_date_time = FY4ASSI.get_date_time_daily
+    elif frequency == 'Monthly':
+        pattern = r'.*FY4A-_AGRI--_N_DISK_1047E_L3-_SSI-_MULT_NOM_(\d{6})_4000M_V0001'
+        strf_name = '%Y%m'
+        date_end_str = date_end.strftime(strf_name)
+        strf_dir = '%Y'
+        date_relativedelta = relativedelta(years=1)
+        resultid_data = 'FY4A_AGRI_L3_SSI_China_DISK_4KM_1Month'
+        planid = 1
+        get_date_time = FY4ASSI.get_date_time_monthly
+    elif frequency == 'Yearly':
+        pattern = r'.*FY4A-_AGRI--_N_DISK_1047E_L3-_SSI-_MULT_NOM_(\d{4})_4000M_V0001'
+        strf_name = '%Y'
+        date_end_str = date_end.strftime(strf_name)
+        strf_dir = None
+        date_relativedelta = None
+        resultid_data = 'FY4A_AGRI_L3_SSI_China_DISK_4KM_1Year'
+        planid = 1
+        get_date_time = FY4ASSI.get_date_time_yearly
+    else:
+        raise ValueError('不支持的类型：{}'.format(frequency))
+
+    in_files = []
+    date_start_tem = date_start
+    while date_start_tem <= date_end:
+        if strf_dir is not None:
+            date_dir = date_start_tem.strftime(strf_dir)
+        else:
+            date_dir = ''
+        in_dir_tem = os.path.join(in_dir, date_dir)
+        date_start_str = date_start_tem.strftime(strf_name)
+        in_files_tem = get_files_by_date(in_dir_tem, date_start_str, date_end_str, ext='.NC', pattern=pattern)
+        in_files.extend(in_files_tem)
+        if date_relativedelta is not None:
+            date_start_tem += date_relativedelta
+        else:
+            break
+    in_files_length = len(in_files)
+    print('找到的文件总数:{}'.format(in_files_length))
+
+    print('开始生成中国区数据')
+    p = Pool(thread)
+    for in_file in in_files[:]:
+        out_file = in_file.replace(in_dir, out_dir)
+        datatime = get_date_time(out_file)
+        p.apply_async(area, args=(in_file, out_file, '4km', left_up_lon, left_up_lat, right_down_lon, right_down_lat,
+                                  resultid_data, planid, datatime))
     p.close()
     p.join()
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
@@ -312,18 +401,24 @@ def product_4km_disk_china_data_and_image(date_start=None, date_end=None, thread
 
 
 if __name__ == '__main__':
+
     # 测试生产4KM时次的绘图
     # start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
 
-    start = datetime.strptime('20190702000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190702235959', '%Y%m%d%H%M%S')
+    start = datetime.strptime('20190101000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190131235959', '%Y%m%d%H%M%S')
 
-    product_4km_disk_full_image_orbit(start, end)  # 圆盘轨道
-    # product_4km_disk_full_data_and_image(start, end, frequency='Daily')  # 圆盘日
+    product_disk_full_image_orbit(start, end)  # 圆盘轨道
+    # product_4km_disk_full_data_and_image(start, end, frequency='Daily', ref='')  # 圆盘日
     # product_4km_disk_full_data_and_image(start, end, frequency='Monthly')  # 圆盘月
     # product_4km_disk_full_data_and_image(start, end, frequency='Yearly')  # 圆盘年
-    #
+
+    product_4km_disk_china_data(start, end, frequency='Orbit')  # 中国区轨道
+    # product_4km_disk_china_data(start, end, frequency='Daily')  # 中国区日
+    # product_4km_disk_china_data(start, end, frequency='Monthly')  # 中国区月
+    # product_4km_disk_china_data(start, end, frequency='Yearly')  # 中国区年
+
     # product_4km_disk_china_data_and_image(start, end, frequency='Orbit')  # 中国区轨道
     # product_4km_disk_china_data_and_image(start, end, frequency='Daily')  # 中国区日
     # product_4km_disk_china_data_and_image(start, end, frequency='Monthly')  # 中国区月

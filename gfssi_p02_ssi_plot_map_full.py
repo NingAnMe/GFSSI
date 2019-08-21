@@ -56,7 +56,7 @@ def plot_image_map(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
     print('>>> :{}'.format(out_file))
 
 
-def plot_map_full(in_file, res='4km', vmin=0, vmax=1000, resultid='', planid='', datatime=''):
+def plot_map_full(in_file, resolution_type=None, vmin=0, vmax=1000, resultid='', planid='', datatime=''):
     print('plot_map_orbit <<<:{}'.format(in_file))
     if not os.path.isfile(in_file):
         print('数据不存在:{}'.format(in_file))
@@ -73,26 +73,25 @@ def plot_map_full(in_file, res='4km', vmin=0, vmax=1000, resultid='', planid='',
         'Gt': datas.get_gt,
         'DNI': datas.get_dni,
     }
-    for dataname in datas_.keys():
+    for element in datas_.keys():
         try:
-            data = datas_[dataname]()
+            data = datas_[element]()
         except Exception as why:
             print(why)
-            print('读取数据错误:{}'.format(dataname))
+            print('读取数据错误:{}'.format(element))
             data = None
 
         if data is not None:
             # 快视图绘制
-            out_filename1 = in_filename + '_{}.png'.format(dataname)
+            out_filename1 = in_filename + '_Full_DISK_{}.png'.format(element)
             out_file1 = os.path.join(dir_, out_filename1)
 
             try:
                 if not os.path.isfile(out_file1):
-                    plot_image_disk(data, out_file=out_file1, res=res, vmin=vmin, vmax=vmax)
+                    plot_image_disk(data, out_file=out_file1, res=resolution_type, vmin=vmin, vmax=vmax)
                     # 入库
                     if os.path.isfile(out_file1):
-                        resultid_tem = resultid.format(proj_type='DISK', data_id=dataname.upper())
-                        add_result_data(resultid=resultid_tem, planid=planid, address=out_file1, datatime=datatime)
+                        add_result_data(resultid=resultid, planid=planid, address=out_file1, datatime=datatime)
                 else:
                     print('文件已经存在，跳过:{}'.format(out_file1))
             except Exception as why:
@@ -100,15 +99,14 @@ def plot_map_full(in_file, res='4km', vmin=0, vmax=1000, resultid='', planid='',
                 print('绘制图像错误:{}'.format(out_file1))
 
             # 等经纬图绘制
-            out_filename2 = in_filename + '_latlon_{}.png'.format(dataname)
+            out_filename2 = in_filename + '_Full_LATLON_{}.png'.format(element)
             out_file2 = os.path.join(dir_, out_filename2)
             try:
                 if not os.path.isfile(out_file2):
-                    plot_image_map(data, out_file=out_file2, res=res, vmin=vmin, vmax=vmax)
+                    plot_image_map(data, out_file=out_file2, res=resolution_type, vmin=vmin, vmax=vmax)
                     # 入库
                     if os.path.isfile(out_file2):
-                        resultid_tem = resultid.format(proj_type='LATLON', data_id=dataname.upper())
-                        add_result_data(resultid=resultid_tem, planid=planid, address=out_file2, datatime=datatime)
+                        add_result_data(resultid=resultid, planid=planid, address=out_file2, datatime=datatime)
                 else:
                     print('文件已经存在，跳过:{}'.format(out_file2))
             except Exception as why:
