@@ -30,24 +30,34 @@ class ResultData(Base):
     datasize = Column(String)
     linkeddata = Column(String)
     remarks = Column(String)
+    element = Column(String)
+    resolution_type = Column(String)
+    area_type = Column(String)
 
     def __repr__(self):
         return """ResultData(
         planid = {}
         resultid = {}
+        resolution_type = {}
+        area_type = {}
+        element = {}
         address = {}
         datatime = {}
         createtime = {}
-        )""".format(self.planid, self.resultid, self.address, self.datatime, self.createtime)
+        )""".format(self.planid, self.resultid, self.resolution_type, self.area_type, self.element,
+                    self.address, self.datatime, self.createtime)
 
 
-def add_result_data(resultid, planid, address, datatime):
+def add_result_data(resultid, planid, resolution_type, area_type, element, address, datatime):
     result_data = ResultData()
     result_data.resultid = resultid
     result_data.planid = planid
     result_data.address = address
     result_data.datatime = datatime
     result_data.createtime = datetime.now()
+    result_data.resolution_type = resolution_type
+    result_data.area_type = area_type
+    result_data.element = element
     session = Session()
     session.add(result_data)
     session.commit()

@@ -71,8 +71,9 @@ def product_disk_full_image_orbit(date_start=None, date_end=None, thread=2, reso
     """
     in_dir = os.path.join(data_root_dir, 'SSIData/FY4A/SSI_{}/Full/Orbit'.format(resolution_type))
     date_end_str = date_end.strftime('%Y%m%d%H%M%S')
-    pattern = r'.*FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_(\d{14})_\d{14}' + \
-              '_{resolution_type}_V0001.NC'.format(resolution_type=resolution_type)
+    # pattern = r'.*FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_(\d{14})_\d{14}' + \
+    #           '_{resolution_type}_V0001.NC'.format(resolution_type=resolution_type)
+    pattern = r'.*FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_(\d{14})_\d{14}_4000M_V0001.NC'
     resultid = 'FY4A_AGRI_L2_SSI_15Min_IMG'
     planid = 1
     vmin = 0
@@ -92,7 +93,7 @@ def product_disk_full_image_orbit(date_start=None, date_end=None, thread=2, reso
     p = Pool(thread)
     for in_file in in_files[:]:
         datatime = FY4ASSI.get_date_time_orbit(in_file)
-        p.apply_async(plot_map_full, args=(in_file, resolution_type, vmin, vmax, resultid, planid, datatime))
+        p.apply_async(plot_map_full, args=(in_file, vmin, vmax, resultid, planid, datatime, resolution_type,))
     p.close()
     p.join()
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
@@ -403,18 +404,18 @@ def product_4km_disk_china_data_and_image(date_start=None, date_end=None, thread
 if __name__ == '__main__':
 
     # 测试生产4KM时次的绘图
-    # start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
-    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
 
-    start = datetime.strptime('20190101000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190131235959', '%Y%m%d%H%M%S')
+    # start = datetime.strptime('20190101000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190131235959', '%Y%m%d%H%M%S')
 
-    product_disk_full_image_orbit(start, end)  # 圆盘轨道
+    product_disk_full_image_orbit(start, end, resolution_type='4KM')  # 圆盘轨道
     # product_4km_disk_full_data_and_image(start, end, frequency='Daily', ref='')  # 圆盘日
     # product_4km_disk_full_data_and_image(start, end, frequency='Monthly')  # 圆盘月
     # product_4km_disk_full_data_and_image(start, end, frequency='Yearly')  # 圆盘年
 
-    product_4km_disk_china_data(start, end, frequency='Orbit')  # 中国区轨道
+    # product_4km_disk_china_data(start, end, frequency='Orbit')  # 中国区轨道
     # product_4km_disk_china_data(start, end, frequency='Daily')  # 中国区日
     # product_4km_disk_china_data(start, end, frequency='Monthly')  # 中国区月
     # product_4km_disk_china_data(start, end, frequency='Yearly')  # 中国区年
