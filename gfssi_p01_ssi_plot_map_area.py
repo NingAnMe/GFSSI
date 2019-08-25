@@ -35,7 +35,7 @@ def screenshot(in_file, out_file, row_min=None, row_max=None, col_min=None, col_
 
 
 def plot_map_area(in_file, out_file, res='4km', left_up_lon=None, left_up_lat=None, right_down_lon=None,
-                  right_down_lat=None, resultid='', planid='', datatime=''):
+                  right_down_lat=None):
     print('plot_map_orbit <<<:{}'.format(in_file))
     if not os.path.isfile(in_file):
         print('数据不存在:{}'.format(in_file))
@@ -51,10 +51,11 @@ def plot_map_area(in_file, out_file, res='4km', left_up_lon=None, left_up_lat=No
                                                                 left_up_lat=left_up_lat, right_down_lon=right_down_lon,
                                                                 right_down_lat=right_down_lat)
         screenshot(in_file, out_file, row_min=row_min, row_max=row_max, col_min=col_min, col_max=col_max)
-        if os.path.isfile(out_file):
-            dataname = out_file.split('_')[-1][:-4]
-            resultid_tem = resultid.format(data_id=dataname.upper())
-            add_result_data(resultid=resultid_tem, planid=planid, address=out_file, datatime=datatime)
+        # 临时文件不入库
+        # if os.path.isfile(out_file):
+        #     dataname = out_file.split('_')[-1][:-4]
+        #     resultid_tem = resultid.format(data_id=dataname.upper())
+        #     add_result_data(resultid=resultid_tem, planid=planid, address=out_file, datatime=datatime)
     except Exception as why:
         print(why)
         print('绘制图像错误:{}'.format(out_file))

@@ -48,7 +48,8 @@ class ResultData(Base):
                     self.address, self.datatime, self.createtime)
 
 
-def add_result_data(resultid, planid, resolution_type, area_type, element, address, datatime):
+def add_result_data(resultid=None, planid=None, resolution_type=None, area_type=None, element=None, address=None,
+                    datatime=None):
     result_data = ResultData()
     result_data.resultid = resultid
     result_data.planid = planid
@@ -62,3 +63,28 @@ def add_result_data(resultid, planid, resolution_type, area_type, element, addre
     session.add(result_data)
     session.commit()
     print(result_data)
+
+
+def find_result_data(resultid=None, datatime_start=None, datatime_end=None, resolution_type=None):
+    session = Session()
+    results = session.query(ResultData).filter(ResultData.resultid == resultid,
+                                               ResultData.resolution_type == resolution_type,
+                                               ResultData.datatime >= datatime_start,
+                                               ResultData.datatime <= datatime_end)
+    print(resultid, datatime_start, datatime_end, resolution_type)
+    print('共找到结果:{}'.format(results.count()))
+    return results
+
+
+def find_result_image(resultid=None, datatime_start=None, datatime_end=None, element=None, resolution_type=None,
+                      area_type=None):
+    session = Session()
+    results = session.query(ResultData).filter(ResultData.resultid == resultid,
+                                               ResultData.resolution_type == resolution_type,
+                                               ResultData.element == element,
+                                               ResultData == area_type,
+                                               ResultData.datatime >= datatime_start,
+                                               ResultData.datatime <= datatime_end)
+    print(resultid, datatime_start, datatime_end, resolution_type, area_type, element)
+    print('共找到结果:{}'.format(results.count()))
+    return results

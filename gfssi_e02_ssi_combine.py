@@ -69,11 +69,15 @@ def _write_out_file(out_file, result):
         os.remove(out_file)
 
 
-def combine_full(in_files, out_file, day=False, resultid='', planid='', datatime=''):
+def combine_full(in_files, out_file, day=False, resultid='', planid='', datatime='', resolution_type=None):
     """
     :param in_files:
     :param out_file:
     :param day: 是否日合成，因为日合成的时候，要改变数据的单位为KW/m2
+    :param resultid:
+    :param planid:
+    :param datatime:
+    :param resolution_type:
     :return:
     """
     out_path = os.path.dirname(out_file)
@@ -124,11 +128,13 @@ def combine_full(in_files, out_file, day=False, resultid='', planid='', datatime
         print(why)
         print('转换单位出错')
 
+    area_type = 'Full_DISK'
     try:
         _write_out_file(out_file, data_all)
         if os.path.isfile(out_file):
             resultid_tem = resultid
-            add_result_data(resultid=resultid_tem, planid=planid, address=out_file, datatime=datatime)
+            add_result_data(resultid=resultid_tem, planid=planid, address=out_file, datatime=datatime,
+                            resolution_type=resolution_type, area_type=area_type, element=None)
     except Exception as why:
         print(why)
         print('输出结果文件错误')
