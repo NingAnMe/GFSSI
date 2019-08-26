@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from lib.lib_read_ssi import FY4ASSI
 from lib.lib_database import add_result_data
+from lib.lib_proj import fill_points_2d
 
 
 def plot_image_disk(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
@@ -28,7 +29,7 @@ def plot_image_disk(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
     print('>>> :{}'.format(out_file))
 
 
-def plot_image_map(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
+def plot_image_map(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000, interp=3):
     if '4km' in res.lower():
         projlut = FY4ASSI.get_lonlat_projlut()
     else:
@@ -50,6 +51,10 @@ def plot_image_map(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
 
     image_data[proj_i, proj_j] = data[pre_i, pre_j]
     fig = plt.figure(figsize=(col/100, row/100), dpi=100)
+
+    for i in range(interp):
+        fill_points_2d(image_data, np.nan)
+
     fig.figimage(image_data, vmin=vmin, vmax=vmax, cmap='jet')
     fig.patch.set_alpha(0)
     plt.savefig(out_file, transparent=True)

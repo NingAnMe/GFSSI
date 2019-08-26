@@ -13,9 +13,10 @@ aid_path = get_aid_path()
 FULL_VALUE = -999
 
 # 辅助文件
-PROJ_LUT_4KM = os.path.join(aid_path, 'lonlat_projlut_4km.hdf')
 BASEMAP_4KM = os.path.join(aid_path, 'ditu_4km.png')
-FY4_LON_LAT_LUT = os.path.join(aid_path, 'FY4X_LON_LAT_LUT.H5')
+FY4_LON_LAT_LUT = os.path.join(aid_path, 'FY4X_LON_LAT_LUT.H5')  # FY4原始数据的经纬度查找表
+PROJ_LUT_4KM = os.path.join(aid_path, 'lonlat_projlut_4km.hdf')  # FY4投影的经纬度查找表
+KDTREE_LUT_4KM = os.path.join(aid_path, 'kdtree_lut_4km.hdf')  # FY4原始数据经纬度KDtree查找表
 EP_TXT = os.path.join(aid_path, 'ep.txt')
 ER_TXT = os.path.join(aid_path, 'er.txt')
 

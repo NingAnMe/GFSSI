@@ -67,3 +67,4 @@ def make_disk_projlut(res='4km', out_file=None):
     result['row_col'] = np.array([proj.row, proj.col], dtype=np.int32)
     print(result['row_col'])
     _write_out_file(out_file, result)
+    print('生成FY4投影之后的查找表:{}'.format(out_file))

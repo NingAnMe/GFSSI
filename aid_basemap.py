@@ -36,3 +36,4 @@ def make_basemap_fy4a(res='4km', out_file=None):
     plt.savefig(out_file, transparent=True)
     fig.clear()
     plt.close()
+    print('生成FY4底图:{}'.format(out_file))

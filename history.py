@@ -12,6 +12,7 @@ import re
 import os
 import sys
 from multiprocessing import Pool
+import numpy as np
 
 from gfssi_p02_ssi_plot_map_full import plot_map_full
 from gfssi_p01_ssi_plot_map_area import plot_map_area
@@ -20,6 +21,8 @@ from gfssi_e03_ssi_area import area
 
 from lib.lib_read_ssi import FY4ASSI
 from lib.lib_database import find_result_data, Session, ResultData
+from lib.lib_get_index_by_lonlat import get_point_index
+from lib.lib_constant import KDTREE_LUT_4KM, FULL_VALUE
 
 # 获取程序所在目录位置
 g_path, _ = os.path.split(os.path.realpath(__file__))
@@ -301,7 +304,128 @@ def product_fy4a_disk_area_data(date_start=None, date_end=None, thread=3, left_u
     p.close()
     p.join()
 
-    return out_files
+    if len(out_files) > 0:
+        return out_files
+    else:
+        return
+
+
+def product_fy4a_disk_point_data(date_start=None, date_end=None, thread=3, lon=None, lat=None,
+                                 resolution_type=None, resultid=None, element=None):
+    lon = float(lon)
+    lat = float(lat)
+    date_s = datetime.strptime(date_start, '%Y%m%d%H%M%S')
+    date_e = datetime.strptime(date_end, '%Y%m%d%H%M%S')
+    out_dir = os.path.join(data_root_dir, 'TmpData')
+    outname = 'FY4A-_AGRI--_{lon:07.3f}N_DISK_{lat:07.3f}E_L2-_SSI-_MULT_NOM_' \
+              '{date_start}_{date_end}_{resolution_type}_V0001.TXT'
+
+    if 'Orbit' in resultid:
+        get_datetime = FY4ASSI.get_date_time_orbit
+    elif 'Daily' in resultid:
+        get_datetime = FY4ASSI.get_date_time_daily
+    elif 'Monthly' in resultid:
+        get_datetime = FY4ASSI.get_date_time_monthly
+    elif 'Yearly' in resultid:
+        get_datetime = FY4ASSI.get_date_time_yearly
+    else:
+        return {}
+
+    index_lut_file = KDTREE_LUT_4KM
+    pre_dist = 0.08
+    index = get_point_index(lon, lat, index_lut_file, pre_dist)
+    print(index)
+
+    results = find_result_data(resultid=resultid, datatime_start=date_s, datatime_end=date_e,
+                               resolution_type=resolution_type)
+    full_files = [row.address for row in results]
+    in_files_length = len(full_files)
+    print('找到的文件总数:{}'.format(in_files_length))
+
+    full_files.sort()
+
+    datas = []
+    header = None
+    dates = []
+    values = []
+    for full_file in full_files:
+        datas_tmp = {}
+        if not os.path.isfile(full_file):
+            print('文件不存在: {}'.format(full_file))
+            continue
+
+        loader = FY4ASSI(full_file)
+        data_geter = {
+            'Itol': loader.get_ssi,
+            'Ib': loader.get_ib,
+            'Id': loader.get_id,
+            'G0': loader.get_g0,
+            'Gt': loader.get_gt,
+            'DNI': loader.get_dni,
+        }
+        if element is not None:
+            elements = [element]
+        else:
+            elements = data_geter.keys()
+
+        for element_ in elements:
+            try:
+                data_tmp = data_geter[element_]()[index]
+            except Exception as why:
+                print(why)
+                print('读取数据错误:{}'.format(element_))
+                continue
+            if data_tmp is not None:
+                if np.isnan(data_tmp):
+                    datas_tmp[element_] = FULL_VALUE
+                else:
+                    datas_tmp[element_] = data_tmp.item()
+
+        date = get_datetime(full_file)
+        if 'Orbit' in resultid:
+            date += relativedelta(hours=8)
+        date = date.strftime('%Y%m%d%H%M%S')
+
+        if len(datas_tmp) == 1:
+            if header is None:
+                header = """Date\t{}
+""".format(element)
+            data_str = '{}\t{:0.4f}\n'.format(
+                date, datas_tmp[element]
+            )
+            dates.append(date)
+            values.append(datas_tmp[element])
+        elif len(datas_tmp) == 3:
+            if header is None:
+                header = """Date\tItol\tIb\tId
+"""
+            data_str = '{}\t{:0.4f}\t{:0.4f}\t{:0.4f}\n'.format(
+                date, datas_tmp['Itol'], datas_tmp['Ib'], datas_tmp['Id']
+            )
+        elif len(datas_tmp) == 6:
+            if header is None:
+                header = """Date\tItol\tIb\tId\tG0\tGt\tDNI
+"""
+            data_str = '{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(
+                date, datas_tmp['Itol'], datas_tmp['Ib'], datas_tmp['Id'],
+                datas_tmp['G0'], datas_tmp['Gt'], datas_tmp['DNI']
+            )
+        else:
+            continue
+        datas.append(data_str)
+
+    out_file = os.path.join(out_dir, outname.format(lon=lon, lat=lat, date_start=date_start,
+                                                    date_end=date_end, resolution_type=resolution_type))
+    if len(datas) > 0:
+        if element is None:
+            with open(out_file, 'w') as fp:
+                fp.write(header)
+                fp.writelines(datas)
+            return out_file
+        else:
+            return {'date': dates, 'value': values}
+    else:
+        return
 
 
 def product_4km_disk_area_image(date_start=None, date_end=None, thread=3, frequency=None, resolution_type=None):

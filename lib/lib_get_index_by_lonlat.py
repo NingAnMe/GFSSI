@@ -4,28 +4,37 @@
 @Time    : 2019/8/12
 @Author  : AnNing
 """
-
+import os
 import pickle
 
 import numpy as np
-from pykdtree import kdtree
+from scipy.spatial import cKDTree
+from pykdtree.kdtree import KDTree
 
 
-def make_point_index_lut(lons_data, lats_data):
+def make_point_index_lut(lons_data, lats_data, out_file):
     condition = np.logical_and(np.isfinite(lons_data), np.isfinite(lats_data))
     idx = np.where(condition)
-    lon_new = lons_data[idx]
-    lat_new = lats_data[idx]
-    lons_lats = zip(lon_new.reshape(-1, ), lat_new.reshape(-1, ))
+    lon_new = lons_data[idx].reshape(-1, 1)
+    lat_new = lats_data[idx].reshape(-1, 1)
+    # lons_lats = zip(lon_new.reshape(-1, ), lat_new.reshape(-1, ))
+    lons_lats = np.concatenate((lon_new, lat_new), axis=1)
+    print(lons_lats.shape)
     data = lons_lats
     print('start cKDTree')
-    ck = kdtree.KDtree(data)
-    with open('index_lut.pickle') as fp:
+    ck = cKDTree(data)
+
+    out_dir = os.path.basename(out_file)
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+
+    with open(out_file, 'wb') as fp:
         pickle.dump((idx, ck), fp)
+        print('生成KDtree查找表:{}'.format(out_file))
 
 
 def get_point_index(lon, lat, index_lut_file, pre_dist=0.04):
-    with open(index_lut_file) as fp:
+    with open(index_lut_file, 'rb') as fp:
         idx, ck = pickle.load(fp)
     fix_point = (lon, lat)
     dist, index = ck.query([fix_point], 1)
