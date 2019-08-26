@@ -375,6 +375,29 @@ def fill_points_2d(array2d, invalid_value=0):
     fill_2d(array2d, mask, 'd')
 
 
+def fill_points_2d_nan(array2d):
+    """
+    2维矩阵无效值补点
+    array2d  2维矩阵
+    invalidValue  无效值
+    """
+    # 用右方的有效点补点
+    mask = np.isnan(array2d)
+    fill_2d(array2d, mask, 'r')
+
+    # 用左方的有效点补点
+    mask = np.isnan(array2d)
+    fill_2d(array2d, mask, 'l')
+
+    # 用上方的有效点补点
+    mask = np.isnan(array2d)
+    fill_2d(array2d, mask, 'u')
+
+    # 用下方的有效点补点
+    mask = np.isnan(array2d)
+    fill_2d(array2d, mask, 'd')
+
+
 if __name__ == '__main__':
     ps = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
     r = meter2degree(4000)

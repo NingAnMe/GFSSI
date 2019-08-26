@@ -559,27 +559,27 @@ if __name__ == '__main__':
     # start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
     #
-    start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190630125959', '%Y%m%d%H%M%S')
+    start = datetime.strptime('20190629000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190629235959', '%Y%m%d%H%M%S')
 
     # start = datetime.strptime('20190201000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190228235959', '%Y%m%d%H%M%S')
     #
-    # start = datetime.strptime('20190201000000', '%Y%m%d%H%M%S')
-    # end = datetime.strptime('20190228235959', '%Y%m%d%H%M%S')
+    # start = datetime.strptime('20190302000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190302235959', '%Y%m%d%H%M%S')
 
-    # product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KM')  # 圆盘轨道
-    # product_fy4a_disk_full_data_and_image(start, end, frequency='Daily', resolution_type='4KM')  # 圆盘日
+    product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KM')  # 圆盘轨道
+    product_fy4a_disk_full_data_and_image(start, end, frequency='Daily', resolution_type='4KM')  # 圆盘日
     # product_fy4a_disk_full_data_and_image(start, end, frequency='Monthly', resolution_type='4KM')  # 圆盘月
     # product_fy4a_disk_full_data_and_image(start, end, frequency='Yearly', resolution_type='4KM')  # 圆盘年
 
-    leftuplon = 70
-    leftuplat = 50
-    rightdownlon = 140
-    rightdownlat = 0
-    product_fy4a_disk_area_data(start, end, resolution_type='4KM', resultid='FY4A_AGRI_L2_SSI_Orbit',
-                                left_up_lon=leftuplon, left_up_lat=leftuplat,
-                                right_down_lon=rightdownlon, right_down_lat=rightdownlat)  # 区域轨道
+    # leftuplon = 70
+    # leftuplat = 50
+    # rightdownlon = 140
+    # rightdownlat = 0
+    # product_fy4a_disk_area_data(start, end, resolution_type='4KM', resultid='FY4A_AGRI_L2_SSI_Orbit',
+    #                             left_up_lon=leftuplon, left_up_lat=leftuplat,
+    #                             right_down_lon=rightdownlon, right_down_lat=rightdownlat)  # 区域轨道
     # product_fy4a_disk_area_data(start, end, frequency='Daily', resolution_type='4KM',
     #                             left_up_lon=leftuplon, left_up_lat=leftuplat,
     #                             right_down_lon=rightdownlon, right_down_lat=rightdownlat)  # 中国区日

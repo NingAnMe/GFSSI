@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from lib.lib_read_ssi import FY4ASSI
 from lib.lib_database import add_result_data
-from lib.lib_proj import fill_points_2d
+from lib.lib_proj import fill_points_2d_nan
 
 
 def plot_image_disk(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
@@ -53,7 +53,7 @@ def plot_image_map(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000, inte
     fig = plt.figure(figsize=(col/100, row/100), dpi=100)
 
     for i in range(interp):
-        fill_points_2d(image_data, np.nan)
+        fill_points_2d_nan(image_data)
 
     fig.figimage(image_data, vmin=vmin, vmax=vmax, cmap='jet')
     fig.patch.set_alpha(0)

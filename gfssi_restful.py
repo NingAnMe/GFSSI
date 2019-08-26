@@ -73,6 +73,7 @@ class DownloadData(Resource):
 class GetPointData(Resource):
     def post(self):
         requests = dict(request.form)
+        print(requests)
         lon = requests.get('lon')
         lat = requests.get('lat')
         date_start = requests.get('date_start')
