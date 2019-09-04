@@ -9,7 +9,7 @@ import pickle
 
 import numpy as np
 from scipy.spatial import cKDTree
-from pykdtree.kdtree import KDTree
+# from pykdtree.kdtree import KDTree  # 使用这个库没有办法保存kdtree
 
 
 def make_point_index_lut(lons_data, lats_data, out_file):
@@ -33,9 +33,7 @@ def make_point_index_lut(lons_data, lats_data, out_file):
         print('生成KDtree查找表:{}'.format(out_file))
 
 
-def get_point_index(lon, lat, index_lut_file, pre_dist=0.04):
-    with open(index_lut_file, 'rb') as fp:
-        idx, ck = pickle.load(fp)
+def get_point_index(lon, lat, idx, ck, pre_dist=0.04):
     fix_point = (lon, lat)
     dist, index = ck.query([fix_point], 1)
     dist = dist[0]
@@ -48,6 +46,7 @@ def get_point_index(lon, lat, index_lut_file, pre_dist=0.04):
         return fix_point_index
     else:
         print('***WARNING*** dist > {}, Dont extract.'.format(pre_dist))
+        return
 
 
 def get_area_index(lons=None, lats=None, left_up_lon=None, left_up_lat=None, right_down_lon=None, right_down_lat=None):

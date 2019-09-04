@@ -12,7 +12,7 @@ import numpy as np
 
 from lib.lib_read_ssi import FY4ASSI
 from lib.lib_constant import FULL_VALUE
-from lib.lib_database import add_result_data
+from lib.lib_database import add_result_data, exist_result_data
 
 
 def add_data(data, data_tem):
@@ -69,7 +69,7 @@ def _write_out_file(out_file, result):
         os.remove(out_file)
 
 
-def combine_full(in_files, out_file, day=False, resultid='', planid='', datatime='', resolution_type=None):
+def combine_full(in_files, out_file, day=False, resultid=None, planid=None, datatime=None, resolution_type=None):
     """
     :param in_files:
     :param out_file:
@@ -84,8 +84,15 @@ def combine_full(in_files, out_file, day=False, resultid='', planid='', datatime
     if not os.path.isdir(out_path):
         os.makedirs(out_path)
 
+    area_type = 'Full_DISK'
     if os.path.isfile(out_file):
         print('文件已经存在，跳过:{}'.format(out_file))
+        if not exist_result_data(resultid=resultid, datatime=datatime,
+                                 resolution_type=resolution_type,
+                                 area_type=area_type):
+            print('开始入库')
+            add_result_data(resultid=resultid, planid=planid, address=out_file, datatime=datatime,
+                            resolution_type=resolution_type, area_type=area_type)
         return
 
     data_all = {
@@ -128,13 +135,14 @@ def combine_full(in_files, out_file, day=False, resultid='', planid='', datatime
         print(why)
         print('转换单位出错')
 
-    area_type = 'Full_DISK'
     try:
         _write_out_file(out_file, data_all)
-        if os.path.isfile(out_file):
-            resultid_tem = resultid
-            add_result_data(resultid=resultid_tem, planid=planid, address=out_file, datatime=datatime,
-                            resolution_type=resolution_type, area_type=area_type, element=None)
+        if os.path.isfile(out_file) and not exist_result_data(resultid=resultid, datatime=datatime,
+                                                              resolution_type=resolution_type,
+                                                              area_type=area_type):
+            print('开始入库')
+            add_result_data(resultid=resultid, planid=planid, address=out_file, datatime=datatime,
+                            resolution_type=resolution_type, area_type=area_type)
     except Exception as why:
         print(why)
         print('输出结果文件错误')

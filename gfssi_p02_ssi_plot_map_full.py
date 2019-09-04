@@ -5,21 +5,28 @@
 @Author  : AnNing
 """
 import os
+import time
+
 import matplotlib.pyplot as plt
 import numpy as np
 from lib.lib_read_ssi import FY4ASSI
-from lib.lib_database import add_result_data
+from lib.lib_database import add_result_data, exist_result_data
 from lib.lib_proj import fill_points_2d_nan
+from lib.lib_constant import BASEMAP_FY4_4KM
 
 
 def plot_image_disk(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
     if '4km' in res.lower():
-        ditu = plt.imread('Aid/ditu_{}.png'.format('4km'))
+        ditu = plt.imread(BASEMAP_FY4_4KM)
+        row, col, _ = ditu.shape
+        fig = plt.figure(figsize=(col / 100, row / 100), dpi=100)
+        fig.figimage(ditu)
+    elif '1km' in res.lower():
+        row, col = data.shape
+        fig = plt.figure(figsize=(col / 100, row / 100), dpi=100)
     else:
-        raise ValueError('不支持此分辨率: {}'.format(res))
-    row, col, _ = ditu.shape
-    fig = plt.figure(figsize=(col / 100, row / 100), dpi=100)
-    fig.figimage(ditu)
+        raise ValueError('plot_image_disk 不支持此分辨率: {}'.format(res))
+
     fig.figimage(data, vmin=vmin, vmax=vmax, cmap='jet', alpha=0.7)
     fig.patch.set_alpha(0)
     plt.savefig(out_file, transparent=True)
@@ -31,9 +38,11 @@ def plot_image_disk(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
 
 def plot_image_map(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000, interp=3):
     if '4km' in res.lower():
-        projlut = FY4ASSI.get_lonlat_projlut()
+        projlut = FY4ASSI.get_lonlat_projlut_4km()
+    elif '1km' in res.lower():
+        projlut = FY4ASSI.get_lonlat_projlut_1km()
     else:
-        raise ValueError('不支持此分辨率: {}'.format(res))
+        raise ValueError('plot_image_map 不支持此分辨率: {}'.format(res))
     row, col = projlut['row_col']
     image_data = np.full((row, col), np.nan, dtype=np.float32)
     proj_i = projlut['prj_i']
@@ -98,12 +107,14 @@ def plot_map_full(in_file, vmin=0, vmax=1000, resultid='', planid='', datatime='
             try:
                 if not os.path.isfile(out_file1):
                     plot_image_disk(data, out_file=out_file1, res=resolution_type, vmin=vmin, vmax=vmax)
-                    # 入库
-                    if os.path.isfile(out_file1):
-                        add_result_data(resultid=resultid, planid=planid, address=out_file1, datatime=datatime,
-                                        resolution_type=resolution_type, area_type=area_type, element=element)
                 else:
                     print('文件已经存在，跳过:{}'.format(out_file1))
+                # 入库
+                if os.path.isfile(out_file1) and not exist_result_data(resultid=resultid, datatime=datatime,
+                                                                       resolution_type=resolution_type,
+                                                                       element=element, area_type=area_type):
+                    add_result_data(resultid=resultid, planid=planid, address=out_file1, datatime=datatime,
+                                    resolution_type=resolution_type, area_type=area_type, element=element)
             except Exception as why:
                 print(why)
                 print('绘制{}图像错误:{}'.format(area_type, out_file1))
@@ -115,12 +126,14 @@ def plot_map_full(in_file, vmin=0, vmax=1000, resultid='', planid='', datatime='
             try:
                 if not os.path.isfile(out_file2):
                     plot_image_map(data, out_file=out_file2, res=resolution_type, vmin=vmin, vmax=vmax)
-                    # 入库
-                    if os.path.isfile(out_file2):
-                        add_result_data(resultid=resultid, planid=planid, address=out_file2, datatime=datatime,
-                                        resolution_type=resolution_type, area_type=area_type, element=element)
                 else:
                     print('文件已经存在，跳过:{}'.format(out_file2))
+                # 入库
+                if os.path.isfile(out_file2) and not exist_result_data(resultid=resultid, datatime=datatime,
+                                                                       resolution_type=resolution_type,
+                                                                       element=element, area_type=area_type):
+                    add_result_data(resultid=resultid, planid=planid, address=out_file2, datatime=datatime,
+                                    resolution_type=resolution_type, area_type=area_type, element=element)
             except Exception as why:
                 print(why)
                 print('绘制{}图像错误:{}'.format(area_type, out_file2))

@@ -6,6 +6,7 @@
 """
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import time
 import hashlib
 import zipfile
 import re
@@ -13,16 +14,19 @@ import os
 import sys
 from multiprocessing import Pool
 import numpy as np
+import threading
 
 from gfssi_p02_ssi_plot_map_full import plot_map_full
 from gfssi_p01_ssi_plot_map_area import plot_map_area
 from gfssi_e02_ssi_combine import combine_full
 from gfssi_e03_ssi_area import area
+from gfssi_b01_ssi_itcal import itcal
+from gfssi_b02_ssi_1km import fy4a_ssi_4km_to_1km
 
 from lib.lib_read_ssi import FY4ASSI
 from lib.lib_database import find_result_data, Session, ResultData
 from lib.lib_get_index_by_lonlat import get_point_index
-from lib.lib_constant import KDTREE_LUT_4KM, FULL_VALUE
+from lib.lib_constant import KDTREE_LUT_FY4_4KM
 
 # 获取程序所在目录位置
 g_path, _ = os.path.split(os.path.realpath(__file__))
@@ -30,6 +34,8 @@ g_path, _ = os.path.split(os.path.realpath(__file__))
 os.chdir(g_path)
 
 data_root_dir = '/home/gfssi/GFData/'
+
+DEBUG = True
 
 
 def get_hash_utf8(str_hash):
@@ -136,6 +142,95 @@ def fy4a_save_source_data_in_database():
     session.commit()
 
 
+def product_fy4a_4kmcorrect_disk_full_data_orbit(date_start=None, date_end=None, thread=2):
+    """
+    绘制原始4KM数据的图像
+    3个产品，每个产品2张图像，共6张图像
+    :param date_start: 开始日期 datetime
+    :param date_end: 结束日期 datetime
+    :param thread:
+    :return:
+    """
+    resultid_data = 'FY4A_AGRI_L2_SSI_Orbit'
+    resultid_itcal = 'FY4A_AGRI_L2_SSI_Orbit'
+
+    frequency = 'Orbit'
+    resolution_type = '4KMCorrect'
+
+    out_dir = os.path.join(data_root_dir, 'SSIData/FY4A/SSI_{resolution_type}/Full/{frequency}')
+    out_dir = out_dir.format(resolution_type=resolution_type, frequency=frequency)
+
+    planid = 1
+    results = find_result_data(resultid=resultid_data, datatime_start=date_start, datatime_end=date_end,
+                               resolution_type='4KM')
+    in_files = [row.address for row in results]
+    in_files.sort()
+    in_files_length = len(in_files)
+    print('找到的文件总数:{}'.format(in_files_length))
+
+    print('开始生产')
+    p = Pool(thread)
+    for in_file in in_files[:]:
+        in_file_name = os.path.basename(in_file)
+        datatime = FY4ASSI.get_date_time_orbit(in_file)
+        if datatime.minute != 0:
+            continue
+        date_time = datatime.strftime('%Y%m%d%H%M%S')
+        out_file_name = in_file_name.replace('4KM', resolution_type)
+        out_file = os.path.join(out_dir, date_time[:8], out_file_name)
+        p.apply_async(itcal, args=(in_file, out_file, resultid_itcal, planid, datatime, resolution_type))
+    p.close()
+    p.join()
+    print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
+
+
+def product_fy4a_1km_disk_full_data_orbit(date_start=None, date_end=None, thread=2):
+    """
+    绘制原始4KM数据的图像
+    3个产品，每个产品2张图像，共6张图像
+    :param date_start: 开始日期 datetime
+    :param date_end: 结束日期 datetime
+    :param thread:
+    :return:
+    """
+    resultid_in = 'FY4A_AGRI_L2_SSI_Orbit'
+    resultid_out = 'FY4A_AGRI_L2_SSI_Orbit'
+
+    frequency = 'Orbit'
+    resolution_type = '1KM'
+
+    out_dir = os.path.join(data_root_dir, 'SSIData/FY4A/SSI_{resolution_type}/Full/{frequency}')
+    out_dir = out_dir.format(resolution_type=resolution_type, frequency=frequency)
+
+    planid = 1
+    results = find_result_data(resultid=resultid_in, datatime_start=date_start, datatime_end=date_end,
+                               resolution_type='4KMCorrect')
+    in_files = [row.address for row in results]
+    in_files.sort()
+    in_files_length = len(in_files)
+    print('找到的文件总数:{}'.format(in_files_length))
+
+    print('开始生产')
+    p = Pool(thread)
+    for in_file in in_files[:]:
+        in_file_name = os.path.basename(in_file)
+        datatime = FY4ASSI.get_date_time_orbit(in_file)
+        if datatime.minute != 0:
+            continue
+        date_time = datatime.strftime('%Y%m%d%H%M%S')
+        out_file_name = in_file_name.replace('4KMCorrect', resolution_type)
+        out_file = os.path.join(out_dir, date_time[:8], out_file_name)
+        if DEBUG:
+            fy4a_ssi_4km_to_1km(in_file, out_file, resultid_out, planid, datatime, resolution_type)
+        else:
+            p.apply_async(fy4a_ssi_4km_to_1km,
+                          args=(in_file, out_file, resultid_out, planid, datatime, resolution_type))
+
+    p.close()
+    p.join()
+    print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
+
+
 def product_fy4a_disk_full_image_orbit(date_start=None, date_end=None, thread=2, resolution_type=None):
     """
     绘制原始4KM数据的图像
@@ -155,6 +250,7 @@ def product_fy4a_disk_full_image_orbit(date_start=None, date_end=None, thread=2,
     results = find_result_data(resultid=resultid_data, datatime_start=date_start, datatime_end=date_end,
                                resolution_type=resolution_type)
     in_files = [row.address for row in results]
+    in_files.sort()
     in_files_length = len(in_files)
     print('找到的文件总数:{}'.format(in_files_length))
 
@@ -162,7 +258,11 @@ def product_fy4a_disk_full_image_orbit(date_start=None, date_end=None, thread=2,
     p = Pool(thread)
     for in_file in in_files[:]:
         datatime = FY4ASSI.get_date_time_orbit(in_file)
-        p.apply_async(plot_map_full, args=(in_file, vmin, vmax, resultid_image, planid, datatime, resolution_type,))
+        if DEBUG:
+            plot_map_full(in_file, vmin, vmax, resultid_image, planid, datatime, resolution_type, )
+        else:
+            p.apply_async(plot_map_full, args=(in_file, vmin, vmax, resultid_image, planid, datatime, resolution_type,))
+
     p.close()
     p.join()
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
@@ -227,6 +327,7 @@ def product_fy4a_disk_full_data_and_image(date_start=None, date_end=None, freque
     p = Pool(thread)
     date_tmp = date_start
     while date_tmp <= date_end:
+        time.sleep(0.1)
         date_name = date_tmp.strftime(strf_name)
         if strf_dir is not None:
             date_dir = date_tmp.strftime(strf_dir)
@@ -236,17 +337,26 @@ def product_fy4a_disk_full_data_and_image(date_start=None, date_end=None, freque
         date_s = datetime.strptime(date_name, strf_name)
         date_e = date_s + date_relativedelta - relativedelta(seconds=1)
 
-        results = find_result_data(resultid=resultid_data_in, datatime_start=date_s, datatime_end=date_e,
-                                   resolution_type=resolution_type)
+        try:
+            results = find_result_data(resultid=resultid_data_in, datatime_start=date_s, datatime_end=date_e,
+                                       resolution_type=resolution_type)
+        except Exception as why:
+            print(why)
+            continue
         in_files = [row.address for row in results]
+        in_files.sort()
         in_files_length = len(in_files)
         print('找到的文件总数:{}'.format(in_files_length))
 
         out_name_tmp = out_name.format(date=date_name, resolution_type=resolution_type)
         out_file = os.path.join(out_dir, date_dir, out_name_tmp)
         datatime = get_date_time(out_file)
-        p.apply_async(combine_full, args=(in_files, out_file, daily, resultid_combine, planid, datatime,
-                                          resolution_type))
+        if DEBUG:
+            combine_full(in_files, out_file, daily, resultid_combine, planid, datatime,
+                         resolution_type)
+        else:
+            p.apply_async(combine_full, args=(in_files, out_file, daily, resultid_combine, planid, datatime,
+                                              resolution_type))
         files_combine.append(out_file)
         date_tmp += date_relativedelta
     p.close()
@@ -255,8 +365,13 @@ def product_fy4a_disk_full_data_and_image(date_start=None, date_end=None, freque
     print('开始绘图')
     p = Pool(thread)
     for file_combine in files_combine[:]:
+        time.sleep(0.5)
         datatime = get_date_time(file_combine)
-        p.apply_async(plot_map_full, args=(file_combine, vmin, vmax, resultid_image, planid, datatime, resolution_type))
+        if DEBUG:
+            plot_map_full(file_combine, vmin, vmax, resultid_image, planid, datatime, resolution_type)
+        else:
+            p.apply_async(plot_map_full,
+                          args=(file_combine, vmin, vmax, resultid_image, planid, datatime, resolution_type))
     p.close()
     p.join()
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
@@ -285,6 +400,7 @@ def product_fy4a_disk_area_data(date_start=None, date_end=None, thread=3, left_u
     results = find_result_data(resultid=resultid, datatime_start=date_start, datatime_end=date_end,
                                resolution_type=resolution_type)
     in_files = [row.address for row in results]
+    in_files.sort()
     in_files_length = len(in_files)
     print('找到的文件总数:{}'.format(in_files_length))
 
@@ -310,8 +426,8 @@ def product_fy4a_disk_area_data(date_start=None, date_end=None, thread=3, left_u
         return
 
 
-def product_fy4a_disk_point_data(date_start=None, date_end=None, thread=3, lon=None, lat=None,
-                                 resolution_type=None, resultid=None, element=None):
+def product_fy4a_disk_point_data(date_start=None, date_end=None, thread=30, lon=None, lat=None,
+                                 resolution_type=None, resultid=None, element=None, idx=None, ck=None):
     lon = float(lon)
     lat = float(lat)
     date_s = datetime.strptime(date_start, '%Y%m%d%H%M%S')
@@ -329,93 +445,64 @@ def product_fy4a_disk_point_data(date_start=None, date_end=None, thread=3, lon=N
     elif 'Yearly' in resultid:
         get_datetime = FY4ASSI.get_date_time_yearly
     else:
-        return {}
-
-    index_lut_file = KDTREE_LUT_4KM
-    pre_dist = 0.08
-    index = get_point_index(lon, lat, index_lut_file, pre_dist)
-    print(index)
+        print('不支持的时间频率:{}'.format(resultid))
+        return
 
     results = find_result_data(resultid=resultid, datatime_start=date_s, datatime_end=date_e,
                                resolution_type=resolution_type)
     full_files = [row.address for row in results]
+    full_files.sort()
     in_files_length = len(full_files)
     print('找到的文件总数:{}'.format(in_files_length))
+    if in_files_length <= 0:
+        return
 
-    full_files.sort()
+    pre_dist = 0.08
+    index = get_point_index(lon, lat, idx, ck, pre_dist)
+    print(index)
+    if index is None:
+        print('没有找到最近点:lon {}   lat:{}'.format(lon, lat))
+        return
 
     datas = []
-    header = None
     dates = []
     values = []
+    count = 0
+    thread_lock = threading.Lock()
+    ts = []
+    import time
+    s = time.clock()
     for full_file in full_files:
-        datas_tmp = {}
         if not os.path.isfile(full_file):
             print('文件不存在: {}'.format(full_file))
+            count += 1
             continue
-
-        loader = FY4ASSI(full_file)
-        data_geter = {
-            'Itol': loader.get_ssi,
-            'Ib': loader.get_ib,
-            'Id': loader.get_id,
-            'G0': loader.get_g0,
-            'Gt': loader.get_gt,
-            'DNI': loader.get_dni,
-        }
-        if element is not None:
-            elements = [element]
-        else:
-            elements = data_geter.keys()
-
-        for element_ in elements:
-            try:
-                data_tmp = data_geter[element_]()[index]
-            except Exception as why:
-                print(why)
-                print('读取数据错误:{}'.format(element_))
-                continue
-            if data_tmp is not None:
-                if np.isnan(data_tmp):
-                    datas_tmp[element_] = FULL_VALUE
-                else:
-                    datas_tmp[element_] = data_tmp.item()
-
-        date = get_datetime(full_file)
-        if 'Orbit' in resultid:
-            date += relativedelta(hours=8)
-        date = date.strftime('%Y%m%d%H%M%S')
-
-        if len(datas_tmp) == 1:
-            if header is None:
-                header = """Date\t{}
-""".format(element)
-            data_str = '{}\t{:0.4f}\n'.format(
-                date, datas_tmp[element]
-            )
-            dates.append(date)
-            values.append(datas_tmp[element])
-        elif len(datas_tmp) == 3:
-            if header is None:
-                header = """Date\tItol\tIb\tId
-"""
-            data_str = '{}\t{:0.4f}\t{:0.4f}\t{:0.4f}\n'.format(
-                date, datas_tmp['Itol'], datas_tmp['Ib'], datas_tmp['Id']
-            )
-        elif len(datas_tmp) == 6:
-            if header is None:
-                header = """Date\tItol\tIb\tId\tG0\tGt\tDNI
-"""
-            data_str = '{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(
-                date, datas_tmp['Itol'], datas_tmp['Ib'], datas_tmp['Id'],
-                datas_tmp['G0'], datas_tmp['Gt'], datas_tmp['DNI']
-            )
-        else:
-            continue
-        datas.append(data_str)
+        t = threading.Thread(target=_get_point_data, args=(full_file, element, index, get_datetime, resultid,
+                                                           dates, datas, values, thread_lock))
+        t.start()
+        ts.append(t)
+    for t in ts:
+        t.join()
+    print(time.clock() - s)
+    dates_new = []
+    values_new = []
+    for date, value in sorted(zip(dates, values), key=lambda x: x[0]):
+        dates_new.append(date)
+        values_new.append(value)
 
     out_file = os.path.join(out_dir, outname.format(lon=lon, lat=lat, date_start=date_start,
                                                     date_end=date_end, resolution_type=resolution_type))
+
+    if element is None:
+        header = """Date\t{}
+""".format(element)
+    elif resolution_type == '4KM':
+        header = """Date\tItol\tIb\tId
+"""
+    else:
+        header = """Date\tItol\tIb\tId\tG0\tGt\tDNI
+"""
+
     if len(datas) > 0:
         if element is None:
             with open(out_file, 'w') as fp:
@@ -423,9 +510,68 @@ def product_fy4a_disk_point_data(date_start=None, date_end=None, thread=3, lon=N
                 fp.writelines(datas)
             return out_file
         else:
-            return {'date': dates, 'value': values}
+            return {'date': dates_new, 'value': values_new}
     else:
         return
+
+
+def _get_point_data(full_file, element, index, get_datetime, resultid,
+                    dates, datas, values, thread_lock):
+    datas_tmp = {}
+
+    loader = FY4ASSI(full_file)
+    data_geter = {
+        'Itol': loader.get_ssi,
+        'Ib': loader.get_ib,
+        'Id': loader.get_id,
+        'G0': loader.get_g0,
+        'Gt': loader.get_gt,
+        'DNI': loader.get_dni,
+    }
+    if element is not None:
+        elements = [element]
+    else:
+        elements = data_geter.keys()
+
+    for element_ in elements:
+        try:
+            data_tmp = data_geter[element_]()[index]
+        except Exception as why:
+            print(why)
+            print('读取数据错误:{}'.format(element_))
+            continue
+        if data_tmp is not None:
+            print(datas_tmp)
+            if np.isnan(data_tmp):
+                datas_tmp[element_] = 0
+            else:
+                datas_tmp[element_] = data_tmp.item()
+
+    date = get_datetime(full_file)
+    if 'Orbit' in resultid:
+        date += relativedelta(hours=8)
+    date = date.strftime('%Y%m%d%H%M%S')
+
+    if len(datas_tmp) == 1:
+        data_str = '{}\t{:0.4f}\n'.format(
+            date, datas_tmp[element]
+        )
+    elif len(datas_tmp) == 3:
+        data_str = '{}\t{:0.4f}\t{:0.4f}\t{:0.4f}\n'.format(
+            date, datas_tmp['Itol'], datas_tmp['Ib'], datas_tmp['Id']
+        )
+    elif len(datas_tmp) == 6:
+        data_str = '{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(
+            date, datas_tmp['Itol'], datas_tmp['Ib'], datas_tmp['Id'],
+            datas_tmp['G0'], datas_tmp['Gt'], datas_tmp['DNI']
+        )
+    else:
+        return
+    with thread_lock:
+        dates.append(date)
+        datas.append(data_str)
+        if datas_tmp.get(element) is not None:
+            values.append(datas_tmp[element])
 
 
 def product_4km_disk_area_image(date_start=None, date_end=None, thread=3, frequency=None, resolution_type=None):
@@ -507,6 +653,7 @@ def product_4km_disk_area_image(date_start=None, date_end=None, thread=3, freque
             date_start_tem += date_relativedelta
         else:
             break
+    in_files.sort()
     in_files_length = len(in_files)
     print('找到的文件总数:{}'.format(in_files_length))
 
@@ -555,24 +702,52 @@ if __name__ == '__main__':
     # 数据入库
     # fy4a_save_source_data_in_database()
 
-    # 测试生产4KM时次的绘图
-    # start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
+    # start = datetime.strptime('20190629000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
     #
-    start = datetime.strptime('20190629000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190629235959', '%Y%m%d%H%M%S')
+    # start = datetime.strptime('20190629010000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190629010000', '%Y%m%d%H%M%S')
 
     # start = datetime.strptime('20190201000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190228235959', '%Y%m%d%H%M%S')
     #
-    # start = datetime.strptime('20190302000000', '%Y%m%d%H%M%S')
-    # end = datetime.strptime('20190302235959', '%Y%m%d%H%M%S')
+    start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
 
-    product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KM')  # 圆盘轨道
-    product_fy4a_disk_full_data_and_image(start, end, frequency='Daily', resolution_type='4KM')  # 圆盘日
+    # =================================全圆盘==================================
+    # 轨道：生产数据
+    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # 4KMCorrect
+    # start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    # product_fy4a_1km_disk_full_data_orbit(start, end)  # 1KM
+
+    # 轨道：绘图
+    # start = datetime.strptime('20190629000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    # product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KM')  # 圆盘轨道
+    product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KMCorrect')  # 圆盘轨道
+    # product_fy4a_disk_full_image_orbit(start, end, resolution_type='1KM')  # 圆盘轨道
+
+    # 日：生产数据和绘图
+    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    # product_fy4a_disk_full_data_and_image(start, end, frequency='Daily', resolution_type='4KM')  # 圆盘日
+    # product_fy4a_disk_full_data_and_image(start, end, frequency='Daily', resolution_type='4KMCorrect')  # 圆盘日
+    # product_fy4a_disk_full_data_and_image(start, end, frequency='Daily', resolution_type='1KM')  # 圆盘日
+
+    # 月：生产数据和绘图
+    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
     # product_fy4a_disk_full_data_and_image(start, end, frequency='Monthly', resolution_type='4KM')  # 圆盘月
+    # product_fy4a_disk_full_data_and_image(start, end, frequency='Monthly', resolution_type='4KMCorrect')  # 圆盘月
+    # product_fy4a_disk_full_data_and_image(start, end, frequency='Monthly', resolution_type='1KM')  # 圆盘月
+
+    # 年：生产数据和绘图
     # product_fy4a_disk_full_data_and_image(start, end, frequency='Yearly', resolution_type='4KM')  # 圆盘年
 
+    # =================================中国区==================================
     # leftuplon = 70
     # leftuplat = 50
     # rightdownlon = 140

@@ -11,7 +11,6 @@ import numpy as np
 from lib.lib_read_ssi import FY4ASSI
 from lib.lib_constant import FULL_VALUE
 from lib.lib_get_index_by_lonlat import get_data_by_index, get_area_index
-from lib.lib_database import add_result_data
 
 
 def _write_out_file(out_file, result):
@@ -29,24 +28,24 @@ def _write_out_file(out_file, result):
         print('没有足够的有效数据，不生成结果文件')
         return
 
-    try:
-        compression = 'gzip'
-        compression_opts = 5
-        shuffle = True
-        with h5py.File(out_file, 'w') as hdf5:
-            for dataset in result.keys():
-                data = result[dataset]
-                if data is not None:
-                    data[np.isnan(data)] = FULL_VALUE
-                    hdf5.create_dataset(dataset,
-                                        dtype=np.float32, data=result[dataset], compression=compression,
-                                        compression_opts=compression_opts,
-                                        shuffle=shuffle)
-        print('成功生成HDF文件 >>>:{}'.format(out_file))
-    except Exception as why:
-        print(why)
-        print('HDF写入数据错误')
-        os.remove(out_file)
+    # try:
+    compression = 'gzip'
+    compression_opts = 5
+    shuffle = True
+    with h5py.File(out_file, 'w') as hdf5:
+        for dataset in result.keys():
+            data = result[dataset]
+            if data is not None:
+                data[np.isnan(data)] = FULL_VALUE
+                hdf5.create_dataset(dataset,
+                                    dtype=np.float32, data=result[dataset], compression=compression,
+                                    compression_opts=compression_opts,
+                                    shuffle=shuffle)
+    print('成功生成HDF文件 >>>:{}'.format(out_file))
+    # except Exception as why:
+    #     print(why)
+    #     print('HDF写入数据错误')
+    #     os.remove(out_file)
 
 
 def area(in_file, out_file, left_up_lon=None, left_up_lat=None, right_down_lon=None, right_down_lat=None,
@@ -56,16 +55,13 @@ def area(in_file, out_file, left_up_lon=None, left_up_lat=None, right_down_lon=N
         print('数据不存在:{}'.format(in_file))
         return
 
-    if os.path.isfile(out_file):
-        print('文件已经存在，跳过:{}'.format(out_file))
-        return
     out_path = os.path.dirname(out_file)
     if not os.path.isdir(out_path):
         os.makedirs(out_path)
 
     if '4km' in resolution_type.lower():
-        lons = FY4ASSI.get_longitude()
-        lats = FY4ASSI.get_latitude()
+        lons = FY4ASSI.get_longitude_4km()
+        lats = FY4ASSI.get_latitude_4km()
     else:
         raise ValueError('不支持此分辨率: {}'.format(resolution_type))
 
@@ -89,8 +85,8 @@ def area(in_file, out_file, left_up_lon=None, left_up_lat=None, right_down_lon=N
             'G0': datas.get_g0,
             'Gt': datas.get_gt,
             'DNI': datas.get_dni,
-            'Latitude': datas.get_latitude,
-            'Longitude': datas.get_longitude,
+            'Latitude': datas.get_latitude_4km,
+            'Longitude': datas.get_longitude_4km,
         }
         (row_min, row_max), (col_min, col_max) = get_area_index(lons=lons, lats=lats, left_up_lon=left_up_lon,
                                                                 left_up_lat=left_up_lat, right_down_lon=right_down_lon,

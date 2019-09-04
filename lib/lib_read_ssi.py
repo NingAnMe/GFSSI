@@ -10,7 +10,7 @@ import re
 import numpy as np
 import gdal
 import h5py
-from lib.lib_constant import PROJ_LUT_4KM, FY4_LON_LAT_LUT
+from lib.lib_constant import *
 
 
 class FY3DSSIENVI:
@@ -42,7 +42,7 @@ class FY3DSSIENVI:
 class FY4ASSI(object):
     def __init__(self, in_file):
         self.in_file = in_file
-        self.lon_lat_lut = FY4_LON_LAT_LUT
+        self.lon_lat_lut = LON_LAT_LUT_FY4_4KM
 
     @staticmethod
     def get_date_time_orbit(in_file):
@@ -164,24 +164,48 @@ class FY4ASSI(object):
                 return data
 
     @staticmethod
-    def get_latitude():
+    def get_latitude_4km():
         # -81, 81
         full_value = -999
-        with h5py.File(FY4_LON_LAT_LUT, 'r') as hdf:
+        with h5py.File(LON_LAT_LUT_FY4_4KM, 'r') as hdf:
             dataset = hdf.get('Latitude')[:]
             dataset[dataset == full_value] = np.nan
             return dataset
 
     @staticmethod
-    def get_longitude():
+    def get_longitude_4km():
         # 23, 186
         full_value = -639
         offset = 104.7
-        with h5py.File(FY4_LON_LAT_LUT, 'r') as hdf:
+        with h5py.File(LON_LAT_LUT_FY4_4KM, 'r') as hdf:
             dataset = hdf.get('Longitude')[:]
             dataset[dataset == full_value] = np.nan
             dataset += offset  # 由于经纬度查找表的问题，这里有一个偏移量
             dataset[dataset > 180] -= 360  # 加上偏移量以后，原来的值会超过180，需要恢复其正常位置
+            return dataset
+
+    @staticmethod
+    def get_latitude_1km():
+        full_value = -999
+        with h5py.File(LON_LAT_LUT_FY4_1KM, 'r') as hdf:
+            dataset = hdf.get('Latitude')[:]
+            dataset[dataset == full_value] = np.nan
+            return dataset
+
+    @staticmethod
+    def get_longitude_1km():
+        full_value = -999
+        with h5py.File(LON_LAT_LUT_FY4_1KM, 'r') as hdf:
+            dataset = hdf.get('Longitude')[:]
+            dataset[dataset == full_value] = np.nan
+            return dataset
+
+    @staticmethod
+    def get_ddem_1km():
+        full_value = -999
+        with h5py.File(LON_LAT_LUT_FY4_1KM, 'r') as hdf:
+            dataset = hdf.get('D_DEM')[:]
+            dataset[dataset == full_value] = np.nan
             return dataset
 
     @staticmethod
@@ -207,25 +231,49 @@ class FY4ASSI(object):
             return dataset
 
     @staticmethod
-    def get_longitude_proj():
+    def get_longitude_proj_4km():
         full_value = -999
-        with h5py.File(PROJ_LUT_4KM, 'r') as hdf:
+        with h5py.File(PROJ_LUT_FY4_4KM, 'r') as hdf:
             dataset = hdf.get('Longitude')[:]
             dataset[dataset == full_value] = np.nan
             return dataset
 
     @staticmethod
-    def get_latitude_proj():
+    def get_longitude_proj_1km():
         full_value = -999
-        with h5py.File(PROJ_LUT_4KM, 'r') as hdf:
+        with h5py.File(PROJ_LUT_FY4_1KM, 'r') as hdf:
+            dataset = hdf.get('Longitude')[:]
+            dataset[dataset == full_value] = np.nan
+            return dataset
+
+    @staticmethod
+    def get_latitude_proj_4km():
+        full_value = -999
+        with h5py.File(PROJ_LUT_FY4_4KM, 'r') as hdf:
             dataset = hdf.get('Latitude')[:]
             dataset[dataset == full_value] = np.nan
             return dataset
 
     @staticmethod
-    def get_lonlat_projlut():
+    def get_latitude_proj_1km():
+        full_value = -999
+        with h5py.File(PROJ_LUT_FY4_1KM, 'r') as hdf:
+            dataset = hdf.get('Latitude')[:]
+            dataset[dataset == full_value] = np.nan
+            return dataset
+
+    @staticmethod
+    def get_lonlat_projlut_4km():
         result = {}
-        with h5py.File(PROJ_LUT_4KM, 'r') as hdf:
+        with h5py.File(PROJ_LUT_FY4_4KM, 'r') as hdf:
+            for dataset in hdf:
+                result[dataset] = hdf.get(dataset)[:]
+            return result
+
+    @staticmethod
+    def get_lonlat_projlut_1km():
+        result = {}
+        with h5py.File(PROJ_LUT_FY4_1KM, 'r') as hdf:
             for dataset in hdf:
                 result[dataset] = hdf.get(dataset)[:]
             return result

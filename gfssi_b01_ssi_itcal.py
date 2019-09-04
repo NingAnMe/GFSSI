@@ -21,6 +21,7 @@ from dateutil.relativedelta import relativedelta
 
 from lib.lib_constant import FULL_VALUE, ER_TXT, EP_TXT
 from lib.lib_read_ssi import FY4ASSI
+from lib.lib_database import add_result_data, exist_result_data
 
 
 def cos(x):
@@ -75,13 +76,12 @@ def calGt(Ib, Id, Ai, Rb, Beta, Itol):
     return (Ib + Id * Ai) * Rb + Id * (1 - Ai) * (1 + cos(Beta)) / 2.0 + Itol * 0.2 * (1 - cos(Beta)) / 2.0
 
 
-def assignTime(ymdhms):
+def assignTime(date):
     """
     DEBUG函数assignTime，原来的函数直接在hour加8可能超过24
-    :param ymdhms:
+    :param date:
     :return:
     """
-    date = datetime.strptime(ymdhms, '%Y%m%d%H%M%S')
     date += relativedelta(hours=8)  # 修改时间为北京时
     datestrf = date.strftime('%Y-%m-%d-%H-%M-%S')
     y, m, d, h, mm, s = datestrf.split('-')
@@ -148,9 +148,19 @@ def _write_out_file(out_file, result):
         os.remove(out_file)
 
 
-def itcal(in_file, out_file):
+def itcal(in_file, out_file, resultid=None, planid=None, datatime=None, resolution_type=None):
     # 如果原来的整点数据不存在，直接使用G0进行补充
     # 如果原来的整点数据存在，使用G0进行校正
+    area_type = 'Full_DISK'
+    if os.path.isfile(out_file):
+        print('数据已经存在: {}'.format(out_file))
+        if not exist_result_data(resultid=resultid, datatime=datatime,
+                                 resolution_type=resolution_type,
+                                 area_type=area_type):
+            add_result_data(resultid=resultid, planid=planid, address=out_file, datatime=datatime,
+                            resolution_type=resolution_type, area_type=area_type, element=None)
+        return
+    print('<<< itcal: {}'.format(in_file))
 
     beta = 35.0  # 常量
 
@@ -160,15 +170,15 @@ def itcal(in_file, out_file):
         print(why)
         print('初始化FY4A SSI读取类错误')
         return
-    ymdhms = datas.get_date_time()
-    y, m, d, hr, minus = assignTime(ymdhms)
+    date_time = FY4ASSI.get_date_time_orbit(in_file)
+    y, m, d, hr, minus = assignTime(date_time)
     e = assignE(y, m, d)
     doy = calDoy(y, m, d)
     delta = calDelta(doy)
-
+    print(delta)
     try:
-        lons = FY4ASSI.get_longitude()
-        lats = FY4ASSI.get_latitude()
+        lons = FY4ASSI.get_longitude_4km()
+        lats = FY4ASSI.get_latitude_4km()
     except Exception as why:
         print(why)
         print('读取lons和lats错误')
@@ -236,6 +246,11 @@ def itcal(in_file, out_file):
 
     try:
         _write_out_file(out_file, result)
+        if os.path.isfile(out_file) and not exist_result_data(resultid=resultid, datatime=datatime,
+                                                              resolution_type=resolution_type,
+                                                              area_type=area_type):
+            add_result_data(resultid=resultid, planid=planid, address=out_file, datatime=datatime,
+                            resolution_type=resolution_type, area_type=area_type, element=None)
     except Exception as why:
         print(why)
         print('输出结果文件错误')

@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker
 
 from lib.lib_constant import DATABASE_URL
 
-engine = create_engine(DATABASE_URL, echo=False)
+engine = create_engine(DATABASE_URL, echo=False, pool_size=30, max_overflow=0)
 Session = sessionmaker(engine)
 
 Base = declarative_base()
@@ -63,6 +63,7 @@ def add_result_data(resultid=None, planid=None, resolution_type=None, area_type=
     session.add(result_data)
     session.commit()
     print(result_data)
+    session.close()
 
 
 def find_result_data(resultid=None, datatime_start=None, datatime_end=None, resolution_type=None):
@@ -71,9 +72,30 @@ def find_result_data(resultid=None, datatime_start=None, datatime_end=None, reso
                                                ResultData.resolution_type == resolution_type,
                                                ResultData.datatime >= datatime_start,
                                                ResultData.datatime <= datatime_end)
+    results_count = results.count()
+    session.close()
     print(resultid, datatime_start, datatime_end, resolution_type)
-    print('共找到结果:{}'.format(results.count()))
+    print('共找到结果:{}'.format(results_count))
     return results
+
+
+def exist_result_data(resultid=None, datatime=None, resolution_type=None, element=None, area_type=None):
+    session = Session()
+    results = session.query(ResultData).filter(ResultData.resultid == resultid,
+                                               ResultData.resolution_type == resolution_type,
+                                               ResultData.datatime == datatime,)
+    if element is not None:
+        results = results.filter(ResultData.element == element)
+    if area_type is not None:
+        results = results.filter(ResultData.area_type == area_type)
+    results_count = results.count()
+    print(resultid, datatime, resolution_type)
+    print('共找到结果:{}'.format(results_count))
+    session.close()
+    if results_count > 0:
+        return True
+    else:
+        return False
 
 
 def find_result_image(resultid=None, datatime_start=None, datatime_end=None, element=None, resolution_type=None,
@@ -85,6 +107,8 @@ def find_result_image(resultid=None, datatime_start=None, datatime_end=None, ele
                                                ResultData == area_type,
                                                ResultData.datatime >= datatime_start,
                                                ResultData.datatime <= datatime_end)
+    results_count = results.count()
+    session.close()
     print(resultid, datatime_start, datatime_end, resolution_type, area_type, element)
-    print('共找到结果:{}'.format(results.count()))
+    print('共找到结果:{}'.format(results_count))
     return results

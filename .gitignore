@@ -105,3 +105,16 @@ venv.bak/
 # Pycharm
 .idea
 .pytest_cache
+/step4/COR/
+/step4/DIFFMID/
+/step4/MID/
+/step4/ObsData/
+/step4/RetData/
+/step4/SatNcData/
+D_DEM.txt
+/Aid/lonlat_projlut_fy4_4km.hdf
+/Aid/lonlat_projlut_fy4_1km.hdf
+/Aid/lonlat_lut_fy4_1km.hdf
+/Aid/kdtree_lut_fy4_4km.hdf
+/Aid/kdtree_lut_fy4_1km.hdf
+/Aid/ditu_fy4a_4km.png

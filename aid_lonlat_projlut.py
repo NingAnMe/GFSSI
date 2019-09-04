@@ -50,13 +50,10 @@ def _write_out_file(out_file, result):
         os.remove(out_file)
 
 
-def make_disk_projlut(res='4km', out_file=None):
-    if res == '4km':
-        res_int = 4000
-        lats = FY4ASSI.get_latitude()
-        lons = FY4ASSI.get_longitude()
-    else:
-        raise ValueError('不支持此分辨率: {}'.format(res))
+def make_disk_projlut_4km(out_file=None):
+    res_int = 4000
+    lats = FY4ASSI.get_latitude_4km()
+    lons = FY4ASSI.get_longitude_4km()
     res_degree = meter2degree(res_int)
     projstr = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
     proj = ProjCore(projstr, res_degree, unit="deg", pt_tl=(23, 81), pt_br=(179.5, -81))  # 角点也要放在格点中心位置
@@ -66,5 +63,29 @@ def make_disk_projlut(res='4km', out_file=None):
     result['Latitude'] = proj.lats
     result['row_col'] = np.array([proj.row, proj.col], dtype=np.int32)
     print(result['row_col'])
+    _write_out_file(out_file, result)
+    print('生成FY4投影之后的查找表:{}'.format(out_file))
+
+
+def make_disk_projlut_1km(out_file=None):
+    res_degree = 0.01
+    lats = FY4ASSI.get_latitude_1km()
+    lons = FY4ASSI.get_longitude_1km()
+    print(lats.shape)
+    print(lats.min(), lats.max())
+    print(lats)
+    print(lons.shape)
+    print(lons.min(), lons.max())
+    print(lons)
+    projstr = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+    proj = ProjCore(projstr, res_degree, unit="deg", pt_tl=(69.9951, 54.995), pt_br=(139.9951, 9.995))  # 角点也要放在格点中心位置
+    result = proj.create_lut(lats=lats, lons=lons)
+    proj.grid_lonslats()
+    result['Longitude'] = proj.lons
+    result['Latitude'] = proj.lats
+    result['row_col'] = np.array([proj.row, proj.col], dtype=np.int32)
+    print(result['row_col'])
+    print(result['prj_i'])
+    print(result['prj_j'])
     _write_out_file(out_file, result)
     print('生成FY4投影之后的查找表:{}'.format(out_file))

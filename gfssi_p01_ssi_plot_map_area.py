@@ -8,7 +8,6 @@ import os
 import matplotlib.pyplot as plt
 from lib.lib_read_ssi import FY4ASSI
 from lib.lib_get_index_by_lonlat import get_area_index
-from lib.lib_database import add_result_data
 
 
 def screenshot(in_file, out_file, row_min=None, row_max=None, col_min=None, col_max=None):
@@ -42,8 +41,8 @@ def plot_map_area(in_file, out_file, res='4km', left_up_lon=None, left_up_lat=No
         return
 
     if res == '4km':
-        lons = FY4ASSI.get_longitude_proj()
-        lats = FY4ASSI.get_latitude_proj()
+        lons = FY4ASSI.get_longitude_proj_4km()
+        lats = FY4ASSI.get_latitude_proj_4km()
     else:
         raise ValueError('不支持此分辨率: {}'.format(res))
     try:
@@ -51,11 +50,6 @@ def plot_map_area(in_file, out_file, res='4km', left_up_lon=None, left_up_lat=No
                                                                 left_up_lat=left_up_lat, right_down_lon=right_down_lon,
                                                                 right_down_lat=right_down_lat)
         screenshot(in_file, out_file, row_min=row_min, row_max=row_max, col_min=col_min, col_max=col_max)
-        # 临时文件不入库
-        # if os.path.isfile(out_file):
-        #     dataname = out_file.split('_')[-1][:-4]
-        #     resultid_tem = resultid.format(data_id=dataname.upper())
-        #     add_result_data(resultid=resultid_tem, planid=planid, address=out_file, datatime=datatime)
     except Exception as why:
         print(why)
         print('绘制图像错误:{}'.format(out_file))

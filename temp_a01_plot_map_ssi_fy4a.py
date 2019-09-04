@@ -38,8 +38,8 @@ def main():
         'Sz': data_loader.get_sz(in_file_geo)
     }
 
-    lats = data_loader.get_latitude()
-    lons = data_loader.get_longitude()
+    lats = data_loader.get_latitude_4km()
+    lons = data_loader.get_longitude_4km()
 
     res_degree = meter2degree(4000)
     projstr = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
