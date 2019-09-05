@@ -9,7 +9,7 @@ from aid_lonlat_projlut import make_disk_projlut_4km, make_disk_projlut_1km
 from aid_basemap import make_basemap_fy4a
 from aid_lonlat_lut import make_lonlat_lut_1km, make_lonlat_lut_fy3d_1km
 from lib.lib_constant import *
-from lib.lib_read_ssi import FY4ASSI
+from lib.lib_read_ssi import FY4ASSI, FY3DSSIENVI
 from lib.lib_get_index_by_lonlat import make_point_index_lut
 
 
@@ -60,3 +60,11 @@ if not os.path.isfile(LON_LAT_LUT_FY3_1KM):
     fy3d_envi = os.path.join(get_aid_path(), 'Sz_20190531.dat')
     make_lonlat_lut_fy3d_1km(fy3d_envi, out_file=LON_LAT_LUT_FY3_1KM)
     print(LON_LAT_LUT_FY3_1KM)
+
+if not os.path.isfile(KDTREE_LUT_FY3_1KM):
+    print('生成FY3 1KM查找表')
+    fy3d_envi = os.path.join(get_aid_path(), 'Sz_20190531.dat')
+    data_loader = FY3DSSIENVI(fy3d_envi)
+    lons, lats = data_loader.get_lon_lat()
+    make_point_index_lut(lons, lats, out_file=KDTREE_LUT_FY3_1KM)
+    print(KDTREE_LUT_FY3_1KM)

@@ -22,7 +22,7 @@ class FY3DSSIENVI:
         self.GeoTransform = dataset.GetGeoTransform()
         self.ProjectionInfo = dataset.GetProjection()
 
-    def get_ssi(self):
+    def get_data(self):
         dataset = gdal.Open(self.in_file)
         band = dataset.GetRasterBand(1)
         data = band.ReadAsArray(0, 0, self.XSize, self.YSize).astype(np.float32)

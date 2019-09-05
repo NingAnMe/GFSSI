@@ -24,7 +24,7 @@ def make_point_index_lut(lons_data, lats_data, out_file):
     print('start cKDTree')
     ck = cKDTree(data)
 
-    out_dir = os.path.basename(out_file)
+    out_dir = os.path.dirname(out_file)
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
 

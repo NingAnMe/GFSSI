@@ -21,6 +21,7 @@ PROJ_LUT_FY4_4KM = os.path.join(aid_path, 'lonlat_projlut_fy4_4km.hdf')  # FY4�
 PROJ_LUT_FY4_1KM = os.path.join(aid_path, 'lonlat_projlut_fy4_1km.hdf')  # FY4投影的经纬度查找表
 KDTREE_LUT_FY4_4KM = os.path.join(aid_path, 'kdtree_lut_fy4_4km.hdf')  # FY4原始数据经纬度KDtree查找表
 KDTREE_LUT_FY4_1KM = os.path.join(aid_path, 'kdtree_lut_fy4_1km.hdf')  # FY4原始数据经纬度KDtree查找表
+KDTREE_LUT_FY3_1KM = os.path.join(aid_path, 'kdtree_lut_fy3_1km.hdf')  # FY3原始数据经纬度KDtree查找表
 D_DEM_1KM = os.path.join(aid_path, 'D_DEM.txt')  # 1km校正文件
 EP_TXT = os.path.join(aid_path, 'ep.txt')
 ER_TXT = os.path.join(aid_path, 'er.txt')
