@@ -3,6 +3,7 @@ import h5py
 import numpy as np
 
 from lib.lib_constant import FULL_VALUE
+from lib.lib_read_ssi import FY3DSSIENVI
 
 
 def readASCIIfile(ASCIIfile):
@@ -75,7 +76,7 @@ def _write_out_file(out_file, result):
 def make_lonlat_lut_1km(d_dem_file, out_file):
     ddem, geoRefer = readASCIIfile(d_dem_file)
     nx, ny = geoRefer2xy(geoRefer)
-    print(1, geoRefer)
+    print('geoRefer', geoRefer)
     ddemArr = np.array(ddem)
     print('ddemArr', ddemArr.shape)
     ddemArr = np.array(ddem)[::-1]
@@ -86,5 +87,15 @@ def make_lonlat_lut_1km(d_dem_file, out_file):
         'Latitude': yy,
         'Longitude': xx,
         'D_DEM': ddemArr
+    }
+    _write_out_file(out_file, result)
+
+
+def make_lonlat_lut_fy3d_1km(fy3d_envi, out_file):
+    data_loader = FY3DSSIENVI(fy3d_envi)
+    lons, lats = data_loader.get_lon_lat()
+    result = {
+        'Latitude': lats,
+        'Longitude': lons,
     }
     _write_out_file(out_file, result)

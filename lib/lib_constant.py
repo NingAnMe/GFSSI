@@ -16,6 +16,7 @@ FULL_VALUE = -999
 BASEMAP_FY4_4KM = os.path.join(aid_path, 'ditu_fy4a_4km.png')
 LON_LAT_LUT_FY4_4KM = os.path.join(aid_path, 'lonlat_lut_fy4_4km.hdf')  # FY4原始数据的经纬度查找表
 LON_LAT_LUT_FY4_1KM = os.path.join(aid_path, 'lonlat_lut_fy4_1km.hdf')  # FY4原始数据的经纬度查找表
+LON_LAT_LUT_FY3_1KM = os.path.join(aid_path, 'lonlat_lut_fy3_1km.hdf')  # FY3原始数据的经纬度查找表
 PROJ_LUT_FY4_4KM = os.path.join(aid_path, 'lonlat_projlut_fy4_4km.hdf')  # FY4投影的经纬度查找表
 PROJ_LUT_FY4_1KM = os.path.join(aid_path, 'lonlat_projlut_fy4_1km.hdf')  # FY4投影的经纬度查找表
 KDTREE_LUT_FY4_4KM = os.path.join(aid_path, 'kdtree_lut_fy4_4km.hdf')  # FY4原始数据经纬度KDtree查找表

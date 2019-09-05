@@ -14,3 +14,5 @@
 *.sbn filter=lfs diff=lfs merge=lfs -text
 *.xml filter=lfs diff=lfs merge=lfs -text
 *.dbf filter=lfs diff=lfs merge=lfs -text
+*.dat filter=lfs diff=lfs merge=lfs -text
+*.hdr filter=lfs diff=lfs merge=lfs -text

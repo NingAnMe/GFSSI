@@ -5,7 +5,6 @@
 @Author  : AnNing
 """
 from datetime import datetime
-import os
 import re
 import numpy as np
 import gdal
