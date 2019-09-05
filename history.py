@@ -470,8 +470,8 @@ def product_fy4a_disk_point_data(date_start=None, date_end=None, thread=30, lon=
     count = 0
     thread_lock = threading.Lock()
     ts = []
-    import time
-    s = time.clock()
+
+    s = datetime.now()
     for full_file in full_files:
         if not os.path.isfile(full_file):
             print('文件不存在: {}'.format(full_file))
@@ -483,7 +483,7 @@ def product_fy4a_disk_point_data(date_start=None, date_end=None, thread=30, lon=
         ts.append(t)
     for t in ts:
         t.join()
-    print(time.clock() - s)
+    print(datetime.now() - s)
     dates_new = []
     values_new = []
     for date, value in sorted(zip(dates, values), key=lambda x: x[0]):

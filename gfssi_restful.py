@@ -97,9 +97,11 @@ class GetPointData(Resource):
         date_e = requests['date_end']
         element = requests['element']
         if 'FY4' in resultid and '4KM' in resolution_type:
+            print('4KM')
             idx = kdtree_idx_fy4_4km
             ck = kdtree_ck_fy4_4km
         elif 'FY4' in resultid and '1KM' in resolution_type:
+            print('1KM')
             idx = kdtree_idx_fy4_1km
             ck = kdtree_ck_fy4_1km
         else:
