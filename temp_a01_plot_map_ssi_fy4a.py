@@ -73,8 +73,8 @@ def plot_map_project(
     print(value.min(), value.max())
     p = dv_map.dv_map()
     p.colorbar_fmt = '%d'
-    p.delat = 1
-    p.delon = 1
+    p.delat = 10
+    p.delon = 10
     box = [54., 18., 73., 135.]  # 经纬度范围 NSWE
     # box = [34., 31., 90., 93.]  # 经纬度范围 NSWE
     index = np.logical_and.reduce((latitude > box[1], latitude < box[0], longitude > box[2], longitude < box[3]))
