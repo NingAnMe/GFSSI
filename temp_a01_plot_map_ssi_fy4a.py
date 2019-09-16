@@ -75,8 +75,8 @@ def plot_map_project(
     p.colorbar_fmt = '%d'
     p.delat = 1
     p.delon = 1
-    # box = [54., 18., 73., 135.]  # 经纬度范围 NSWE
-    box = [34., 31., 90., 93.]  # 经纬度范围 NSWE
+    box = [54., 18., 73., 135.]  # 经纬度范围 NSWE
+    # box = [34., 31., 90., 93.]  # 经纬度范围 NSWE
     index = np.logical_and.reduce((latitude > box[1], latitude < box[0], longitude > box[2], longitude < box[3]))
     latitude = latitude[index]
     longitude = longitude[index]
