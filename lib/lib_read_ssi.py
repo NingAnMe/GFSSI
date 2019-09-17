@@ -105,7 +105,7 @@ class FY4ASSI(object):
             dataset = hdf.get('G0')
             if dataset is not None:
                 data = dataset[:]
-                index = np.logical_or(data <= 0, data >= 1500)
+                index = data <= 0
                 data[index] = np.nan
                 return data
 
@@ -118,7 +118,7 @@ class FY4ASSI(object):
             dataset = hdf.get('Gt')
             if dataset is not None:
                 data = dataset[:]
-                index = np.logical_or(data <= 0, data >= 1500)
+                index = data <= 0
                 data[index] = np.nan
                 return data
 
@@ -131,7 +131,7 @@ class FY4ASSI(object):
             dataset = hdf.get('DNI')
             if dataset is not None:
                 data = dataset[:]
-                index = np.logical_or(data <= 0, data >= 1500)
+                index = data <= 0
                 data[index] = np.nan
                 return data
 
@@ -140,7 +140,7 @@ class FY4ASSI(object):
             dataset = hdf.get('SSI')
             if dataset is not None:
                 data = dataset[:]
-                index = np.logical_or(data <= 0, data >= 1500)
+                index = data <= 0
                 data[index] = np.nan
                 return data
 
@@ -149,7 +149,7 @@ class FY4ASSI(object):
             dataset = hdf.get('DifSSI')
             if dataset is not None:
                 data = dataset[:]
-                index = np.logical_or(data <= 0, data >= 1500)
+                index = data <= 0
                 data[index] = np.nan
                 return data
 
@@ -158,7 +158,7 @@ class FY4ASSI(object):
             dataset = hdf.get('DirSSI')
             if dataset is not None:
                 data = dataset[:]
-                index = np.logical_or(data <= 0, data >= 1500)
+                index = data <= 0
                 data[index] = np.nan
                 return data
 

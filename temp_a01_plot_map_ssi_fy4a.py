@@ -18,7 +18,7 @@ from lib.lib_read_ssi import FY4ASSI
 
 
 def main():
-    in_dir = '/home/gfssi/GFData/tem'
+    in_dir = '/home/gsics/anning/GFSSI'
     in_filename = 'FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_2018_4000M_V0001.NC'
     in_file = os.path.join(in_dir, in_filename)
 
@@ -38,12 +38,12 @@ def main():
 
 
     for ssi_type in datas:
-        date = '20190530'
+        date = '2018'
         ssi_type_dict = {
-            'Bc': ('Ib', 0, 1400, 'w/m2'),
-            'Gc': ('Itol', 0, 1400, 'w/m2'),
-            'Dc': ('Id', 0, 1400, 'w/m2'),
-            'Sz': ('Sz', 0, 90, '')
+            'Bc': ('Ib', 0, 4000, 'KWh/m2'),
+            'Gc': ('Itol', 0, 4000, 'KWh/m2'),
+            'Dc': ('Id', 0, 4000, 'KWh/m2'),
+            # 'Sz': ('Sz', 0, 90, '')
         }
         title, vmin, vmax, unit = ssi_type_dict[ssi_type]
 
@@ -70,11 +70,14 @@ def plot_map_project(
         markersize=3,
         unit=''):
 
-    print(value.min(), value.max())
+    print(np.nanmin(value), np.nanmax(value))
     p = dv_map.dv_map()
     p.colorbar_fmt = '%d'
     p.delat = 10
     p.delon = 10
+    p.show_china_boundary = True
+    p.show_china_province = True
+
     box = [54., 18., 73., 135.]  # 经纬度范围 NSWE
     # box = [34., 31., 90., 93.]  # 经纬度范围 NSWE
     index = np.logical_and.reduce((latitude > box[1], latitude < box[0], longitude > box[2], longitude < box[3]))
