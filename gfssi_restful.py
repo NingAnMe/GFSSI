@@ -8,6 +8,16 @@ from history import product_fy4a_disk_area_data, make_zip_file, get_hash_utf8, f
     product_fy4a_disk_point_data
 
 from lib.lib_constant import KDTREE_LUT_FY4_4KM, KDTREE_LUT_FY4_1KM
+
+print('读取查找表文件： {}'.format('*' * 10))
+print(':{}'.format(KDTREE_LUT_FY4_4KM))
+print(':{}'.format(KDTREE_LUT_FY4_1KM))
+
+if not os.path.isfile(KDTREE_LUT_FY4_4KM):
+    raise FileExistsError('{} is not exit'.format(KDTREE_LUT_FY4_4KM))
+if not os.path.isfile(KDTREE_LUT_FY4_1KM):
+    raise FileExistsError('{} is not exit'.format(KDTREE_LUT_FY4_1KM))
+
 with open(KDTREE_LUT_FY4_4KM, 'rb') as fp:
     kdtree_idx_fy4_4km, kdtree_ck_fy4_4km = pickle.load(fp)
 with open(KDTREE_LUT_FY4_1KM, 'rb') as fp:
@@ -21,6 +31,7 @@ api = Api(app)
 class DownloadData(Resource):
 
     def post(self):
+        print('DownloadData')
         requests = dict(request.form)
         print(datetime.now(), requests)
         area_type = requests.pop('area_type')
@@ -65,8 +76,18 @@ class DownloadData(Resource):
             resolution_type = requests['resolution_type']
             date_s = requests['date_start']
             date_e = requests['date_end']
+            if 'FY4' in resultid and '4KM' in resolution_type:
+                print('4KM')
+                idx = kdtree_idx_fy4_4km
+                ck = kdtree_ck_fy4_4km
+            elif 'FY4' in resultid and '1KM' in resolution_type:
+                print('1KM')
+                idx = kdtree_idx_fy4_1km
+                ck = kdtree_ck_fy4_1km
+            else:
+                return {'error': '分辨率错误', 'code': 0}, 200
             txt = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                               resolution_type=resolution_type, resultid=resultid)
+                                               resolution_type=resolution_type, resultid=resultid, idx=idx, ck=ck)
             if txt is not None:
                 in_files = [txt]
             else:
@@ -87,6 +108,7 @@ class DownloadData(Resource):
 
 class GetPointData(Resource):
     def post(self):
+        print('GetPointData')
         requests = dict(request.form)
         print(datetime.now(), requests)
         lon = requests['lon']

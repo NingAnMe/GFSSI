@@ -26,7 +26,7 @@ from gfssi_b02_ssi_1km import fy4a_ssi_4km_to_1km
 from lib.lib_read_ssi import FY4ASSI
 from lib.lib_database import find_result_data, Session, ResultData
 from lib.lib_get_index_by_lonlat import get_point_index
-from lib.lib_constant import KDTREE_LUT_FY4_4KM
+from lib.lib_constant import *
 
 # 获取程序所在目录位置
 g_path, _ = os.path.split(os.path.realpath(__file__))
@@ -244,8 +244,7 @@ def product_fy4a_disk_full_image_orbit(date_start=None, date_end=None, thread=2,
     resultid_data = 'FY4A_AGRI_L2_SSI_Orbit'
     resultid_image = 'FY4A_AGRI_L2_SSI_Orbit_IMG'
     planid = 1
-    vmin = 0
-    vmax = 1000
+    vmin, vmax = COLORBAR_RANGE_ORBIT
 
     results = find_result_data(resultid=resultid_data, datatime_start=date_start, datatime_end=date_end,
                                resolution_type=resolution_type)
@@ -291,8 +290,7 @@ def product_fy4a_disk_full_data_and_image(date_start=None, date_end=None, freque
         strf_dir = '%Y%m'
         date_relativedelta = relativedelta(days=1)
         daily = True
-        vmin = 0
-        vmax = 20
+        vmin, vmax = COLORBAR_RANGE_DAILY
         planid = 1
         get_date_time = FY4ASSI.get_date_time_daily
     elif frequency == 'Monthly':
@@ -302,8 +300,7 @@ def product_fy4a_disk_full_data_and_image(date_start=None, date_end=None, freque
         strf_dir = '%Y'
         date_relativedelta = relativedelta(months=1)
         daily = False
-        vmin = 0
-        vmax = 600
+        vmin, vmax = COLORBAR_RANGE_MONTHLY
         planid = 1
         get_date_time = FY4ASSI.get_date_time_monthly
     elif frequency == 'Yearly':
@@ -313,8 +310,7 @@ def product_fy4a_disk_full_data_and_image(date_start=None, date_end=None, freque
         strf_dir = None
         date_relativedelta = relativedelta(years=1)
         daily = False
-        vmin = 0
-        vmax = 7000
+        vmin, vmax = COLORBAR_RANGE_YEARLY
         planid = 1
         get_date_time = FY4ASSI.get_date_time_yearly
     else:
@@ -493,16 +489,22 @@ def product_fy4a_disk_point_data(date_start=None, date_end=None, thread=30, lon=
     out_file = os.path.join(out_dir, outname.format(lon=lon, lat=lat, date_start=date_start,
                                                     date_end=date_end, resolution_type=resolution_type))
 
-    if element is None:
-        header = """Date\t{}
-""".format(element)
-    elif resolution_type == '4KM':
+    if resolution_type == '4KM':
         header = """Date\tItol\tIb\tId
 """
-    else:
+    elif resolution_type == '4KM_correct':
         header = """Date\tItol\tIb\tId\tG0\tGt\tDNI
 """
-
+    elif resolution_type == '1KM':
+        header = """Date\tItol\tIb\tId\tG0\tGt\tDNI
+    """
+    elif resolution_type == '1KM_correct':
+        header = """Date\tItol\tIb\tId
+    """
+    else:
+        header = """Date
+"""
+    print(len(datas))
     if len(datas) > 0:
         if element is None:
             with open(out_file, 'w') as fp:
@@ -541,7 +543,6 @@ def _get_point_data(full_file, element, index, get_datetime, resultid,
             print('读取数据错误:{}'.format(element_))
             continue
         if data_tmp is not None:
-            print(datas_tmp)
             if np.isnan(data_tmp):
                 datas_tmp[element_] = 0
             else:
