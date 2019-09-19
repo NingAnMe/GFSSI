@@ -18,15 +18,37 @@ kwargs = {
     'Yearly': COLORBAR_RANGE_YEARLY,
 }
 
+# for k, r in kwargs.items():
+#     fig, ax = plt.subplots(figsize=(1, 8))
+#     fig.subplots_adjust(right=0.5)
+#     cmap = plt.get_cmap('jet')
+#     vmin, vmax = r
+#     orientation = 'vertical'
+#     # orientation = 'horizontal'
+#     norm = plt.Normalize(vmin=vmin, vmax=vmax)
+#     cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap,
+#                                     norm=norm,
+#                                     orientation=orientation)
+#     # cb1.set_label('Kwh/m^2')
+#     plt.tight_layout()
+#     alpha = 0
+#     fig.patch.set_alpha(alpha)
+#     fig.savefig(os.path.join(aid_path, 'colormap_{}.png'.format(k)))
+
+
 for k, r in kwargs.items():
-    fig, ax = plt.subplots(figsize=(1, 8))
-    fig.subplots_adjust(right=0.5)
+    fig, ax = plt.subplots(figsize=(8, 1))
+    fig.subplots_adjust(bottom=0.5)
     cmap = plt.get_cmap('jet')
     vmin, vmax = r
+    # orientation = 'vertical'
+    orientation = 'horizontal'
     norm = plt.Normalize(vmin=vmin, vmax=vmax)
     cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap,
                                     norm=norm,
-                                    orientation='vertical')
+                                    orientation=orientation)
     # cb1.set_label('Kwh/m^2')
     plt.tight_layout()
-    fig.savefig(os.path.join(aid_path, 'colormap_{}.jpg'.format(k)))
+    alpha = 0
+    fig.patch.set_alpha(alpha)
+    fig.savefig(os.path.join(aid_path, 'colormap_{}.png'.format(k)))
