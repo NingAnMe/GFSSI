@@ -3,7 +3,8 @@
 # @Time    : 2019/9/19 12:01
 # @Author  : AnNing
 
-import os
+# 参考
+# https://matplotlib.org/3.1.1/tutorials/colors/colorbar_only.html
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
