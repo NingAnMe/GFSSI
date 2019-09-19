@@ -1,7 +1,5 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
-
-
 import os
 import sys
 import random
@@ -11,7 +9,15 @@ import Python_Program
 # 经纬度范围,及其循环次数
 # NC的实际经纬度 [0.0, 55.0, 70.0, 140.0]
 # LatLonRange = [20.0, 55.0, 75.0, 135.0, 0.04]
-LatLonRange = [9.995, 55.01, 69.995, 135.01, 0.01]
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+step4_dir = os.path.dirname(current_dir)
+gfssi_dir = os.path.dirname(step4_dir)
+sys.path.append(gfssi_dir)
+print(sys.path)
+
+from lib.lib_constant import FY4A_1KM_CORRECT_LAT_LON_RANGE
+LatLonRange = FY4A_1KM_CORRECT_LAT_LON_RANGE
 
 
 # 每日数据订正
