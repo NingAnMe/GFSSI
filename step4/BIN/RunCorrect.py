@@ -392,6 +392,6 @@ if __name__ == "__main__":
     # CaculateNCLine(install_dir, runday, 9)
     for ihour in range(24):
         try:
-            CaculateNCLine(r'/home/gfssi/Project/OM/gfssi/step4', runday, ihour)
+            CaculateNCLine(install_dir, runday, ihour)
         except:
             pass
