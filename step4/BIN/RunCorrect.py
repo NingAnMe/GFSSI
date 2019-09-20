@@ -14,7 +14,6 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 step4_dir = os.path.dirname(current_dir)
 gfssi_dir = os.path.dirname(step4_dir)
 sys.path.append(gfssi_dir)
-print(sys.path)
 
 from lib.lib_constant import FY4A_1KM_CORRECT_LAT_LON_RANGE
 LatLonRange = FY4A_1KM_CORRECT_LAT_LON_RANGE
@@ -387,12 +386,12 @@ def CaculateNCLine(install, runday, runhour):
 if __name__ == "__main__":
     install_dir = r'/home/gfssi/Project/OM/gfssi/step4'
 
-    runday = '20171015'
-    # runday = sys.argv[1]
-    # ForecastDataPerday(install_dir, runday)
-    CaculateNCLine(install_dir, runday, 9)
-    # for ihour in range(24):
-    #     try:
-    #         CaculateNCLine(r'/home/gfssi/Project/OM/gfssi/step4', runday, ihour)
-    #     except:
-    #         pass
+    # runday = '20171015'
+    runday = sys.argv[1]
+    ForecastDataPerday(install_dir, runday)
+    # CaculateNCLine(install_dir, runday, 9)
+    for ihour in range(24):
+        try:
+            CaculateNCLine(r'/home/gfssi/Project/OM/gfssi/step4', runday, ihour)
+        except:
+            pass
