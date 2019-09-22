@@ -269,10 +269,12 @@ def product_fy4a_1kmcorrect_disk_full_data_orbit(date_start=None, date_end=None,
 
     print('开始生产')
     p = Pool(thread)
-    for in_file in in_files[:1]:
+    for in_file in in_files:
         in_file_name = os.path.basename(in_file)
         ymdhm = in_file_name[:12]
         datatime = datetime.strptime(ymdhm, '%Y%m%d%H%M') - relativedelta(hours=8)
+        if not date_start <= datatime <= date_end:
+            continue
         if datatime.minute != 0:
             continue
         date_time = datatime.strftime('%Y%m%d%H%M%S')
@@ -761,9 +763,9 @@ def product_4km_disk_area_image(date_start=None, date_end=None, thread=3, freque
 
 if __name__ == '__main__':
     # 数据入库
-    fy4a_save_source_data_in_database()
+    # fy4a_save_source_data_in_database()
 
-    # start = datetime.strptime('20190629000000', '%Y%m%d%H%M%S')
+    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
     #
     # start = datetime.strptime('20190629010000', '%Y%m%d%H%M%S')
@@ -783,29 +785,37 @@ if __name__ == '__main__':
     # start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
     # product_fy4a_1km_disk_full_data_orbit(start, end)  # 1KM
+    # start = datetime.strptime('20171015000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20171015235959', '%Y%m%d%H%M%S')
     # product_fy4a_1kmcorrect_disk_full_data_orbit(start, end)  # 1KMCorrect
 
     # 轨道：绘图
-    # start = datetime.strptime('20190629000000', '%Y%m%d%H%M%S')
+    start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KM')  # 圆盘轨道
+    product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KMCorrect')  # 圆盘轨道
+    # start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
-    # product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KM')  # 圆盘轨道
-    # product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KMCorrect')  # 圆盘轨道
-    # product_fy4a_disk_full_image_orbit(start, end, resolution_type='1KM')  # 圆盘轨道
-    # product_fy4a_disk_full_image_orbit('20171015000000', '20171015020000', resolution_type='1KMCorrect')  # 圆盘轨道
+    product_fy4a_disk_full_image_orbit(start, end, resolution_type='1KM')  # 圆盘轨道
+    product_fy4a_disk_full_image_orbit('20171015000000', '20171015235959', resolution_type='1KMCorrect')  # 圆盘轨道
 
     # 日：生产数据和绘图
-    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190601235959', '%Y%m%d%H%M%S')
+    product_fy4a_disk_full_data_and_image(start, end, frequency='Daily', resolution_type='4KM')  # 圆盘日
+    product_fy4a_disk_full_data_and_image(start, end, frequency='Daily', resolution_type='4KMCorrect')  # 圆盘日
+    # start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
-    # product_fy4a_disk_full_data_and_image(start, end, frequency='Daily', resolution_type='4KM')  # 圆盘日
-    # product_fy4a_disk_full_data_and_image(start, end, frequency='Daily', resolution_type='4KMCorrect')  # 圆盘日
     # product_fy4a_disk_full_data_and_image(start, end, frequency='Daily', resolution_type='1KM')  # 圆盘日
+    # start = datetime.strptime('20171015000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20171015235959', '%Y%m%d%H%M%S')
     # product_fy4a_disk_full_data_and_image(start, end, frequency='Daily', resolution_type='1KMCorrect')  # 圆盘日
 
     # 月：生产数据和绘图
-    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
-    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
-    # product_fy4a_disk_full_data_and_image(start, end, frequency='Monthly', resolution_type='4KM')  # 圆盘月
-    # product_fy4a_disk_full_data_and_image(start, end, frequency='Monthly', resolution_type='4KMCorrect')  # 圆盘月
+    start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    product_fy4a_disk_full_data_and_image(start, end, frequency='Monthly', resolution_type='4KM')  # 圆盘月
+    product_fy4a_disk_full_data_and_image(start, end, frequency='Monthly', resolution_type='4KMCorrect')  # 圆盘月
     # product_fy4a_disk_full_data_and_image(start, end, frequency='Monthly', resolution_type='1KM')  # 圆盘月
     # product_fy4a_disk_full_data_and_image(start, end, frequency='Monthly', resolution_type='1KMCorrect')  # 圆盘月
 

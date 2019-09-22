@@ -27,7 +27,7 @@ EP_TXT = os.path.join(aid_path, 'ep.txt')
 ER_TXT = os.path.join(aid_path, 'er.txt')
 
 # 数据库
-DATABASE_URL = 'mysql+pymysql://hzqx:PassWord@1234@183.230.93.188:3306/solar'
+DATABASE_URL = 'mysql+pymysql://root:root@cma07@127.0.0.1:3306/solar'
 
 # 图例范围
 COLORBAR_RANGE_ORBIT = (0, 1000)

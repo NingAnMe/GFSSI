@@ -15,17 +15,18 @@ from lib.lib_proj import fill_points_2d_nan
 from lib.lib_constant import BASEMAP_FY4_4KM
 
 
-def plot_image_disk(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000):
-    if '4km' in res.lower():
+def plot_image_disk(data, out_file='test.jpg', resolution_type='4km', vmin=0, vmax=1000):
+    if '4km' in resolution_type.lower():
         ditu = plt.imread(BASEMAP_FY4_4KM)
         row, col, _ = ditu.shape
         fig = plt.figure(figsize=(col / 100, row / 100), dpi=100)
         fig.figimage(ditu)
-    elif '1km' in res.lower():
+    elif '1km' in resolution_type.lower():
+        return
         row, col = data.shape
         fig = plt.figure(figsize=(col / 100, row / 100), dpi=100)
     else:
-        raise ValueError('plot_image_disk 不支持此分辨率: {}'.format(res))
+        raise ValueError('plot_image_disk 不支持此分辨率: {}'.format(resolution_type))
 
     fig.figimage(data, vmin=vmin, vmax=vmax, cmap='jet', alpha=0.7)
     fig.patch.set_alpha(0)
@@ -106,7 +107,7 @@ def plot_map_full(in_file, vmin=0, vmax=1000, resultid='', planid='', datatime='
 
             try:
                 if not os.path.isfile(out_file1):
-                    plot_image_disk(data, out_file=out_file1, res=resolution_type, vmin=vmin, vmax=vmax)
+                    plot_image_disk(data, out_file=out_file1, resolution_type=resolution_type, vmin=vmin, vmax=vmax)
                 else:
                     print('文件已经存在，跳过:{}'.format(out_file1))
                 # 入库

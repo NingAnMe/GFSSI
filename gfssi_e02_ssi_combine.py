@@ -35,10 +35,6 @@ def add_data(data, data_tem):
 
 
 def _write_out_file(out_file, result):
-    out_dir = os.path.dirname(out_file)
-    if not os.path.isdir(out_dir):
-        os.makedirs(out_dir)
-
     valid_count = 0
     for key in result:
         if result[key] is None:
@@ -48,6 +44,10 @@ def _write_out_file(out_file, result):
     if valid_count == 0:
         print('没有足够的有效数据，不生成结果文件')
         return
+
+    out_dir = os.path.dirname(out_file)
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
 
     try:
         compression = 'gzip'
