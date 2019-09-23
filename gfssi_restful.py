@@ -23,7 +23,6 @@ with open(KDTREE_LUT_FY4_4KM, 'rb') as fp:
 with open(KDTREE_LUT_FY4_1KM, 'rb') as fp:
     kdtree_idx_fy4_1km, kdtree_ck_fy4_1km = pickle.load(fp)
 
-
 app = Flask(__name__)
 api = Api(app)
 
@@ -70,12 +69,15 @@ class DownloadData(Resource):
             except Exception as why:
                 print('下载区域文件错误: {}'.format(why))
         elif area_type == 'Point':
-            lon = float(requests['left_up_lon'])
-            lat = float(requests['left_up_lat'])
             resultid = requests['resultid']
             resolution_type = requests['resolution_type']
             date_s = requests['date_start']
             date_e = requests['date_end']
+            point_file = requests.get('path')
+            if not point_file:
+                lon = float(requests['left_up_lon'])
+                lat = float(requests['left_up_lat'])
+
             if 'FY4' in resultid and '4KM' in resolution_type:
                 print('4KM')
                 idx = kdtree_idx_fy4_4km
@@ -86,12 +88,17 @@ class DownloadData(Resource):
                 ck = kdtree_ck_fy4_1km
             else:
                 return {'error': '分辨率错误', 'code': 0}, 200
-            txt = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                               resolution_type=resolution_type, resultid=resultid, idx=idx, ck=ck)
-            if txt is not None:
-                in_files = [txt]
+            if point_file is not None:
+                in_files = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, point_file=point_file,
+                                                        resolution_type=resolution_type, resultid=resultid,
+                                                        idx=idx, ck=ck)
             else:
-                in_files = None
+                txt = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                                   resolution_type=resolution_type, resultid=resultid, idx=idx, ck=ck)
+                if txt is not None:
+                    in_files = [txt]
+                else:
+                    in_files = None
         else:
             return {'error': '不支持的区域类型:{}'.format(area_type), 'code': 0}, 400
 
@@ -111,6 +118,9 @@ class GetPointData(Resource):
         print('GetPointData')
         requests = dict(request.form)
         print(datetime.now(), requests)
+
+        is_live = requests.pop('is_live')
+        is_forecast = requests.pop('is_forecast')
         lon = requests['lon']
         lat = requests['lat']
         resultid = requests['resultid']
@@ -118,6 +128,10 @@ class GetPointData(Resource):
         date_s = requests['date_start']
         date_e = requests['date_end']
         element = requests['element']
+
+        if 'Orbit' not in resultid:
+            is_forecast = 'false'
+
         if 'FY4' in resultid and '4KM' in resolution_type:
             print('4KM')
             idx = kdtree_idx_fy4_4km
@@ -129,11 +143,37 @@ class GetPointData(Resource):
         else:
             return {'error': '分辨率错误', 'code': 0}, 200
 
-        result = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                              resolution_type=resolution_type, resultid=resultid, element=element,
-                                              idx=idx, ck=ck)
+        if is_live.lower() == 'true':
+            result = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                                  resolution_type=resolution_type, resultid=resultid, element=element,
+                                                  idx=idx, ck=ck)
+
+            live_length = len(result['date'])
+            result['length'] = live_length
+            if is_forecast.lower() == 'true':
+                forecast_date = []
+                forecast_value = []
+                result['date'].extend(forecast_date)
+                result['value'].extend(forecast_value)
+                # ceshiceshiceshiceshi
+                if live_length >= 5:
+                    result['length'] -= 4
+            else:
+                pass
+        else:
+            if is_forecast.lower() == 'true':
+                result = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                                      resolution_type=resolution_type, resultid=resultid,
+                                                      element=element,
+                                                      idx=idx, ck=ck)
+                result['length'] = 0
+            else:
+                print('不支持的类型：is_live 和 is_forecast 不能同时为FALSE')
+                result = None
+
         if result is not None:
             result['code'] = 1
+
             return result, 201
         else:
             return {'error': '没有找到任何输入数据', 'code': 0}, 200
@@ -141,7 +181,6 @@ class GetPointData(Resource):
 
 api.add_resource(DownloadData, '/download')
 api.add_resource(GetPointData, '/get_point_data')
-
 
 if __name__ == '__main__':
     # host = '222.128.59.164'

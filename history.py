@@ -484,15 +484,14 @@ def product_fy4a_disk_area_data(date_start=None, date_end=None, thread=3, left_u
         return
 
 
-def product_fy4a_disk_point_data(date_start=None, date_end=None, thread=30, lon=None, lat=None,
+def product_fy4a_disk_point_data(date_start=None, date_end=None, lon=None, lat=None, point_file=None,
                                  resolution_type=None, resultid=None, element=None, idx=None, ck=None):
-    lon = float(lon)
-    lat = float(lat)
+
     date_s = datetime.strptime(date_start, '%Y%m%d%H%M%S')
     date_e = datetime.strptime(date_end, '%Y%m%d%H%M%S')
     out_dir = os.path.join(data_root_dir, 'TmpData')
     outname = 'FY4A-_AGRI--_{lon:07.3f}N_DISK_{lat:07.3f}E_L2-_SSI-_MULT_NOM_' \
-              '{date_start}_{date_end}_{resolution_type}_V0001.TXT'
+              '{date_start}_{date_end}_{resolution_type}_V0001_{site}.TXT'
 
     if 'Orbit' in resultid:
         get_datetime = FY4ASSI.get_date_time_orbit
@@ -515,68 +514,175 @@ def product_fy4a_disk_point_data(date_start=None, date_end=None, thread=30, lon=
     if in_files_length <= 0:
         return
 
-    pre_dist = 0.08
-    index = get_point_index(lon, lat, idx, ck, pre_dist)
-    print(index)
-    if index is None:
-        print('没有找到最近点:lon {}   lat:{}'.format(lon, lat))
-        return
-
-    datas = []
-    dates = []
-    values = []
-    count = 0
     thread_lock = threading.Lock()
     ts = []
 
-    s = datetime.now()
-    for full_file in full_files:
-        if not os.path.isfile(full_file):
-            print('文件不存在: {}'.format(full_file))
-            count += 1
-            continue
-        t = threading.Thread(target=_get_point_data, args=(full_file, element, index, get_datetime, resultid,
-                                                           dates, datas, values, thread_lock))
-        t.start()
-        ts.append(t)
-    for t in ts:
-        t.join()
-    print(datetime.now() - s)
-    dates_new = []
-    values_new = []
-    for date, value in sorted(zip(dates, values), key=lambda x: x[0]):
-        dates_new.append(date)
-        values_new.append(value)
+    if point_file is None:  # 单点数据
+        lon = float(lon)
+        lat = float(lat)
+        pre_dist = 0.08
+        index = get_point_index(lon, lat, idx, ck, pre_dist)
+        if index is None:
+            print('没有找到最近点:lon {}   lat:{}'.format(lon, lat))
+            return
 
-    out_file = os.path.join(out_dir, outname.format(lon=lon, lat=lat, date_start=date_start,
-                                                    date_end=date_end, resolution_type=resolution_type))
+        datas = []
+        dates = []
+        values = []
+        count = 0
+        s = datetime.now()
+        for full_file in full_files:
+            if not os.path.isfile(full_file):
+                print('文件不存在: {}'.format(full_file))
+                count += 1
+                continue
+            t = threading.Thread(target=_get_point_data, args=(full_file, element, index, get_datetime, resultid,
+                                                               dates, datas, values, thread_lock))
+            t.start()
+            ts.append(t)
+        for t in ts:
+            t.join()
+        print('获取{}数据消耗时间:{}'.format(in_files_length, datetime.now() - s))
+        if len(datas) <= 0:
+            print('没有找到有效的点数据')
+            return
 
-    if resolution_type == '4KM':
-        header = """Date\tItol\tIb\tId
-"""
-    elif resolution_type == '4KM_correct':
-        header = """Date\tItol\tIb\tId\tG0\tGt\tDNI
-"""
-    elif resolution_type == '1KM':
-        header = """Date\tItol\tIb\tId\tG0\tGt\tDNI
-    """
-    elif resolution_type == '1KM_correct':
-        header = """Date\tItol\tIb\tId
-    """
-    else:
-        header = """Date
-"""
-    print(len(datas))
-    if len(datas) > 0:
-        if element is None:
+        if element is not None:  # 返回单点数据
+            dates_new = []
+            values_new = []
+
+            for date, value in sorted(zip(dates, values), key=lambda x: x[0]):
+                dates_new.append(date)
+                values_new.append(value)
+            if len(values_new) > 0:
+                return {'date': dates_new, 'value': values_new}
+            else:
+                print('没有找到有效的点数据')
+                return
+        else:  # 返回单点的TXT文件
+            out_file = os.path.join(out_dir, outname.format(lon=lon, lat=lat, date_start=date_start,
+                                                            date_end=date_end, resolution_type=resolution_type,
+                                                            site=''))
+            if len(datas) > 0:
+                with open(out_file, 'w') as fp:
+                    header = "Date\tItol\tIb\tId\tG0\tGt\tDNI\n"
+                    fp.write(header)
+                    datas.sort()
+                    fp.writelines(datas)
+                return out_file
+            else:
+                print('没有找到有效的点数据')
+                return
+    else:  # 多点数据
+        point_infos = []
+        indexs = []
+        with open(point_file, 'r') as fp:
+            fp.readline()
+            for row in fp.readlines():
+                point_name, lon, lat = row.strip().split('\t')
+                lon = float(lon)
+                lat = float(lat)
+                pre_dist = 0.08
+                index = get_point_index(lon, lat, idx, ck, pre_dist)
+                if index is None:
+                    print('没有找到最近点:lon {}   lat:{}'.format(lon, lat))
+                    continue
+                else:
+                    point_infos.append((point_name, lon, lat))
+                    print(type(index[0]))
+                    indexs.append([int(index[0]), int(index[1])])
+
+        for info in point_infos:
+            print(info)
+
+        dates = []
+        values = []
+        count = 0
+        s = datetime.now()
+        for full_file in full_files:
+            if not os.path.isfile(full_file):
+                print('文件不存在: {}'.format(full_file))
+                count += 1
+                continue
+            _get_multi_point_data(full_file, indexs, get_datetime, resultid, dates, values, thread_lock)
+        print('获取{}数据消耗时间:{}'.format(in_files_length, datetime.now() - s))
+        print(values)
+
+        out_files = []
+        for i, info in enumerate(point_infos):  # i是站点的索引值
+            point_name, lon, lat = info
+            print('站点名: {}'.format(point_name))
+            datas = []
+            for j, date in enumerate(dates):  # j 是日期的索引值
+                print('日期：{}'.format(date))
+                datas_tmp = values[j]
+                data_format = {'date': date}
+                for element_ in datas_tmp:
+                    data_ = datas_tmp[element_][i]
+                    data_format[element_] = data_
+                    # if data_ == 0:
+                    #     data_format[element_] = data_
+                    # else:
+                    #     data_format[element_] = np.nan
+                data_str = '{date}\t{Itol:0.4f}\t{Ib:0.4f}\t{Id:0.4f}\t{G0:0.4f}\t{Gt:0.4f}\t{DNI:0.4f}\n'.format(
+                    **data_format)
+                datas.append(data_str)
+            out_file = os.path.join(out_dir, outname.format(lon=lon, lat=lat, date_start=date_start,
+                                                            date_end=date_end, resolution_type=resolution_type,
+                                                            site=point_name))
             with open(out_file, 'w') as fp:
+                header = "Date\tItol\tIb\tId\tG0\tGt\tDNI\n"
                 fp.write(header)
+                datas.sort()
                 fp.writelines(datas)
-            return out_file
-        else:
-            return {'date': dates_new, 'value': values_new}
-    else:
-        return
+            out_files.append(out_file)
+        return out_files
+
+        # for full_file in full_files:
+        #     if not os.path.isfile(full_file):
+        #         print('文件不存在: {}'.format(full_file))
+        #         count += 1
+        #         continue
+        #     t = threading.Thread(target=_get_multi_point_data, args=(full_file, indexs, get_datetime,
+        #                                                              dates, values, thread_lock))
+        #     t.start()
+        #     ts.append(t)
+        # for t in ts:
+        #     t.join()
+        # print('获取{}数据消耗时间:{}'.format(in_files_length, datetime.now() - s))
+        # if len(datas) <= 0:
+        #     print('没有找到有效的点数据')
+        #     return
+
+
+def _get_multi_point_data(full_file, indexs, get_datetime, resultid,
+                          dates, values, thread_lock):
+    indexs = np.array(indexs, dtype=np.int)
+    datas_tmp = {}
+    length = len(indexs)
+    loader = FY4ASSI(full_file)
+    data_geter = {
+        'Itol': loader.get_ssi,
+        'Ib': loader.get_ib,
+        'Id': loader.get_id,
+        'G0': loader.get_g0,
+        'Gt': loader.get_gt,
+        'DNI': loader.get_dni,
+    }
+    elements = data_geter.keys()
+    for element_ in elements:
+        try:
+            data_tmp = data_geter[element_]()[indexs[:, 0], indexs[:, 1]]
+        except Exception:
+            data_tmp = [np.nan for i in range(length)]
+        datas_tmp[element_] = data_tmp
+    date = get_datetime(full_file)
+    if 'Orbit' in resultid:
+        date += relativedelta(hours=8)
+    date = date.strftime('%Y%m%d%H%M%S')
+    with thread_lock:
+        dates.append(date)
+        values.append(datas_tmp)
 
 
 def _get_point_data(full_file, element, index, get_datetime, resultid,
@@ -600,36 +706,28 @@ def _get_point_data(full_file, element, index, get_datetime, resultid,
     for element_ in elements:
         try:
             data_tmp = data_geter[element_]()[index]
-        except Exception as why:
-            print(why)
-            print('读取数据错误:{}'.format(element_))
-            continue
-        if data_tmp is not None:
             if np.isnan(data_tmp):
                 datas_tmp[element_] = 0
             else:
-                datas_tmp[element_] = data_tmp.item()
+                datas_tmp[element_] = data_tmp
+        except Exception as why:
+            datas_tmp[element_] = 0
 
     date = get_datetime(full_file)
     if 'Orbit' in resultid:
         date += relativedelta(hours=8)
     date = date.strftime('%Y%m%d%H%M%S')
 
-    if len(datas_tmp) == 1:
-        data_str = '{}\t{:0.4f}\n'.format(
-            date, datas_tmp[element]
-        )
-    elif len(datas_tmp) == 3:
-        data_str = '{}\t{:0.4f}\t{:0.4f}\t{:0.4f}\n'.format(
-            date, datas_tmp['Itol'], datas_tmp['Ib'], datas_tmp['Id']
-        )
-    elif len(datas_tmp) == 6:
-        data_str = '{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(
-            date, datas_tmp['Itol'], datas_tmp['Ib'], datas_tmp['Id'],
-            datas_tmp['G0'], datas_tmp['Gt'], datas_tmp['DNI']
-        )
-    else:
-        return
+    data_format = {'date': date}
+    for element_ in datas_tmp:
+        data_ = datas_tmp[element_]
+        if data_ != 0:
+            data_format[element_] = data_
+        else:
+            data_format[element_] = np.nan
+    data_str = '{date}\t{Itol:0.4f}\t{Ib:0.4f}\t{Id:0.4f}\t{G0:0.4f}\t{Gt:0.4f}\t{DNI:0.4f}\n'.format(
+        **data_format)
+
     with thread_lock:
         dates.append(date)
         datas.append(data_str)
