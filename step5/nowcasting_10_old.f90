@@ -11,7 +11,7 @@ integer nd,n,i,mm1,mm2,is,n1,k,j,kk,im
 integer a00(mm-1),ix(1),iday(12)
 real r_data(nn),r_data_sta(nn),r_data_smarts(nn)
 real work_smarts(nn),work_sta(nn)
-real y(nn),pmgf(nn,mm-1),x(nn,mm-1),aa(mm-1),a0(mm-1),a(mn+1), r, f(mn,nn) !wind7Îªµ¥Î¬Êý×é£¬´æ·ÅÒ»¸öÔÂµÄ·çËÙÊý¾Ý£¨15·ÖÖÓÒ»´Î£©¡£!aÎª»Ø¹éÏµÊý£¬rÎª¸´Ïà¹ØÏµÊý
+real y(nn),pmgf(nn,mm-1),x(nn,mm-1),aa(mm-1),a0(mm-1),a(mn+1), r, f(mn,nn) !wind7Îªï¿½ï¿½Î¬ï¿½ï¿½ï¿½é£¬ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ÂµÄ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½15ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Î£ï¿½ï¿½ï¿½!aÎªï¿½Ø¹ï¿½Ïµï¿½ï¿½ï¿½ï¿½rÎªï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½
 real wind0(nn),windy(nn),work(nn)
 
 real q,s,u, b(mn+1,mn+1), v(mn),gl,gono,w(2)
@@ -26,33 +26,6 @@ integer hour2,minu2
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!       
 data iday/31,28,31,30,31,30,31,31,30,31,30,31/
-
-! -  parameters and running options
-INTEGER iargc,argnum !n_command_line
-character*20 lat,lon
-Real lat_float, lon_float
-argnum=iargc()
-IF (argnum .ne. 4) THEN
-  WRITE(*,*) 'Need 4 argument'
-  WRITE(*,*) 'Usage: in_file_path out_file_path lon lat'
-  STOP
-ENDIF
-CALL getarg(1, file_in_sta)
-CALL getarg(2, file_out)
-CALL getarg(3, lon)
-CALL getarg(4, lat)
-
-print *, file_in_sta
-print *, file_out
-print *, lon
-print *, lat
-
-read(lon,'(f12.4)') lon_float
-read(lat,'(f12.4)') lat_float
-
-print *, lon_float
-print *, lat_float
-
 nd=16   !forecast 16 times,every time is 15minutes,so 16times is 4hours.we
         !forecast 4hours 
 n=5     !5 obs .we use past of 5 obs data ,to forecast 4hours.
@@ -62,6 +35,7 @@ n=5     !5 obs .we use past of 5 obs data ,to forecast 4hours.
 !!!!following we read the input file,and get the newest 5 obs data .
 !!!! and we also compute the future 16times's time and gono.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+file_in_sta='interp_out.txt'
 open(12,file=file_in_sta)
      do i=1,n
          read(12,*) tim,r_data_sta(i)
@@ -70,7 +44,7 @@ open(12,file=file_in_sta)
          read(tim(7:8),'(i2)') day
          read(tim(9:10),'(i2)') hour
          read(tim(11:12),'(i2)') minu   
-         call cal_sun_angle(gono,year,month,day,hour,minu,lon_float,lat_float)
+         call cal_sun_angle(gono,year,month,day,hour,minu,116.4665,39.7736)
 !!!!here we use the point lat,lon.if we use other point,need edit
          r_data_smarts(i)=gono
      enddo
@@ -79,14 +53,15 @@ open(12,file=file_in_sta)
        mm2=mm1+(i-n)*15
        hour2=mm2/60
        minu2=mod(mm2,60)
-       call cal_sun_angle(gono,year,month,day,hour2,minu2,lon_float,lat_float)
+       call cal_sun_angle(gono,year,month,day,hour2,minu2,116.4665,39.7736)
 !!!here we use the point lat,lon.if we use other point,need edit
        r_data_smarts(i)=gono
-!       read(12,*) tim,r_data_sta(i)  # ÔÚÊµ¼ÊµÄÉú²ú»·¾³ÖÐ£¬²»ÐèÒªÐèÒªÔ¤²âµÄËÄ¸öÐ¡Ê±µÄÊý¾Ý
+       read(12,*) tim,r_data_sta(i)
      enddo
 close(12)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!     
+     
      
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!follow  we get the locs and locd,in the n=5 obs data .
@@ -117,15 +92,17 @@ print*, locs, locd,'locs,locd'
 !!!!following we first open the forecast_test.txt
 !!!! and judge the locd-locs+1==n ,if yes,use MMGF,method,if no,use gono*0.7
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+file_out='forecast_test.txt'
 open(21,file=file_out)
-write(21,'(a)') '   MMGF  '
+write(21,'(a)') '    in_situ       MMGF  '
+
 
 if(locd-locs+1==n)then
    n1=n+nd
    work_smarts(1:n1)=r_data_smarts(locd-n+1:locd-n+n1)
    work_sta(1:n)=r_data_sta(locd-n+1:locd)
   do k=1,n
-   r_data(k)=0.0  !Çç¿ÕÖ¸Êý
+   r_data(k)=0.0  !ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
   if(work_smarts(k).ne.0)then
      r_data(k)=work_sta(k)/work_smarts(k)
   endif
@@ -134,12 +111,12 @@ if(locd-locs+1==n)then
   endif
   enddo
 
-  wind0(1:n)=r_data(1:n)  !Î´½øÐÐÒ»½×²î·Ö
+  wind0(1:n)=r_data(1:n)  !Î´ï¿½ï¿½ï¿½ï¿½Ò»ï¿½×²ï¿½ï¿½
   work(1:n)=wind0(1:n)
   if(wind0(n).eq.0)then
      work(n+1:n1)=0.0
   else
-!¶ÔÄ³96*2¸öÊ±´ÎµÄÐòÁÐ¼ÆËãÆä¾ùÉúº¯ÊýÍØÕ¹¾ØÕó£¬¾ØÕó³¤¶ÈÎªn1¡£½á¹û´æ·ÅÔÚpmgf(n1,mm-1)¾ØÕóÖÐ
+!ï¿½ï¿½Ä³96*2ï¿½ï¿½Ê±ï¿½Îµï¿½ï¿½ï¿½ï¿½Ð¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹ï¿½ï¿½ï¿½ó£¬¾ï¿½ï¿½ó³¤¶ï¿½Îªn1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½pmgf(n1,mm-1)ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
      call MMGF(n,n1,mm,wind0(1:n),pmgf(1:n1,1:mm-1))
 
 
@@ -153,11 +130,11 @@ if(locd-locs+1==n)then
       y(i)=wind0(i)
    enddo
 
-!ÀûÓÃ»ÒÉ«¹ØÁª¶È¼ÆËã·½·¨½«Ô¤±¨Á¿windºÍÔ¤±¨Òò×ÓpmgfµÄ¹ØÁª¶Èaa£¬ÆäÊý×é´óÐ¡ÓëÔ¤±¨Òò×ÓpmgfµÄ´óÐ¡Ò»ÖÂ£¬¼´Îªmm-1
+!ï¿½ï¿½ï¿½Ã»ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½È¼ï¿½ï¿½ã·½ï¿½ï¿½ï¿½ï¿½Ô¤ï¿½ï¿½ï¿½ï¿½windï¿½ï¿½Ô¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½pmgfï¿½Ä¹ï¿½ï¿½ï¿½ï¿½ï¿½aaï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½Ô¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½pmgfï¿½Ä´ï¿½Ð¡Ò»ï¿½Â£ï¿½ï¿½ï¿½Îªmm-1
    call gra(x(1:n,1:mm-1),y(n),aa,mm-1,n)
 
 
-!½«¹ØÁª¶È¾ØÕóaa´Ó´óµ½Ð¡ÅÅÁÐµÃµ½a0£¬²¢¼ÇÂ¼ËùÔÚÎ»ÖÃa00
+!ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¾ï¿½ï¿½ï¿½aaï¿½Ó´ï¿½Ð¡ï¿½ï¿½ï¿½ÐµÃµï¿½a0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½a00
    do i=1,mm-1
       ix=maxloc(aa)
       a0(i)=aa(ix(1))
@@ -166,7 +143,7 @@ if(locd-locs+1==n)then
    enddo
 
 
-!!!!! ½«¹ØÁª¶È×î´óµÄmn¸öÍØÕ¹ÖÜÆÚÐòÁÐ´æ·ÅÔÚf(mn,n1)ÖÐ¡£
+!!!!! ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½mnï¿½ï¿½ï¿½ï¿½Õ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½f(mn,n1)ï¿½Ð¡ï¿½
    do j=1, mn
      k=a00(j)
      do kk=1,n1
@@ -175,7 +152,7 @@ if(locd-locs+1==n)then
    enddo
 
 
-!!!¶àÔªÏßÐÔ»Ø¹é£¬»Ø¹éÏµÊý´æ·ÅÔÚa(mn+1)ÖÐ
+!!!ï¿½ï¿½Ôªï¿½ï¿½ï¿½Ô»Ø¹é£¬ï¿½Ø¹ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½a(mn+1)ï¿½ï¿½
 
    call isqt2(f(1:mn,1:n1),wind0(1:n),mn,mn+1,n,a,q,s,r,v,u,b)
 
@@ -189,16 +166,17 @@ if(locd-locs+1==n)then
 
 !out
         do im=1,n1
-       work(im)=windy(im)
-    enddo
+	   work(im)=windy(im)
+	enddo
   endif
-!!¼ÆËãÍ³¼ÆÄâºÏÊ±¶Î£¨1£ºn1-16£©£¬Í³¼ÆÄâºÏÏßÓë¹Û²âÏßµÄÎó²îb(1)£¬¼°NWPÓë¹Û²âÏßµÄÎó²î(b2)
+!!ï¿½ï¿½ï¿½ï¿½Í³ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½Î£ï¿½1ï¿½ï¿½n1-16ï¿½ï¿½ï¿½ï¿½Í³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Û²ï¿½ï¿½ßµï¿½ï¿½ï¿½ï¿½b(1)ï¿½ï¿½ï¿½ï¿½NWPï¿½ï¿½Û²ï¿½ï¿½ßµï¿½ï¿½ï¿½ï¿½(b2)
 
 
-!½«¸÷µã¹ö¶¯µÄÔ¤±¨½á¹û´æÔÚÎÄ¼þ21ÖÐ¡£Êµ¿ö¡¢Ô¤±¨Ïà¼ä¸ô
+!ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½21ï¿½Ð¡ï¿½Êµï¿½ï¿½ï¿½ï¿½Ô¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    
     do k=6,21
-    write(21,'(f12.3)') work(k)*work_smarts(k)
-    enddo
+    write(21,'(2f12.3)')r_data_sta(k), work(k)*work_smarts(k)
+    enddo    
     close(21)
 else
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -206,7 +184,7 @@ else
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     print*,'hahaha'
     do i=1,nd
-       write(21,'(f12.3)') r_data_smarts(n+i)*0.7
+       write(21,'(2f12.3)')r_data_sta(5+i),r_data_smarts(n+i)*0.7
     enddo
     close(21)
 endif
@@ -214,7 +192,7 @@ endif
 end program
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!subroutine MMGF ¾ùÉúº¯Êý×Ó³ÌÐò,n1Îª¾ùÉúÍØÕ¹º¯ÊýµÄ³¤¶È£¬nÎªÔ­ÐòÁÐµÄ³¤¶È
+!subroutine MMGF ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½ï¿½,n1Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½È£ï¿½nÎªÔ­ï¿½ï¿½ï¿½ÐµÄ³ï¿½ï¿½ï¿½
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine MMGF(N,n1,mm,x,PMGF)
 real sb(n),x(n),pmgf(n1,mm-1)
@@ -225,27 +203,27 @@ real sb(n),x(n),pmgf(n1,mm-1)
      sb(j)=0.0
    enddo
     do j=1,kk
-      I=0
-      do l=j,n,kk
-       sb(j)=sb(j)+x(l)
-        I=I+1
-      enddo
-       sb(j)=sb(j)/float(I)
-    enddo
-    do l=1,n1
-      j=l-l/kk*kk
-      if(j.eq.0) j=kk
-      kkk=kk-1
-      pmgf(l,kkk)=sb(j)
-    enddo
+	  I=0
+	  do l=j,n,kk
+	   sb(j)=sb(j)+x(l)
+	    I=I+1
+	  enddo
+	   sb(j)=sb(j)/float(I)
+	enddo
+	do l=1,n1
+	  j=l-l/kk*kk
+	  if(j.eq.0) j=kk
+	  kkk=kk-1
+	  pmgf(l,kkk)=sb(j)
+	enddo
  enddo
 return
-end
+end   
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!subroutine gra(x,y,aa,m,nl)¼ÆËã»ÒÉ«¹ØÁª¶Èº¯Êý
-!xÎªÒò×ÓÐòÁÐ£¬yÎªÔ¤±¨Á¿ÐòÁÐ£¬aaÎª»ÒÉ«¹ØÁª¶È£¬Êý×é´óÐ¡ÓëÒò×Ó¸öÊýÏàÍ¬
-!!!½«ËùÓÐÐòÁÐ½øÐÐ±ê×¼»¯´¦Àí
+!subroutine gra(x,y,aa,m,nl)ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½Èºï¿½ï¿½ï¿½
+!xÎªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½yÎªÔ¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½aaÎªï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½È£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½ï¿½Ó¸ï¿½ï¿½ï¿½ï¿½ï¿½Í¬
+!!!ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð½ï¿½ï¿½Ð±ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine gra(x,y,aa,m,nl)
 
@@ -259,7 +237,7 @@ do i=1,m
    call standard(w1,xs,nl)
    do j=1,nl
      x(j,i)=xs(j)
-    enddo
+	enddo
 enddo
 call standard(y,xs,nl)
   do j=1,nl
@@ -267,12 +245,12 @@ call standard(y,xs,nl)
   enddo
 
 !--------------------------------------
-!!!¼ÆËã»ÒÉ«¹ØÁª¶È
+!!!ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 !--------------------------------------
 do i=1,m
     do j=1,nl
-     wk2(i,j)=abs(y(j)-x(j,i))
-    enddo
+	 wk2(i,j)=abs(y(j)-x(j,i))
+	enddo
 enddo
 
 
@@ -281,8 +259,8 @@ do i=1,m
   wk3(i)=minval(wk2(i,:))
   wk4(i)=maxval(wk2(i,:))
 enddo
- wk_min=minval(wk3)
- wk_max=maxval(wk4)
+ wk_min=minval(wk3)   
+ wk_max=maxval(wk4)  
 
 do i=1,m
    do j=1,nl
@@ -295,175 +273,175 @@ do i=1,m
    aa(i)=sum(wk2(i,:))/float(nl)
 enddo
 
-    RETURN
-    END
+	RETURN
+	END
 
 
 !!!!!!!!!!!!!!!!!!!!!!
-!!!!!±ê×¼»¯´¦Àí!x Ô­Ê¼ÐòÁÐ£¬xsÎª±ê×¼»¯ÐòÁÐ,nlÎªÊ±¼ä³¤¶È
+!!!!!ï¿½ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½!x Ô­Ê¼ï¿½ï¿½ï¿½Ð£ï¿½xsÎªï¿½ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,nlÎªÊ±ï¿½ä³¤ï¿½ï¿½
 !!!!!!!!!!!!!!!!!!!!!!!
 subroutine standard(x,xs,nl)
 real x(nl),xs(nl),x_mean,x_sx
 
-    x_mean=sum(x)/float(nl)
-    x_sx=sum((x-x_mean)**2)/float(nl)
-    do n=1,nl
-        xs(n)=(x(n)-x_mean)/sqrt(x_sx)
-    enddo
+	x_mean=sum(x)/float(nl)
+	x_sx=sum((x-x_mean)**2)/float(nl)
+	do n=1,nl
+		xs(n)=(x(n)-x_mean)/sqrt(x_sx)
+	enddo
 
-    RETURN
-    END
+	RETURN
+	END
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!¶àÔªÏßÐÔ»Ø¹ésubroutine
-!M ×Ô±äÁ¿¸öÊý mmÎª»Ø¹éÏµÊý¸öÊýmm=m+1,nÎªÊ±¼ä³¤¶È£¬a(mm)ÊÇÒ»Î¬Êý×é£¬´æ·Å»Ø¹éÏµÊý£¬qsrÎªÆ«²îÆ½·½ºÍ£¬Æ½¾ù±ê×¼²îºÍ¸´Ïà¹ØÏµÊý£¬
-! v(m)Îªm¸ö×Ô±äÁ¿µÄÆ«Ïà¹ØÏµÊý£¬ÓÃÀ´¼ìÑéÒò×ÓÓë±äÁ¿µÄÏà¹Ø¶È£»ÓÃ¸´Ïà¹ØÏµÊýÀ´¼ìÑéÕûÌå»Ø¹éÐ§¹û¡£uÎª»Ø¹éÆ½·½ºÍ,bÎª¹¤×÷Êý×é
+!ï¿½ï¿½Ôªï¿½ï¿½ï¿½Ô»Ø¹ï¿½subroutine
+!M ï¿½Ô±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ mmÎªï¿½Ø¹ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½mm=m+1,nÎªÊ±ï¿½ä³¤ï¿½È£ï¿½a(mm)ï¿½ï¿½Ò»Î¬ï¿½ï¿½ï¿½é£¬ï¿½ï¿½Å»Ø¹ï¿½Ïµï¿½ï¿½ï¿½ï¿½qsrÎªÆ«ï¿½ï¿½Æ½ï¿½ï¿½ï¿½Í£ï¿½Æ½ï¿½ï¿½ï¿½ï¿½×¼ï¿½ï¿½Í¸ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½
+! v(m)Îªmï¿½ï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø¶È£ï¿½ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø¹ï¿½Ð§ï¿½ï¿½ï¿½ï¿½uÎªï¿½Ø¹ï¿½Æ½ï¿½ï¿½ï¿½ï¿½,bÎªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine isqt2(x,y,m,mm,n,a,q,s,r,v,u,b)
 
 dimension x(m,n),y(n),a(mm),b(mm,mm),v(m)
 real x,y,a,b,v,q,s,r,u,yy,dyy,p,pp
 
-    B(1,1)=N
-    DO J=2,MM
-      B(1,J)=0.0
-      DO I=1,N
-      B(1,J)=B(1,J)+X(J-1,I)
+	B(1,1)=N
+	DO J=2,MM
+	  B(1,J)=0.0
+	  DO I=1,N
+	  B(1,J)=B(1,J)+X(J-1,I)
       enddo
-      B(J,1)=B(1,J)
+	  B(J,1)=B(1,J)
     enddo
-    DO I=2,MM
-      DO J=I,MM
-        B(I,J)=0.0
-        DO  K=1,N
-        B(I,J)=B(I,J)+X(I-1,K)*X(J-1,K)
+	DO I=2,MM
+	  DO J=I,MM
+	    B(I,J)=0.0
+	    DO  K=1,N
+	    B(I,J)=B(I,J)+X(I-1,K)*X(J-1,K)
         enddo
-        B(J,I)=B(I,J)
+	    B(J,I)=B(I,J)
       enddo
     enddo
-    A(1)=0.0
-    DO I=1,N
-    A(1)=A(1)+Y(I)
+	A(1)=0.0
+	DO I=1,N
+	A(1)=A(1)+Y(I)
     enddo
-    DO I=2,MM
-      A(I)=0.0
-      DO  J=1,N
-      A(I)=A(I)+X(I-1,J)*Y(J)
+	DO I=2,MM
+	  A(I)=0.0
+	  DO  J=1,N
+	  A(I)=A(I)+X(I-1,J)*Y(J)
       enddo
     enddo
 
-    CALL ACHOL(B,MM,1,A,L)
+	CALL ACHOL(B,MM,1,A,L)
 
-    YY=0.0
-    DO I=1,N
-    YY=YY+Y(I)/N
+	YY=0.0
+	DO I=1,N
+	YY=YY+Y(I)/N
     enddo
-    Q=0.0
-    DYY=0.0
-    U=0.0
+	Q=0.0
+	DYY=0.0
+	U=0.0
 
-    DO I=1,N
-      P=A(1)
-      DO J=1,M
+	DO I=1,N
+	  P=A(1)
+	  DO J=1,M
       P=P+A(J+1)*X(J,I)
       enddo
-      Q=Q+(Y(I)-P)*(Y(I)-P)
-      DYY=DYY+(Y(I)-YY)*(Y(I)-YY)
-      U=U+(YY-P)*(YY-P)
+	  Q=Q+(Y(I)-P)*(Y(I)-P)
+	  DYY=DYY+(Y(I)-YY)*(Y(I)-YY)
+	  U=U+(YY-P)*(YY-P)
     enddo
 
 
-    S=SQRT(Q/N)
-    if(Q/DYY.gt.1.0)then
-    R=0.0
-    else
-    R=SQRT(1.0-Q/DYY)
-    endif
+	S=SQRT(Q/N)
+	if(Q/DYY.gt.1.0)then 
+	R=0.0
+	else
+	R=SQRT(1.0-Q/DYY)
+	endif
 
-    DO J=1,M
-      P=0.0
-      DO I=1,N
-        PP=A(1)
-        DO K=1,M
-          IF (K.NE.J) PP=PP+A(K+1)*X(K,I)
+	DO J=1,M
+	  P=0.0
+	  DO I=1,N
+	    PP=A(1)
+	    DO K=1,M
+	      IF (K.NE.J) PP=PP+A(K+1)*X(K,I)
         enddo
-        P=P+(Y(I)-PP)*(Y(I)-PP)
+	    P=P+(Y(I)-PP)*(Y(I)-PP)
        enddo
      if((Q/P).ge.1.0)then
-      v(J)=0.0
-      else
-      V(J)=SQRT(1.0-Q/P)
-      endif
+	  v(J)=0.0
+	  else
+	  V(J)=SQRT(1.0-Q/P)
+	  endif
     enddo
 
-    RETURN
-    END
+	RETURN
+	END
 
 
-    SUBROUTINE ACHOL(Aa,N,M,D,L)
-    real Aa(N,N),D(N,M)
-    L=1
-    IF (Aa(1,1)+1.0.EQ.1.0) THEN
-      L=0
-      WRITE(*,30)
-      RETURN
-    END IF
-    Aa(1,1)=SQRT(Aa(1,1))
-    DO  J=2,N
-    Aa(1,J)=Aa(1,J)/Aa(1,1)
+	SUBROUTINE ACHOL(Aa,N,M,D,L)
+	real Aa(N,N),D(N,M)
+	L=1
+	IF (Aa(1,1)+1.0.EQ.1.0) THEN
+	  L=0
+	  WRITE(*,30)
+	  RETURN
+	END IF
+	Aa(1,1)=SQRT(Aa(1,1))
+	DO  J=2,N
+	Aa(1,J)=Aa(1,J)/Aa(1,1)
     enddo
-    DO  I=2,N
-      DO  J=2,I
-      Aa(I,I)=Aa(I,I)-Aa(J-1,I)*Aa(J-1,I)
+	DO  I=2,N
+	  DO  J=2,I
+	  Aa(I,I)=Aa(I,I)-Aa(J-1,I)*Aa(J-1,I)
       enddo
-      IF (Aa(I,I)+1.0.EQ.1.0) THEN
-       Aa(I,I)= 0.5 !!! ¼ÓÈë
-        L=0
-        WRITE(*,30)
-        RETURN
-      END IF
-30      FORMAT(1X,'FAIL')
+	  IF (Aa(I,I)+1.0.EQ.1.0) THEN
+       Aa(I,I)= 0.5 !!! ï¿½ï¿½ï¿½ï¿½
+	    L=0
+	    WRITE(*,30)
+	    RETURN
+	  END IF
+30	  FORMAT(1X,'FAIL')
 
     if(Aa(I,I).gt.0.0)then
-      Aa(I,I)=SQRT(Aa(I,I))
-        else
-         Aa(I,I)= 0.5  !0.0
-      endif
-      IF (I.NE.N) THEN
-        DO  J=I+1,N
-        DO  K=2,I
-        Aa(I,J)=Aa(I,J)-Aa(K-1,I)*Aa(K-1,J)
+	  Aa(I,I)=SQRT(Aa(I,I))   
+		else  
+	     Aa(I,I)= 0.5  !0.0
+	  endif
+	  IF (I.NE.N) THEN
+	    DO  J=I+1,N
+	    DO  K=2,I
+	    Aa(I,J)=Aa(I,J)-Aa(K-1,I)*Aa(K-1,J)
         enddo
-        Aa(I,J)=Aa(I,J)/Aa(I,I)
+	    Aa(I,J)=Aa(I,J)/Aa(I,I)
         enddo
-      END IF
-
+	  END IF
+  
     enddo
 
-    DO J=1,M
-      D(1,J)=D(1,J)/Aa(1,1)
-      DO  I=2,N
-        DO K=2,I
-        D(I,J)=D(I,J)-Aa(K-1,I)*D(K-1,J)
+	DO J=1,M
+	  D(1,J)=D(1,J)/Aa(1,1)
+	  DO  I=2,N
+	    DO K=2,I
+	    D(I,J)=D(I,J)-Aa(K-1,I)*D(K-1,J)
         enddo
-        D(I,J)=D(I,J)/Aa(I,I)
+	    D(I,J)=D(I,J)/Aa(I,I)
       enddo
     enddo
-    DO J=1,M
-      D(N,J)=D(N,J)/Aa(N,N)
-      DO  K=N,2,-1
-        DO  I=K,N
-        D(K-1,J)=D(K-1,J)-Aa(K-1,I)*D(I,J)
+	DO J=1,M
+	  D(N,J)=D(N,J)/Aa(N,N)
+	  DO  K=N,2,-1
+	    DO  I=K,N
+	    D(K-1,J)=D(K-1,J)-Aa(K-1,I)*D(I,J)
         enddo
-        D(K-1,J)=D(K-1,J)/Aa(K-1,K-1)
+	    D(K-1,J)=D(K-1,J)/Aa(K-1,K-1)
       enddo
     enddo
-    RETURN
-    END
+	RETURN
+	END
 
 
 !----------------------------------------------------------------------
-!     subroutine getida ¶ÔÈÕÆÚ½øÐÐ¿çÔÂ¼ÆËã
+!     subroutine getida ï¿½ï¿½ï¿½ï¿½ï¿½Ú½ï¿½ï¿½Ð¿ï¿½ï¿½Â¼ï¿½ï¿½ï¿½
 !----------------------------------------------------------------------   
       subroutine getida(idf,ida,iv)
       dimension idf(3),ida(3),iday(12)

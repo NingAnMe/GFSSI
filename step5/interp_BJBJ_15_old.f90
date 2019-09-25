@@ -1,6 +1,6 @@
 program main
 implicit none
-character*300 fn,fn1
+character*200 fn,fn1
 character*12 tim1,tim2
 integer hour,minnute
 real  aa,go1,go2,Itotal1,Itotal2,Itotal3
@@ -18,21 +18,13 @@ integer  icc
 character*10 tim11,tim22 
 real   kk
 
-INTEGER iargc,argnum !n_command_line
-argnum=iargc()
-IF (argnum .ne. 2) THEN
-  WRITE(*,*) 'Need 2 argument'
-  WRITE(*,*) 'Usage: BJBJ_file_path result_chazhi_file_path'
-  STOP
-ENDIF
-CALL getarg(1, fn)  ! BJBJ.txt
-CALL getarg(2, fn1)  ! result_chazhi.txt
-
 print*,'hello'
-print*,fn
-print*,fn1
 
+
+fn='interp_in.txt'
+fn1='interp_out.txt'
 open(12,file=fn1)
+
 open(11,file=fn)
 read(11,*)
 read(11,*)
