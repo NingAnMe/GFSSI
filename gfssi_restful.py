@@ -1,5 +1,7 @@
 import pickle
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
 import os
 from flask import Flask, request
 from flask_restful import Resource, Api
@@ -8,6 +10,7 @@ from history import product_fy4a_disk_area_data, make_zip_file, get_hash_utf8, f
     product_fy4a_disk_point_data
 
 from lib.lib_constant import KDTREE_LUT_FY4_4KM, KDTREE_LUT_FY4_1KM
+from lib.lib_forecast import forecast_ssi
 
 print('读取查找表文件： {}'.format('*' * 10))
 print(':{}'.format(KDTREE_LUT_FY4_4KM))
@@ -74,10 +77,6 @@ class DownloadData(Resource):
             date_s = requests['date_start']
             date_e = requests['date_end']
             point_file = requests.get('path')
-            if not point_file:
-                lon = float(requests['left_up_lon'])
-                lat = float(requests['left_up_lat'])
-
             if 'FY4' in resultid and '4KM' in resolution_type:
                 print('4KM')
                 idx = kdtree_idx_fy4_4km
@@ -88,11 +87,14 @@ class DownloadData(Resource):
                 ck = kdtree_ck_fy4_1km
             else:
                 return {'error': '分辨率错误', 'code': 0}, 200
+
             if point_file is not None:
                 in_files = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, point_file=point_file,
                                                         resolution_type=resolution_type, resultid=resultid,
                                                         idx=idx, ck=ck)
             else:
+                lon = float(requests['left_up_lon'])
+                lat = float(requests['left_up_lat'])
                 txt = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
                                                    resolution_type=resolution_type, resultid=resultid, idx=idx, ck=ck)
                 if txt is not None:
@@ -129,7 +131,11 @@ class GetPointData(Resource):
         date_e = requests['date_end']
         element = requests['element']
 
+        # 只支持时次预报
         if 'Orbit' not in resultid:
+            is_forecast = 'false'
+        # 只支持 4KMCorrect 和 1KM 预报
+        if ('4KMCorrect' not in resolution_type) and ('1KM' not in resolution_type):
             is_forecast = 'false'
 
         if 'FY4' in resultid and '4KM' in resolution_type:
@@ -144,33 +150,58 @@ class GetPointData(Resource):
             return {'error': '分辨率错误', 'code': 0}, 200
 
         if is_live.lower() == 'true':
-            result = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                                  resolution_type=resolution_type, resultid=resultid, element=element,
-                                                  idx=idx, ck=ck)
+            if is_forecast.lower() == 'true':
+                result = {}
+                date_end = datetime.strptime(date_e, '%Y%m%d%H%M%S')
+                date_e = (date_end - relativedelta(hours=4)).strftime('%Y%m%d%H%M%S')
+                result_live = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                                           resolution_type=resolution_type, resultid=resultid,
+                                                           element=element,
+                                                           idx=idx, ck=ck)
 
-            live_length = len(result['date'])
-            result['length'] = live_length
-            if is_forecast.lower() == 'true':
-                forecast_date = []
-                forecast_value = []
-                result['date'].extend(forecast_date)
-                result['value'].extend(forecast_value)
-                # ceshiceshiceshiceshi
-                if live_length >= 5:
-                    result['length'] -= 4
+                print(result_live)
+                result['length'] = len(result_live['date']) - 1
+                date_s = (date_end - relativedelta(hours=5)).strftime('%Y%m%d%H%M%S')
+                result_forecast = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                                               resolution_type=resolution_type, resultid=resultid,
+                                                               element=element,
+                                                               idx=idx, ck=ck)
+                print(result_forecast)
+                values = result_forecast.pop('values')
+                if result_forecast is not None:
+                    forecast_dates, forecast_values = forecast_ssi(result_forecast['date'], values, lon, lat)
+                    result_live['date'].extend(forecast_dates)
+                    result_live['value'].extend(forecast_values)
+                    result['date'] = result_live['date']
+                    result['value'] = result_live['value']
             else:
-                pass
-        else:
-            if is_forecast.lower() == 'true':
                 result = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
                                                       resolution_type=resolution_type, resultid=resultid,
                                                       element=element,
                                                       idx=idx, ck=ck)
+                result.pop('values')
+                live_length = len(result['date']) - 1
+                result['length'] = live_length
+        else:
+            if is_forecast.lower() == 'true':
+                date_end = datetime.strptime(date_e, '%Y%m%d%H%M%S')
+                date_start = date_end - relativedelta(hours=1)
+                date_s = date_start.strftime('%Y%m%d%H%M%S')
+
+                result = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                                      resolution_type=resolution_type, resultid=resultid,
+                                                      element=element,
+                                                      idx=idx, ck=ck)
+                values = result.pop('values')
+                if result is not None:
+                    forecast_dates, forecast_values = forecast_ssi(result['date'], values, lon, lat)
+                    result['date'] = forecast_dates
+                    result['value'] = forecast_values
                 result['length'] = 0
             else:
                 print('不支持的类型：is_live 和 is_forecast 不能同时为FALSE')
                 result = None
-
+        print(result)
         if result is not None:
             result['code'] = 1
 
@@ -187,3 +218,5 @@ if __name__ == '__main__':
     host = '0.0.0.0'
     post = 5000
     app.run(debug=True, host=host, port=5000)
+    product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                 resolution_type=resolution_type, resultid=resultid, idx=idx, ck=ck)

@@ -5,7 +5,7 @@
 @Author  : AnNing
 """
 import os
-from lib.lib_path import get_aid_path
+from lib.lib_path import get_aid_path, GFSSI_DIR
 
 aid_path = get_aid_path()
 
@@ -37,3 +37,7 @@ COLORBAR_RANGE_YEARLY = (0, 4000)
 
 # FY4A 1KM Correct程序的经纬度范围，需要和1KM对应
 FY4A_1KM_CORRECT_LAT_LON_RANGE = [9.995, 55.01, 69.995, 140.01, 0.01]
+
+# 预报程序
+INTERP_EXE = os.path.join(GFSSI_DIR, 'step5', 'interp')
+FORECAST_EXE = os.path.join(GFSSI_DIR, 'step5', 'forecast')
