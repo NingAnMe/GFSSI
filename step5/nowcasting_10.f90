@@ -26,6 +26,31 @@ integer hour2,minu2
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!       
 data iday/31,28,31,30,31,30,31,31,30,31,30,31/
+
+! -  parameters and running options
+INTEGER iargc,argnum !n_command_line
+character*20 lat,lon
+Real lat_float, lon_float
+argnum=iargc()
+IF (argnum .ne. 4) THEN
+  WRITE(*,*) 'Need 4 argument'
+  WRITE(*,*) 'Usage: in_file_path out_file_path lat lon'
+  STOP
+ENDIF
+CALL getarg(1, file_in_sta)
+CALL getarg(2, file_out)
+CALL getarg(3, lat)
+CALL getarg(4, lon)
+
+print *, file_in_sta
+print *, file_out
+print *, lat
+print *, lon
+
+read(lat,*) lat_float
+read(lon,*) lon_float
+
+
 nd=16   !forecast 16 times,every time is 15minutes,so 16times is 4hours.we
         !forecast 4hours 
 n=5     !5 obs .we use past of 5 obs data ,to forecast 4hours.
@@ -35,7 +60,6 @@ n=5     !5 obs .we use past of 5 obs data ,to forecast 4hours.
 !!!!following we read the input file,and get the newest 5 obs data .
 !!!! and we also compute the future 16times's time and gono.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-file_in_sta='result_chazhi.txt'
 open(12,file=file_in_sta)
      do i=1,n
          read(12,*) tim,r_data_sta(i)
@@ -44,7 +68,7 @@ open(12,file=file_in_sta)
          read(tim(7:8),'(i2)') day
          read(tim(9:10),'(i2)') hour
          read(tim(11:12),'(i2)') minu   
-         call cal_sun_angle(gono,year,month,day,hour,minu,116.4665,39.7736)
+         call cal_sun_angle(gono,year,month,day,hour,minu,lon_float,lat_float)
 !!!!here we use the point lat,lon.if we use other point,need edit
          r_data_smarts(i)=gono
      enddo
@@ -53,7 +77,7 @@ open(12,file=file_in_sta)
        mm2=mm1+(i-n)*15
        hour2=mm2/60
        minu2=mod(mm2,60)
-       call cal_sun_angle(gono,year,month,day,hour2,minu2,116.4665,39.7736)
+       call cal_sun_angle(gono,year,month,day,hour2,minu2,lon_float,lat_float)
 !!!here we use the point lat,lon.if we use other point,need edit
        r_data_smarts(i)=gono
        read(12,*) tim,r_data_sta(i)
@@ -92,10 +116,8 @@ print*, locs, locd,'locs,locd'
 !!!!following we first open the forecast_test.txt
 !!!! and judge the locd-locs+1==n ,if yes,use MMGF,method,if no,use gono*0.7
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-file_out='forecast_test.txt'
 open(21,file=file_out)
-write(21,'(a)') '    in_situ       MMGF  '
-
+write(21,'(a)') '   MMGF  '
 
 if(locd-locs+1==n)then
    n1=n+nd
@@ -173,10 +195,10 @@ if(locd-locs+1==n)then
 
 
 !将各点滚动的预报结果存在文件21中。实况、预报相间隔
-    
+
     do k=6,21
-    write(21,'(2f12.3)')r_data_sta(k), work(k)*work_smarts(k)
-    enddo    
+    write(21,'(f12.3)') work(k)*work_smarts(k)
+    enddo
     close(21)
 else
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -218,7 +240,7 @@ real sb(n),x(n),pmgf(n1,mm-1)
     enddo
  enddo
 return
-end   
+end
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !subroutine gra(x,y,aa,m,nl)计算灰色关联度函数
@@ -259,8 +281,8 @@ do i=1,m
   wk3(i)=minval(wk2(i,:))
   wk4(i)=maxval(wk2(i,:))
 enddo
- wk_min=minval(wk3)   
- wk_max=maxval(wk4)  
+ wk_min=minval(wk3)
+ wk_max=maxval(wk4)
 
 do i=1,m
    do j=1,nl
@@ -352,7 +374,7 @@ real x,y,a,b,v,q,s,r,u,yy,dyy,p,pp
 
 
     S=SQRT(Q/N)
-    if(Q/DYY.gt.1.0)then 
+    if(Q/DYY.gt.1.0)then
     R=0.0
     else
     R=SQRT(1.0-Q/DYY)
@@ -403,8 +425,8 @@ real x,y,a,b,v,q,s,r,u,yy,dyy,p,pp
 30      FORMAT(1X,'FAIL')
 
     if(Aa(I,I).gt.0.0)then
-      Aa(I,I)=SQRT(Aa(I,I))   
-        else  
+      Aa(I,I)=SQRT(Aa(I,I))
+        else
          Aa(I,I)= 0.5  !0.0
       endif
       IF (I.NE.N) THEN
@@ -415,7 +437,7 @@ real x,y,a,b,v,q,s,r,u,yy,dyy,p,pp
         Aa(I,J)=Aa(I,J)/Aa(I,I)
         enddo
       END IF
-  
+
     enddo
 
     DO J=1,M
