@@ -713,6 +713,7 @@ def _get_point_data(full_file, element, index, get_datetime, resultid,
     for element_ in elements:
         try:
             data_tmp = data_geter[element_]()[index]
+            print(data_tmp)
             if np.isnan(data_tmp):
                 datas_tmp[element_] = 0
             else:
@@ -905,10 +906,10 @@ if __name__ == '__main__':
     # product_fy4a_1kmcorrect_disk_full_data_orbit(start, end)  # 1KMCorrect
 
     # 轨道：绘图
-    start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
     # product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KM')  # 圆盘轨道
-    product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KMCorrect')  # 圆盘轨道
+    # product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KMCorrect')  # 圆盘轨道
     # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190602235959', '%Y%m%d%H%M%S')
     # product_fy4a_disk_full_image_orbit(start, end, resolution_type='1KM')  # 圆盘轨道
