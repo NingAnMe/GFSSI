@@ -38,7 +38,7 @@ def filter_data_by_delta_sigma(x, y, w=None, n=8):
 def filter_data_by_time(data, timestamp, longitude, time):
     index = get_time_index_by_timestamp_longitude(timestamp, longitude, time)
     if isinstance(data, dict):
-        for k, d in data.iteritems():
+        for k, d in data.items():
             data[k] = d[index]
     else:
         data = data[index]

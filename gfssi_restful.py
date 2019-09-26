@@ -218,5 +218,3 @@ if __name__ == '__main__':
     host = '0.0.0.0'
     post = 5000
     app.run(debug=True, host=host, port=5000)
-    product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                 resolution_type=resolution_type, resultid=resultid, idx=idx, ck=ck)

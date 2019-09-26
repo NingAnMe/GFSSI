@@ -884,6 +884,14 @@ if __name__ == '__main__':
     # start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
 
+    start = datetime.strptime('20190110000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190120235959', '%Y%m%d%H%M%S')
+    product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # 4KMCorrect
+
+    start = datetime.strptime('20190410000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190420235959', '%Y%m%d%H%M%S')
+    product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # 4KMCorrect
+
     # =================================全圆盘==================================
     # 轨道：生产数据
     # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
@@ -897,10 +905,10 @@ if __name__ == '__main__':
     # product_fy4a_1kmcorrect_disk_full_data_orbit(start, end)  # 1KMCorrect
 
     # 轨道：绘图
-    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
-    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
     # product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KM')  # 圆盘轨道
-    # product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KMCorrect')  # 圆盘轨道
+    product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KMCorrect')  # 圆盘轨道
     # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190602235959', '%Y%m%d%H%M%S')
     # product_fy4a_disk_full_image_orbit(start, end, resolution_type='1KM')  # 圆盘轨道
@@ -946,15 +954,15 @@ if __name__ == '__main__':
     # product_fy4a_disk_area_data(start, end, frequency='Yearly', resolution_type='4KM',
     #                             left_up_lon=leftuplon, left_up_lat=leftuplat,
     #                             right_down_lon=rightdownlon, right_down_lat=rightdownlat)  # 中国区年
-    from gfssi_restful import kdtree_idx_fy4_4km as idx
-    from gfssi_restful import kdtree_ck_fy4_4km as ck
-
-    resolution_type = '4KM'
-    resultid = 'FY4A_AGRI_L2_SSI_Orbit'
-    txt1 = product_fy4a_disk_point_data(date_start='20190101000000', date_end='20191231000000', lon=102.65, lat=25.,
-                                       resolution_type=resolution_type, resultid=resultid, idx=idx, ck=ck)
-
-    txt2 = product_fy4a_disk_point_data(date_start='20190101000000', date_end='20191231000000', lon=120.1647, lat=32.2261,
-                                       resolution_type=resolution_type, resultid=resultid, idx=idx, ck=ck)
-    print(txt1)
-    print(txt2)
+    # from gfssi_restful import kdtree_idx_fy4_4km as idx
+    # from gfssi_restful import kdtree_ck_fy4_4km as ck
+    #
+    # resolution_type = '4KM'
+    # resultid = 'FY4A_AGRI_L2_SSI_Orbit'
+    # txt1 = product_fy4a_disk_point_data(date_start='20190101000000', date_end='20191231000000', lon=102.65, lat=25.,
+    #                                    resolution_type=resolution_type, resultid=resultid, idx=idx, ck=ck)
+    #
+    # txt2 = product_fy4a_disk_point_data(date_start='20190101000000', date_end='20191231000000', lon=120.1647, lat=32.2261,
+    #                                    resolution_type=resolution_type, resultid=resultid, idx=idx, ck=ck)
+    # print(txt1)
+    # print(txt2)
