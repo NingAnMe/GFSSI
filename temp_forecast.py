@@ -55,19 +55,22 @@ if __name__ == '__main__':
     #     print('datetime_start datetime_end hour lon lat out_dir      hour是北京时间')
     date_init = argv[1]
     date_finally = argv[2]
-    # hour = argv[3]
+    hour = argv[3]
     # lon = argv[4]
     # lat = argv[5]
     # out_dir = argv[6]
     # date_init = '20190110'
     # date_finally = '20190120'
-    hour = 10
+    # hour = 10
     lon = 120.165
     lat = 32.226
-    out_dir = os.path.join('/home/gfssi/GFData/TmpData', '{}_{}'.format(lon, lat))
+    out_dir = os.path.join('/home/gfssi/GFData/TmpData', '{}_{}_{}'.format(lon, lat, hour))
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+
     date_start = datetime.strptime(date_init[:8], '%Y%m%d')
     date_end = datetime.strptime(date_finally[:8], '%Y%m%d')
-    # forecast(date_start, date_end, hour, lon, lat, out_dir)
+    forecast(date_start, date_end, hour, lon, lat, out_dir)
 
     outname = 'FY4A-_AGRI--_{lon:07.3f}N_DISK_{lat:07.3f}E_L2-_SSI-_MULT_NOM_' \
               '{date_start}_{date_end}_{resolution_type}_V0001_forecast.csv'.format(
