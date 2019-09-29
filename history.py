@@ -23,6 +23,7 @@ from gfssi_e03_ssi_area import area
 from gfssi_b01_ssi_itcal import itcal
 from gfssi_b02_ssi_1km import fy4a_ssi_4km_to_1km
 from gfssi_b04_txt2hdf import fy4a_1km_correct_txt2hdf
+from gfssi_b03_envi2hdf import fy3d_envi2hdf
 
 from lib.lib_read_ssi import FY4ASSI
 from lib.lib_database import find_result_data, Session, ResultData
@@ -98,7 +99,7 @@ def get_files_by_date(dir_path, time_start, time_end, ext=None, pattern=None):
 
 
 def fy4a_save_source_data_in_database():
-    source_dir = os.path.join(data_root_dir, 'SourceData')
+    source_dir = os.path.join(data_root_dir, 'SourceData', 'FY4A', 'SSI_4KM')
     ssi_dir = os.path.join(data_root_dir, 'SSIData')
     ext = '.NC'
     resultid = 'FY4A_AGRI_L2_SSI_Orbit'
@@ -142,6 +143,36 @@ def fy4a_save_source_data_in_database():
                     print(why)
                     os.remove(dst_file)
     session.commit()
+    session.close()
+
+
+def fy3d_save_source_data_in_database(date_start=None, date_end=None, thread=2):
+    source_dir = os.path.join(data_root_dir, 'SourceData', 'FY3D', 'SSI_1KM')
+    ext = '.dat'
+    resultid = 'FY3D_MERSI_L2_SSI_Orbit'
+    planid = 1
+    resolution_type = '1KM'
+    filename_template = 'FY3D-_MERSI--_N_DISK_E_L3-_SSI-_MULT_NOM_{ymd}_{r}_V0001.NC'
+
+    print('开始生产')
+    p = Pool(thread)
+    for root, dirs, files in os.walk(source_dir):
+        for file_name in files:
+            if ext is not None:
+                if '.' not in ext:
+                    ext = '.' + ext
+                if os.path.splitext(file_name)[1].lower() != ext.lower():
+                    continue
+            src_file = os.path.join(root, file_name)
+            ymd = file_name[3:11]
+            datatime = datetime.strptime(ymd, "%Y%m%d")
+            if (not date_start <= datatime <= date_end) or ('Gc' not in file_name):
+                continue
+            dst_dir = os.path.join(data_root_dir, 'SSIData', 'FY3D', 'SSI_1KM', 'Full', 'Daily', ymd[:6])
+            filename_out = filename_template.format(ymd=ymd, r=resolution_type)
+            dst_file = os.path.join(dst_dir, filename_out)
+            # p.apply_async(fy3d_envi2hdf, args=(src_file, dst_file, resultid, planid, datatime, resolution_type))
+            fy3d_envi2hdf(src_file, dst_file, resultid, planid, datatime, resolution_type)
 
 
 def product_fy4a_4kmcorrect_disk_full_data_orbit(date_start=None, date_end=None, thread=2):
@@ -323,7 +354,6 @@ def product_fy4a_disk_full_image_orbit(date_start=None, date_end=None, thread=2,
             plot_map_full(in_file, vmin, vmax, resultid_image, planid, datatime, resolution_type, )
         else:
             p.apply_async(plot_map_full, args=(in_file, vmin, vmax, resultid_image, planid, datatime, resolution_type,))
-
     p.close()
     p.join()
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
@@ -885,13 +915,13 @@ if __name__ == '__main__':
     # start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
 
-    start = datetime.strptime('20190110000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190120235959', '%Y%m%d%H%M%S')
-    product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # 4KMCorrect
-
-    start = datetime.strptime('20190410000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190420235959', '%Y%m%d%H%M%S')
-    product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # 4KMCorrect
+    # start = datetime.strptime('20190110000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190120235959', '%Y%m%d%H%M%S')
+    # product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # 4KMCorrect
+    #
+    # start = datetime.strptime('20190410000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190420235959', '%Y%m%d%H%M%S')
+    # product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # 4KMCorrect
 
     # =================================全圆盘==================================
     # 轨道：生产数据
@@ -906,8 +936,8 @@ if __name__ == '__main__':
     # product_fy4a_1kmcorrect_disk_full_data_orbit(start, end)  # 1KMCorrect
 
     # 轨道：绘图
-    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
-    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    # start = datetime.strptime('20190410000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190410235959', '%Y%m%d%H%M%S')
     # product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KM')  # 圆盘轨道
     # product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KMCorrect')  # 圆盘轨道
     # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
@@ -916,6 +946,9 @@ if __name__ == '__main__':
     # product_fy4a_disk_full_image_orbit('20171015000000', '20171015235959', resolution_type='1KMCorrect')  # 圆盘轨道
 
     # 日：生产数据和绘图
+    start = datetime.strptime('20190501000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190501235959', '%Y%m%d%H%M%S')
+    fy3d_save_source_data_in_database(start, end)  # 圆盘日
     # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
     # product_fy4a_disk_full_data_and_image(start, end, frequency='Daily', resolution_type='4KM')  # 圆盘日

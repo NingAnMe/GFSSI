@@ -11,31 +11,37 @@ import h5py
 import numpy as np
 
 
-def write_hdf5(out_file, datas):
-    """
-    :param out_file: (str)
-    :param datas: (dict)
-    :return:
-    """
-    if not datas:
+def write_out_file(out_file, result, full_value=np.nan):
+    valid_count = 0
+    for key in result:
+        if result[key] is None:
+            continue
+        else:
+            valid_count += 1
+    if valid_count == 0:
+        print('没有足够的有效数据，不生成结果文件')
         return
-    with h5py.File(out_file, 'w') as hdf5:
-        for key in datas:
-            if isinstance(datas[key], dict):
-                group_name = key
-                group_data = datas[key]
-                if isinstance(group_data, dict):
-                    for dataset_name in group_data:
-                        data = group_data[dataset_name]
-                        # 处理
-                        hdf5.create_dataset('/{}/{}'.format(group_name, dataset_name),
-                                            dtype=np.float32, data=data)
-            else:
-                dataset_name = key
-                data = datas[dataset_name]
-                # 处理
-                hdf5.create_dataset(dataset_name, data=data)
-    print('>>> {}'.format(out_file))
+
+    out_dir = os.path.dirname(out_file)
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+    try:
+        compression = 'gzip'
+        compression_opts = 5
+        shuffle = True
+        with h5py.File(out_file, 'w') as hdf5:
+            for dataset in result.keys():
+                data, dtype = result[dataset]
+                data[np.isnan(data)] = full_value
+                hdf5.create_dataset(dataset,
+                                    dtype=dtype, data=data, compression=compression,
+                                    compression_opts=compression_opts,
+                                    shuffle=shuffle)
+        print('>>> 成功生成HDF文件{}'.format(out_file))
+    except Exception as why:
+        print(why)
+        print('HDF写入数据错误')
+        os.remove(out_file)
 
 
 def write_hdf5_and_compress(out_file, datas):
