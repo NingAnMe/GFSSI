@@ -37,7 +37,7 @@ def write_out_file(out_file, result, full_value=np.nan):
                                     dtype=dtype, data=data, compression=compression,
                                     compression_opts=compression_opts,
                                     shuffle=shuffle)
-        print('>>> 成功生成HDF文件{}'.format(out_file))
+        print('>>> 成功生成HDF文件: {}'.format(out_file))
     except Exception as why:
         print(why)
         print('HDF写入数据错误')
