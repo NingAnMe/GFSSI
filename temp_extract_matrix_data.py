@@ -31,7 +31,7 @@ def extract_from_array(array, index, n):
 in_path = '/home/gfssi/GFData/SSIData/FY4A/SSI_4KMCorrect/Full/Orbit'
 out_path = '/home/gfssi/GFData/SSIForecastData/FY4A/SSI_4KMCorrect/Full/Orbit'
 
-infiles = get_files_by_date(in_path, '20190601', '20191231', 'nc', r'.*_NOM_(\d{8})')
+infiles = get_files_by_date(in_path, '20190101', '20191231', 'nc', r'.*_NOM_(\d{8})')
 infiles.sort()
 
 n = 63
