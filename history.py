@@ -9,8 +9,6 @@ from dateutil.relativedelta import relativedelta
 import time
 import hashlib
 import zipfile
-import re
-import os
 import sys
 from multiprocessing import Pool
 import numpy as np
@@ -29,6 +27,7 @@ from lib.lib_read_ssi import FY4ASSI
 from lib.lib_database import find_result_data, Session, ResultData
 from lib.lib_get_index_by_lonlat import get_point_index
 from lib.lib_constant import *
+from lib.lib_io import get_files_by_date
 
 # 获取程序所在目录位置
 g_path, _ = os.path.split(os.path.realpath(__file__))
@@ -63,39 +62,6 @@ def make_zip_file(out_file, in_files):
                 z.write(in_file, os.path.basename(in_file))
     print('生成zip文件：{}'.format(out_file))
     return out_file
-
-
-def get_files_by_date(dir_path, time_start, time_end, ext=None, pattern=None):
-    """
-    :param dir_path: 文件夹
-    :param time_start: 开始时间
-    :param time_end: 结束时间
-    :param ext: 后缀名, '.hdf5'
-    :param pattern: 匹配时间的模式
-    :return: list
-    """
-    files_found = []
-    if pattern is not None:
-        pattern = pattern
-    else:
-        pattern = r".*(\d{8})"
-
-    for root, dirs, files in os.walk(dir_path):
-        for file_name in files:
-            if ext is not None:
-                if '.' not in ext:
-                    ext = '.' + ext
-                if os.path.splitext(file_name)[1].lower() != ext.lower():
-                    continue
-            re_result = re.match(pattern, file_name)
-            if re_result is not None:
-                time_file = ''.join(re_result.groups())
-            else:
-                continue
-            if int(time_start) <= int(time_file) <= int(time_end):
-                files_found.append(os.path.join(root, file_name))
-    files_found.sort()
-    return files_found
 
 
 def fy4a_save_source_data_in_database():
@@ -548,6 +514,7 @@ def product_fy4a_disk_point_data(date_start=None, date_end=None, lon=None, lat=N
         lat = float(lat)
         pre_dist = 0.08
         index = get_point_index(lon, lat, idx, ck, pre_dist)
+        print('index', index)
         if index is None:
             print('没有找到最近点:lon {}   lat:{}'.format(lon, lat))
             return
@@ -903,31 +870,11 @@ if __name__ == '__main__':
     # 数据入库
     # fy4a_save_source_data_in_database()
 
-    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
-    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
-    #
-    # start = datetime.strptime('20190629010000', '%Y%m%d%H%M%S')
-    # end = datetime.strptime('20190629010000', '%Y%m%d%H%M%S')
-
-    # start = datetime.strptime('20190201000000', '%Y%m%d%H%M%S')
-    # end = datetime.strptime('20190228235959', '%Y%m%d%H%M%S')
-    #
-    # start = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
-    # end = datetime.strptime('20190630000000', '%Y%m%d%H%M%S')
-
-    # start = datetime.strptime('20190110000000', '%Y%m%d%H%M%S')
-    # end = datetime.strptime('20190120235959', '%Y%m%d%H%M%S')
-    # product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # 4KMCorrect
-    #
-    # start = datetime.strptime('20190410000000', '%Y%m%d%H%M%S')
-    # end = datetime.strptime('20190420235959', '%Y%m%d%H%M%S')
-    # product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # 4KMCorrect
-
     # =================================全圆盘==================================
     # 轨道：生产数据
-    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
-    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
-    # product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # 4KMCorrect
+    start = datetime.strptime('20190101000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # 4KMCorrect
     # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190601235959', '%Y%m%d%H%M%S')
     # product_fy4a_1km_disk_full_data_orbit(start, end)  # 1KM
@@ -946,9 +893,9 @@ if __name__ == '__main__':
     # product_fy4a_disk_full_image_orbit('20171015000000', '20171015235959', resolution_type='1KMCorrect')  # 圆盘轨道
 
     # 日：生产数据和绘图
-    start = datetime.strptime('20190501000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190501235959', '%Y%m%d%H%M%S')
-    fy3d_save_source_data_in_database(start, end)  # 圆盘日
+    # start = datetime.strptime('20190501000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190501235959', '%Y%m%d%H%M%S')
+    # fy3d_save_source_data_in_database(start, end)  # 圆盘日
     # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
     # product_fy4a_disk_full_data_and_image(start, end, frequency='Daily', resolution_type='4KM')  # 圆盘日
