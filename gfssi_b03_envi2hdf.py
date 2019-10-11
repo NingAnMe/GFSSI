@@ -3,7 +3,6 @@
 # @Time    : 2019/9/29 16:16
 # @Author  : AnNing
 import os
-import sys
 
 import numpy as np
 from lib.lib_read_ssi import FY3DSSIENVI
@@ -22,7 +21,7 @@ def fy3d_envi2hdf(in_file, out_file, resultid, planid, datatime, resolution_type
             add_result_data(resultid=resultid, planid=planid, address=out_file, datatime=datatime,
                             resolution_type=resolution_type, area_type=area_type, element=None)
         return
-    print('<<< itcal: {}'.format(in_file))
+    print('<<< fy3d_envi2hdf: {}'.format(in_file))
 
     in_file_gc = in_file
     in_file_bc = in_file_gc.replace('Gc', 'Bc')
@@ -35,9 +34,9 @@ def fy3d_envi2hdf(in_file, out_file, resultid, planid, datatime, resolution_type
     sz = FY3DSSIENVI(in_file_sz)
 
     result = {
-        'SSI': (ssi.get_data(), np.float),
-        'DirSSI': (dirssi.get_data(), np.float),
-        'DifSSI': (difssi.get_data(), np.float),
+        'SSI': (ssi.get_data() / 1000., np.float),
+        'DirSSI': (dirssi.get_data() / 1000., np.float),
+        'DifSSI': (difssi.get_data() / 1000., np.float),
         'Sz': (sz.get_data(), np.float)
     }
 
