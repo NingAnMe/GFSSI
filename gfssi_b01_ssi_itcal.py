@@ -13,7 +13,6 @@
 3、DEBUG函数assignTime，原来的函数直接在hour加8可能超过24
 """
 import os
-from datetime import datetime
 
 import h5py
 import numpy as np
@@ -194,6 +193,9 @@ def itcal(in_file, out_file, resultid=None, planid=None, datatime=None, resoluti
     print((G0 > 0).sum())
     index_invalid_g0 = np.logical_or(G0 >= 1400, G0 <= 0)  # ########################## G0的无效值赋值为nan
     G0[index_invalid_g0] = np.nan
+    if np.isnan(G0).all():
+        print('Warning::::::::没有有效的G0数据，不生产数据')
+        return
 
     # G0无效
     DQF[index_invalid_g0] = 0
