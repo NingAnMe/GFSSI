@@ -10,7 +10,7 @@ import sys
 
 from lib.lib_forecast import forecast_ssi
 from schedule import product_fy4a_disk_point_data
-from gfssi_restful import kdtree_idx_fy4_4km, kdtree_ck_fy4_4km
+from restful import kdtree_idx_fy4_4km, kdtree_ck_fy4_4km
 
 idx = kdtree_idx_fy4_4km
 ck = kdtree_ck_fy4_4km
