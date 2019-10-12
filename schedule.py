@@ -64,7 +64,9 @@ def make_zip_file(out_file, in_files):
     return out_file
 
 
-def fy4a_save_4km_orbit_data_in_database(date_start=None, date_end=None):
+def fy4a_save_4km_orbit_data_in_database(date_start=None, date_end=None, **kwargs):
+    print(date_start)
+    print(date_end)
     source_dir = os.path.join(data_root_dir, 'SourceData', 'FY4A', 'SSI_4KM')
     ssi_dir = os.path.join(data_root_dir, 'SSIData')
     ext = '.NC'
@@ -112,10 +114,10 @@ def fy4a_save_4km_orbit_data_in_database(date_start=None, date_end=None):
     session.close()
 
 
-def fy3d_product_daily_data_and_save_in_database(date_start=None, date_end=None, thread=2):
+def fy3d_product_daily_data_and_save_in_database(date_start=None, date_end=None, thread=2, **kwargs):
     source_dir = os.path.join(data_root_dir, 'SourceData', 'FY3D', 'SSI_1KM')
     ext = '.dat'
-    resultid = 'FY3D_MERSI_L2_SSI_Orbit'
+    resultid = 'FY3D_MERSI_L3_SSI_Daily'
     planid = 1
     resolution_type = '1KM'
     filename_template = 'FY3D-_MERSI--_N_DISK_E_L3-_SSI-_MULT_NOM_{ymd}_{r}_V0001.NC'
@@ -141,7 +143,7 @@ def fy3d_product_daily_data_and_save_in_database(date_start=None, date_end=None,
             fy3d_envi2hdf(src_file, dst_file, resultid, planid, datatime, resolution_type)
 
 
-def product_fy4a_4kmcorrect_disk_full_data_orbit(date_start=None, date_end=None, thread=2):
+def product_fy4a_4kmcorrect_disk_full_data_orbit(date_start=None, date_end=None, thread=2, **kwargs):
     """
     绘制原始4KM数据的图像
     3个产品，每个产品2张图像，共6张图像
@@ -184,7 +186,7 @@ def product_fy4a_4kmcorrect_disk_full_data_orbit(date_start=None, date_end=None,
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
 
 
-def product_fy4a_1km_disk_full_data_orbit(date_start=None, date_end=None, thread=2):
+def product_fy4a_1km_disk_full_data_orbit(date_start=None, date_end=None, thread=2, **kwargs):
     """
     绘制原始4KM数据的图像
     3个产品，每个产品2张图像，共6张图像
@@ -232,7 +234,7 @@ def product_fy4a_1km_disk_full_data_orbit(date_start=None, date_end=None, thread
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
 
 
-def product_fy4a_1kmcorrect_disk_full_data_orbit(date_start=None, date_end=None, thread=2):
+def product_fy4a_1kmcorrect_disk_full_data_orbit(date_start=None, date_end=None, thread=2, **kwargs):
     """
     绘制原始4KM数据的图像
     3个产品，每个产品2张图像，共6张图像
@@ -290,7 +292,7 @@ def product_fy4a_1kmcorrect_disk_full_data_orbit(date_start=None, date_end=None,
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
 
 
-def product_fy4a_disk_full_image_orbit(date_start=None, date_end=None, thread=2, resolution_type=None):
+def product_fy4a_disk_full_image_orbit(date_start=None, date_end=None, thread=2, resolution_type=None, **kwargs):
     """
     绘制原始4KM数据的图像
     3个产品，每个产品2张图像，共6张图像
@@ -326,7 +328,7 @@ def product_fy4a_disk_full_image_orbit(date_start=None, date_end=None, thread=2,
 
 
 def product_combine_data_and_image(date_start=None, date_end=None, frequency=None, thread=2,
-                                   resolution_type=None, sat_sensor=None):
+                                   resolution_type=None, sat_sensor=None, **kwargs):
     """
     4KM数据日合成
     绘制原始4KM数据的图像
@@ -441,7 +443,8 @@ def product_combine_data_and_image(date_start=None, date_end=None, frequency=Non
 
 
 def product_fy4a_disk_area_data(date_start=None, date_end=None, thread=3, left_up_lon=None, left_up_lat=None,
-                                right_down_lon=None, right_down_lat=None, resolution_type=None, resultid=None):
+                                right_down_lon=None, right_down_lat=None, resolution_type=None, resultid=None,
+                                **kwargs):
     """
     生成原始数据的中国区时次数据
     3个产品，每个产品1张图像，共3张图像
@@ -490,7 +493,7 @@ def product_fy4a_disk_area_data(date_start=None, date_end=None, thread=3, left_u
 
 
 def product_fy4a_disk_point_data(date_start=None, date_end=None, lon=None, lat=None, point_file=None,
-                                 resolution_type=None, resultid=None, element=None, idx=None, ck=None):
+                                 resolution_type=None, resultid=None, element=None, idx=None, ck=None, **kwargs):
     date_s = datetime.strptime(date_start, '%Y%m%d%H%M%S')
     date_e = datetime.strptime(date_end, '%Y%m%d%H%M%S')
     out_dir = os.path.join(data_root_dir, 'TmpData')
@@ -671,7 +674,7 @@ def product_fy4a_disk_point_data(date_start=None, date_end=None, lon=None, lat=N
 
 
 def _get_multi_point_data(full_file, indexs, get_datetime, resultid,
-                          dates, values, thread_lock):
+                          dates, values, thread_lock, **kwargs):
     indexs = np.array(indexs, dtype=np.int)
     datas_tmp = {}
     length = len(indexs)
@@ -701,7 +704,7 @@ def _get_multi_point_data(full_file, indexs, get_datetime, resultid,
 
 
 def _get_point_data(full_file, element, index, get_datetime, resultid,
-                    dates, datas, values, thread_lock):
+                    dates, datas, values, thread_lock, **kwargs):
     datas_tmp = {}
 
     loader = FY4ASSI(full_file)
@@ -751,7 +754,8 @@ def _get_point_data(full_file, element, index, get_datetime, resultid,
             values.append(datas_tmp)
 
 
-def product_4km_disk_area_image(date_start=None, date_end=None, thread=3, frequency=None, resolution_type=None):
+def product_4km_disk_area_image(date_start=None, date_end=None, thread=3, frequency=None, resolution_type=None,
+                                **kwargs):
     """
     生成原始数据的中国区时次数据
     3个产品，每个产品1张图像，共3张图像

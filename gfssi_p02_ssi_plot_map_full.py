@@ -5,28 +5,31 @@
 @Author  : AnNing
 """
 import os
-import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-from lib.lib_read_ssi import FY4ASSI
+from lib.lib_read_ssi import FY4ASSI, FY3DSSI
 from lib.lib_database import add_result_data, exist_result_data
 from lib.lib_proj import fill_points_2d_nan
 from lib.lib_constant import BASEMAP_FY4_4KM
 
 
-def plot_image_disk(data, out_file='test.jpg', resolution_type='4km', vmin=0, vmax=1000):
-    if '4km' in resolution_type.lower():
+def plot_image_disk(*args, **kwargs):
+    if 'fy4a' in kwargs.get('resultid'):
+        plot_fy4a_image_disk(*args, **kwargs)
+    else:
+        print('plot_image_disk不支持此分辨率')
+
+
+def plot_fy4a_image_disk(data, out_file='test.jpg', resolution_type='4km', vmin=0, vmax=1000):
+    if '4km' in resolution_type.lower() and 'fy4a' in resolution_type.lower():
         ditu = plt.imread(BASEMAP_FY4_4KM)
         row, col, _ = ditu.shape
         fig = plt.figure(figsize=(col / 100, row / 100), dpi=100)
         fig.figimage(ditu)
-    elif '1km' in resolution_type.lower():
-        return
-        row, col = data.shape
-        fig = plt.figure(figsize=(col / 100, row / 100), dpi=100)
     else:
-        raise ValueError('plot_image_disk 不支持此分辨率: {}'.format(resolution_type))
+        print('plot_image_disk 不支持此分辨率: {}'.format(resolution_type))
+        return
 
     fig.figimage(data, vmin=vmin, vmax=vmax, cmap='jet', alpha=0.7)
     fig.patch.set_alpha(0)
@@ -37,13 +40,43 @@ def plot_image_disk(data, out_file='test.jpg', resolution_type='4km', vmin=0, vm
     print('>>> :{}'.format(out_file))
 
 
-def plot_image_map(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000, interp=3):
-    if '4km' in res.lower():
+def plot_fy3_image_map(data, out_file='test.jpg', resolution_type='1km', vmin=0, vmax=2):
+    if '1km' in resolution_type:
+        row, col = data.shape
+    else:
+        print('不支持的分辨率:{}'.format(resolution_type))
+        return
+
+    fig = plt.figure(figsize=(col / 100, row / 100), dpi=100)
+    fig.figimage(data, vmin=vmin, vmax=vmax, cmap='jet')
+    fig.patch.set_alpha(0)
+    plt.savefig(out_file, transparent=True)
+    fig.clear()
+    plt.close()
+    print("监测到数据的最小值和最大值：{}， {}".format(np.nanmin(data), np.nanmax(data)))
+    print('>>> :{}'.format(out_file))
+
+
+def plot_image_map(*args, **kwargs):
+    res = kwargs['resolution_type']
+    if 'fy4a' in res:
+        plot_fy4_image_map(*args, **kwargs)
+    elif 'fy3d' in res:
+        plot_fy3_image_map(*args, **kwargs)
+    else:
+        print('不支持的卫星和分辨率: {}')
+
+
+def plot_fy4_image_map(data, out_file='test.jpg', resolution_type='4km', vmin=0, vmax=1000, interp=3):
+    if '4km' in resolution_type.lower():
         projlut = FY4ASSI.get_lonlat_projlut_4km()
-    elif '1km' in res.lower():
+    elif '1kmcorrect' in resolution_type.lower():
+        projlut = FY4ASSI.get_lonlat_projlut_1km()
+        interp = 0
+    elif '1km' in resolution_type.lower():
         projlut = FY4ASSI.get_lonlat_projlut_1km()
     else:
-        raise ValueError('plot_image_map 不支持此分辨率: {}'.format(res))
+        raise ValueError('plot_image_map 不支持此分辨率: {}'.format(resolution_type))
     row, col = projlut['row_col']
     image_data = np.full((row, col), np.nan, dtype=np.float32)
     proj_i = projlut['prj_i']
@@ -60,7 +93,7 @@ def plot_image_map(data, out_file='test.jpg', res='4km', vmin=0, vmax=1000, inte
     pre_j = pre_j[valid_index]
 
     image_data[proj_i, proj_j] = data[pre_i, pre_j]
-    fig = plt.figure(figsize=(col/100, row/100), dpi=100)
+    fig = plt.figure(figsize=(col / 100, row / 100), dpi=100)
 
     for i in range(interp):
         fill_points_2d_nan(image_data)
@@ -82,7 +115,13 @@ def plot_map_full(in_file, vmin=0, vmax=1000, resultid='', planid='', datatime='
     dir_ = os.path.dirname(in_file)
     in_filename = os.path.basename(in_file)
 
-    datas = FY4ASSI(in_file)
+    if 'fy4a' in resultid:
+        datas = FY4ASSI(in_file)
+    elif 'fy3d' in resultid:
+        datas = FY3DSSI(in_file)
+    else:
+        print('不支持的卫星：{}'.format(resultid))
+        return
     datas_ = {
         'Itol': datas.get_ssi,
         'Ib': datas.get_ib,
@@ -107,7 +146,8 @@ def plot_map_full(in_file, vmin=0, vmax=1000, resultid='', planid='', datatime='
 
             try:
                 if not os.path.isfile(out_file1):
-                    plot_image_disk(data, out_file=out_file1, resolution_type=resolution_type, vmin=vmin, vmax=vmax)
+                    plot_image_disk(data, out_file=out_file1, resultid=resultid, resolution_type=resolution_type,
+                                    vmin=vmin, vmax=vmax)
                 else:
                     print('文件已经存在，跳过:{}'.format(out_file1))
                 # 入库
@@ -126,7 +166,9 @@ def plot_map_full(in_file, vmin=0, vmax=1000, resultid='', planid='', datatime='
             out_file2 = os.path.join(dir_, out_filename2)
             try:
                 if not os.path.isfile(out_file2):
-                    plot_image_map(data, out_file=out_file2, res=resolution_type, vmin=vmin, vmax=vmax)
+                    plot_image_map(data, out_file=out_file2, resultid=resultid, resolution_type=resolution_type,
+                                   vmin=vmin,
+                                   vmax=vmax)
                 else:
                     print('文件已经存在，跳过:{}'.format(out_file2))
                 # 入库

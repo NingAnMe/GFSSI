@@ -6,7 +6,7 @@ import grpc
 import gfssi_pb2
 import gfssi_pb2_grpc
 
-from history import product_fy4a_disk_area_data
+from schedule import product_fy4a_disk_area_data
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 

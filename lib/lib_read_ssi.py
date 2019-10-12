@@ -38,10 +38,30 @@ class FY3DSSIENVI:
         return lon, lat
 
 
+class FY3DSSI:
+    def __init__(self, in_file):
+        self.in_file = in_file
+
+    @staticmethod
+    def get_latitude_1km():
+        full_value = -999
+        with h5py.File(LON_LAT_LUT_FY3_1KM, 'r') as hdf:
+            dataset = hdf.get('Latitude')[:]
+            dataset[dataset == full_value] = np.nan
+            return dataset
+
+    @staticmethod
+    def get_longitude_1km():
+        full_value = -999
+        with h5py.File(LON_LAT_LUT_FY3_1KM, 'r') as hdf:
+            dataset = hdf.get('Longitude')[:]
+            dataset[dataset == full_value] = np.nan
+            return dataset
+
+
 class FY4ASSI(object):
     def __init__(self, in_file):
         self.in_file = in_file
-        self.lon_lat_lut = LON_LAT_LUT_FY4_4KM
 
     @staticmethod
     def get_date_time_orbit(in_file):

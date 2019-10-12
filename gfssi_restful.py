@@ -6,7 +6,7 @@ import os
 from flask import Flask, request
 from flask_restful import Resource, Api
 
-from history import product_fy4a_disk_area_data, make_zip_file, get_hash_utf8, find_result_data, data_root_dir, \
+from schedule import product_fy4a_disk_area_data, make_zip_file, get_hash_utf8, find_result_data, data_root_dir, \
     product_fy4a_disk_point_data
 
 from lib.lib_constant import KDTREE_LUT_FY4_4KM, KDTREE_LUT_FY4_1KM
