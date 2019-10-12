@@ -8,7 +8,7 @@ import numpy as np
 from lib.lib_read_ssi import FY4ASSI
 from lib.lib_hdf5 import write_out_file
 
-from history import get_files_by_date
+from schedule import get_files_by_date
 
 
 def extract_from_array(array, index, n):

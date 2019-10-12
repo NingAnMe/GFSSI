@@ -4,102 +4,22 @@
 # @Author  : AnNing
 from collections import OrderedDict
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 import re
 import os
-import sys
 import h5py
 import numpy as np
-
-"""
-#This script demonstrates the use of a convolutional LSTM network.
-
-This network is used to predict the next frame of an artificially
-generated movie which contains moving squares.
-"""
-from keras.models import Sequential
-from keras.layers import Flatten, LSTM, Dense, MaxPooling3D, TimeDistributed
-from keras.layers.convolutional import Conv3D, Conv2D, Conv1D
-from keras.layers.convolutional_recurrent import ConvLSTM2D
-from keras.layers.normalization import BatchNormalization
-from keras.models import load_model
-
 from lib.lib_io import get_files_by_date
 
+
+from keras.models import load_model
 """
 目标，准备（sample，timestep， datashape， channels）的数据
 """
 timestep = 4  # 设置步长
-forecast_step = 4  # 设置预测的时长
+forecast_step = 2  # 设置预测的时长
 width = 63
 length = 63
 channels = 2
-
-
-# We create a layer which take as input movies of shape
-# (n_frames, width, height, channels) and returns a movie
-# of identical shape.
-def model1():
-    seq = Sequential()
-    seq.add(ConvLSTM2D(filters=40, kernel_size=(3, 3),
-                       input_shape=(timestep, width, length, channels),
-                       padding='same', return_sequences=True))
-    seq.add(BatchNormalization())
-
-    seq.add(ConvLSTM2D(filters=40, kernel_size=(3, 3),
-                       padding='same', return_sequences=True))
-    seq.add(BatchNormalization())
-
-    seq.add(MaxPooling3D(pool_size=(1, 3, 3)))
-    seq.add(BatchNormalization())
-
-    seq.add(Flatten())
-    seq.add(Dense(2))
-    seq.compile(loss='mse', optimizer='adadelta')
-    print(seq.summary())
-    return seq
-
-
-def model2():
-    seq = Sequential()
-    seq.add(ConvLSTM2D(filters=40, kernel_size=(3, 3),
-                       input_shape=(timestep, width, length, channels),
-                       padding='same', return_sequences=True))
-    seq.add(BatchNormalization())
-
-    seq.add(ConvLSTM2D(filters=40, kernel_size=(3, 3),
-                       padding='same', return_sequences=True))
-    seq.add(BatchNormalization())
-
-    seq.add(Conv3D(filters=2, kernel_size=(3, 3, 3),
-                   padding='same', data_format='channels_last'))
-    seq.add(BatchNormalization())
-    seq.add(MaxPooling3D(pool_size=(1, 3, 3)))
-
-    seq.add(Flatten())
-    seq.add(Dense(2))
-    seq.compile(loss='mse', optimizer='adadelta')
-    print(seq.summary())
-    return seq
-
-
-def model3():
-    seq = Sequential()
-    seq.add(ConvLSTM2D(filters=40, kernel_size=(3, 3),
-                       input_shape=(timestep, width, length, channels),
-                       padding='same', return_sequences=True))
-    seq.add(BatchNormalization())
-
-    seq.add(Conv3D(filters=2, kernel_size=(3, 3, 3),
-                   padding='same', data_format='channels_last'))
-    seq.add(BatchNormalization())
-    seq.add(MaxPooling3D(pool_size=(2, 3, 3)))
-
-    seq.add(Flatten())
-    seq.add(Dense(2))
-    seq.compile(loss='mse', optimizer='adadelta')
-    print(seq.summary())
-    return seq
 
 
 class FY4AExtractFileLoader:
@@ -125,8 +45,7 @@ class FY4AExtractFileLoader:
             return hdf5.get('data_y')[:]
 
 
-root_path = '/content/drive/My Drive/'
-in_path = os.path.join(root_path, 'FY4AForecast')
+in_path = r'C:\D\GoogleDrive\FY4AForecast\20190601'
 in_files = get_files_by_date(in_path)
 in_files.sort()
 
@@ -204,15 +123,14 @@ train_y[np.isnan(train_y)] = 0
 # print(train_x[0])
 print(train_y.shape)
 
+google_drive = r'C:\D\GoogleDrive'
+
 model_number = 2
 model_name = 'model{}'.format(model_number)
-model_outfile = os.path.join(root_path, 'model/nice_model{}_step{}.h5'.format(model_number, forecast_step))
-if os.path.isfile(model_outfile):
-    model = load_model(model_outfile)
-else:
-    model = eval(model_name)()
-model.fit(train_x, train_y, batch_size=32,
-          epochs=150, validation_split=0.1)
-if not os.path.isdir('model'):
-    os.makedirs('model')
-model.save(model_outfile)
+model_outfile = os.path.join(google_drive, 'model/nice_model{}.h5'.format(model_number))
+model = load_model(model_outfile)
+
+result = model.predict(train_x)
+for y_hat, y in zip(result, train_y):
+    print()
+    print(y_hat, y)
