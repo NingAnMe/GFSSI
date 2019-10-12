@@ -13,10 +13,13 @@ from lib.lib_constant import *
 aid_path = get_aid_path()
 
 kwargs = {
-    'Orbit': COLORBAR_RANGE_ORBIT,
-    'Daily': COLORBAR_RANGE_DAILY,
-    'Monthly': COLORBAR_RANGE_MONTHLY,
-    'Yearly': COLORBAR_RANGE_YEARLY,
+    'Orbit_FY4A': COLORBAR_RANGE_ORBIT_FY4A,
+    'Daily_FY4A': COLORBAR_RANGE_DAILY_FY4A,
+    'Monthly_FY4A': COLORBAR_RANGE_MONTHLY_FY4A,
+    'Yearly_FY4A': COLORBAR_RANGE_YEARLY_FY4A,
+    'Daily_FY3D': COLORBAR_RANGE_DAILY_FY3D,
+    'Monthly_FY3D': COLORBAR_RANGE_MONTHLY_FY3D,
+    'Yearly_FY3D': COLORBAR_RANGE_YEARLY_FY3D,
 }
 
 # for k, r in kwargs.items():

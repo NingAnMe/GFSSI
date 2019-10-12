@@ -114,7 +114,7 @@ def fy4a_save_4km_orbit_data_in_database(date_start=None, date_end=None, **kwarg
     session.close()
 
 
-def fy3d_product_daily_data_and_save_in_database(date_start=None, date_end=None, thread=2, **kwargs):
+def fy3d_product_1km_daily_data(date_start=None, date_end=None, thread=2, **kwargs):
     source_dir = os.path.join(data_root_dir, 'SourceData', 'FY3D', 'SSI_1KM')
     ext = '.dat'
     resultid = 'FY3D_MERSI_L3_SSI_Daily'
@@ -292,55 +292,8 @@ def product_fy4a_1kmcorrect_disk_full_data_orbit(date_start=None, date_end=None,
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
 
 
-def product_fy4a_disk_full_image_orbit(date_start=None, date_end=None, thread=2, resolution_type=None, **kwargs):
-    """
-    绘制原始4KM数据的图像
-    3个产品，每个产品2张图像，共6张图像
-    :param date_start: 开始日期 datetime
-    :param date_end: 结束日期 datetime
-    :param thread:
-    :param resolution_type:
-    :return:
-    """
-    resultid_data = 'FY4A_AGRI_L2_SSI_Orbit'
-    resultid_image = 'FY4A_AGRI_L2_SSI_Orbit_IMG'
-    planid = 1
-    vmin, vmax = COLORBAR_RANGE_ORBIT
-
-    results = find_result_data(resultid=resultid_data, datatime_start=date_start, datatime_end=date_end,
-                               resolution_type=resolution_type)
-    in_files = [row.address for row in results]
-    in_files.sort()
-    in_files_length = len(in_files)
-    print('找到的文件总数:{}'.format(in_files_length))
-
-    print('开始绘图')
-    p = Pool(thread)
-    for in_file in in_files[:]:
-        datatime = FY4ASSI.get_date_time_orbit(in_file)
-        if DEBUG:
-            plot_map_full(in_file, vmin, vmax, resultid_image, planid, datatime, resolution_type, )
-        else:
-            p.apply_async(plot_map_full, args=(in_file, vmin, vmax, resultid_image, planid, datatime, resolution_type,))
-    p.close()
-    p.join()
-    print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
-
-
-def product_combine_data_and_image(date_start=None, date_end=None, frequency=None, thread=2,
-                                   resolution_type=None, sat_sensor=None, **kwargs):
-    """
-    4KM数据日合成
-    绘制原始4KM数据的图像
-    3个产品，每个产品2张图像，共6张图像
-    :param sat_sensor:
-    :param date_start: 开始日期 datetime
-    :param date_end: 结束日期 datetime
-    :param frequency:
-    :param thread:
-    :param resolution_type:
-    :return:
-    """
+def product_combine_data(date_start=None, date_end=None, frequency=None, thread=2,
+                         resolution_type=None, sat_sensor=None):
     sat_sensor = sat_sensor.upper()
     sat, sensor = sat_sensor.split('_')
     out_dir = os.path.join(data_root_dir, 'SSIData/{sat}/SSI_{resolution_type}/Full/{frequency}')
@@ -348,7 +301,7 @@ def product_combine_data_and_image(date_start=None, date_end=None, frequency=Non
     if sat == 'FY4A':
         out_name = 'FY4A-_AGRI--_N_DISK_1047E_L3-_SSI-_MULT_NOM_{date}_{resolution_type}_V0001.NC'
     elif sat == 'FY3D':
-        out_name = 'FY3D-_MERSI--_N_DISK_E_L3-_SSI-_MULT_NOM_{ymd}_{r}_V0001.NC'
+        out_name = 'FY3D-_MERSI--_N_DISK_E_L3-_SSI-_MULT_NOM_{date}_{resolution_type}_V0001.NC'
     else:
         print('不支持的卫星:sat_sensor={}'.format(sat_sensor))
         return
@@ -359,7 +312,6 @@ def product_combine_data_and_image(date_start=None, date_end=None, frequency=Non
         strf_dir = '%Y%m'
         date_relativedelta = relativedelta(days=1)
         daily = True
-        vmin, vmax = COLORBAR_RANGE_DAILY
         planid = 1
         get_date_time = FY4ASSI.get_date_time_daily
     elif frequency == 'Monthly':
@@ -369,7 +321,6 @@ def product_combine_data_and_image(date_start=None, date_end=None, frequency=Non
         strf_dir = '%Y'
         date_relativedelta = relativedelta(months=1)
         daily = False
-        vmin, vmax = COLORBAR_RANGE_MONTHLY
         planid = 1
         get_date_time = FY4ASSI.get_date_time_monthly
     elif frequency == 'Yearly':
@@ -379,13 +330,11 @@ def product_combine_data_and_image(date_start=None, date_end=None, frequency=Non
         strf_dir = None
         date_relativedelta = relativedelta(years=1)
         daily = False
-        vmin, vmax = COLORBAR_RANGE_YEARLY
         planid = 1
         get_date_time = FY4ASSI.get_date_time_yearly
     else:
         raise ValueError('不支持的类型：{}'.format(frequency))
 
-    resultid_image = '{sat_sensor}_L3_SSI_{frequency}_IMG'.format(sat_sensor=sat_sensor, frequency=frequency)
     resultid_combine = '{sat_sensor}_L3_SSI_{frequency}'.format(sat_sensor=sat_sensor, frequency=frequency)
 
     files_combine = []
@@ -427,16 +376,80 @@ def product_combine_data_and_image(date_start=None, date_end=None, frequency=Non
     p.close()
     p.join()
 
+
+def product_image(date_start=None, date_end=None, frequency=None, thread=2,
+                  resolution_type=None, sat_sensor=None, **kwargs):
+    sat_sensor = sat_sensor.upper()
+    sat, sensor = sat_sensor.split('_')
+
+    if frequency == 'Orbit':
+        resultid_data_in = '{}_L2_SSI_Orbit'.format(sat_sensor)
+        if sat == 'FY4A':
+            vmin, vmax = COLORBAR_RANGE_ORBIT_FY4A
+        else:
+            print('此时间分辨率={}不支持卫星={}'.format(frequency, sat_sensor))
+            return
+        planid = 1
+        get_date_time = FY4ASSI.get_date_time_orbit
+    elif frequency == 'Daily':
+        resultid_data_in = '{}_L3_SSI_Daily'.format(sat_sensor)
+        if sat == 'FY4A':
+            vmin, vmax = COLORBAR_RANGE_DAILY_FY4A
+        elif sat == 'FY3D':
+            vmin, vmax = COLORBAR_RANGE_DAILY_FY3D
+        else:
+            print('此时间分辨率={}不支持卫星={}'.format(frequency, sat_sensor))
+            return
+        planid = 1
+        get_date_time = FY4ASSI.get_date_time_daily
+    elif frequency == 'Monthly':
+        resultid_data_in = '{}_L3_SSI_Monthly'.format(sat_sensor)
+        if sat == 'FY4A':
+            vmin, vmax = COLORBAR_RANGE_MONTHLY_FY4A
+        elif sat == 'FY3D':
+            vmin, vmax = COLORBAR_RANGE_MONTHLY_FY3D
+        else:
+            print('此时间分辨率={}不支持卫星={}'.format(frequency, sat_sensor))
+            return
+        planid = 1
+        get_date_time = FY4ASSI.get_date_time_monthly
+    elif frequency == 'Yearly':
+        resultid_data_in = '{}_L3_SSI_Yearly'.format(sat_sensor)
+        if sat == 'FY4A':
+            vmin, vmax = COLORBAR_RANGE_YEARLY_FY4A
+        elif sat == 'FY3D':
+            vmin, vmax = COLORBAR_RANGE_MONTHLY_FY3D
+        else:
+            print('此时间分辨率={}不支持卫星={}'.format(frequency, sat_sensor))
+            return
+        planid = 1
+        get_date_time = FY4ASSI.get_date_time_yearly
+    else:
+        raise ValueError('不支持的类型：{}'.format(frequency))
+
+    resultid_image = resultid_data_in + '_IMG'
+
+    try:
+        results = find_result_data(resultid=resultid_data_in, datatime_start=date_start, datatime_end=date_end,
+                                   resolution_type=resolution_type)
+    except Exception as why:
+        print(why)
+        return
+
+    in_files = [row.address for row in results]
+    in_files.sort()
+    in_files_length = len(in_files)
+    print('找到的文件总数:{}'.format(in_files_length))
+
     print('开始绘图')
     p = Pool(thread)
-    for file_combine in files_combine[:]:
-        time.sleep(0.5)
-        datatime = get_date_time(file_combine)
+    for in_file in in_files[:]:
+        datatime = get_date_time(in_file)
         if DEBUG:
-            plot_map_full(file_combine, vmin, vmax, resultid_image, planid, datatime, resolution_type)
+            plot_map_full(in_file, vmin, vmax, resultid_image, planid, datatime, resolution_type)
         else:
             p.apply_async(plot_map_full,
-                          args=(file_combine, vmin, vmax, resultid_image, planid, datatime, resolution_type))
+                          args=(in_file, vmin, vmax, resultid_image, planid, datatime, resolution_type))
     p.close()
     p.join()
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
@@ -881,52 +894,78 @@ def product_4km_disk_area_image(date_start=None, date_end=None, thread=3, freque
 
 if __name__ == '__main__':
     # 数据入库
-    fy4a_save_4km_orbit_data_in_database()
+    fy4a_save_4km_orbit_data_in_database()  # FY4A 4KM原始数据入库
 
-    # =================================全圆盘==================================
-    # 轨道：生产数据
+    # =================================生产数据==================================
+    # 轨道：生产数据：FY4A
     start = datetime.strptime('20190101000000', '%Y%m%d%H%M%S')
     end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
-    product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # 4KMCorrect
+    product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # FY4A 4KMCorrect
     start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
     end = datetime.strptime('20190601235959', '%Y%m%d%H%M%S')
-    product_fy4a_1km_disk_full_data_orbit(start, end)  # 1KM
+    product_fy4a_1km_disk_full_data_orbit(start, end)  # FY4A 1KM
     start = datetime.strptime('20171015000000', '%Y%m%d%H%M%S')
     end = datetime.strptime('20171015235959', '%Y%m%d%H%M%S')
-    product_fy4a_1kmcorrect_disk_full_data_orbit(start, end)  # 1KMCorrect
-    #
-    # 轨道：绘图
-    start = datetime.strptime('20190410000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190410235959', '%Y%m%d%H%M%S')
-    product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KM')  # 圆盘轨道
-    product_fy4a_disk_full_image_orbit(start, end, resolution_type='4KMCorrect')  # 圆盘轨道
+    product_fy4a_1kmcorrect_disk_full_data_orbit(start, end)  # FY4A 1KMCorrect
+
+    # 日：生产数据：FY4A FY3D
+    start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    product_combine_data(start, end, frequency='Daily', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    product_combine_data(start, end, frequency='Daily', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
     start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
     end = datetime.strptime('20190602235959', '%Y%m%d%H%M%S')
-    product_fy4a_disk_full_image_orbit(start, end, resolution_type='1KM')  # 圆盘轨道
-    product_fy4a_disk_full_image_orbit('20171015000000', '20171015235959', resolution_type='1KMCorrect')  # 圆盘轨道
-
-    # 日：生产数据和绘图
+    product_combine_data(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
+    start = datetime.strptime('20171015000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20171015235959', '%Y%m%d%H%M%S')
+    product_combine_data(start, end, frequency='Daily', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
     start = datetime.strptime('20190501000000', '%Y%m%d%H%M%S')
     end = datetime.strptime('20190501235959', '%Y%m%d%H%M%S')
-    fy3d_product_daily_data_and_save_in_database(start, end)  # 圆盘日
+    fy3d_product_1km_daily_data(start, end)  # FY3D 1KM
+
+    # 月：生产数据：FY4A FY3D
     start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
     end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
-    product_combine_data_and_image(start, end, frequency='Daily', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # 圆盘日
-    product_combine_data_and_image(start, end, frequency='Daily', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # 圆盘日
-    start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190602235959', '%Y%m%d%H%M%S')
-    product_combine_data_and_image(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # 圆盘日
-    start = datetime.strptime('20171015000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20171015235959', '%Y%m%d%H%M%S')
-    product_combine_data_and_image(start, end, frequency='Daily', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # 圆盘日
+    product_combine_data(start, end, frequency='Monthly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    product_combine_data(start, end, frequency='Monthly', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
+    product_combine_data(start, end, frequency='Monthly', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
+    product_combine_data(start, end, frequency='Monthly', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
+    product_combine_data(start, end, frequency='Monthly', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
 
-    # 月：生产数据和绘图
+    # 年：生产数据：FY4A FY3D
     start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
     end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
-    product_combine_data_and_image(start, end, frequency='Monthly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # 圆盘月
-    product_combine_data_and_image(start, end, frequency='Monthly', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # 圆盘月
-    product_combine_data_and_image(start, end, frequency='Monthly', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # 圆盘月
-    product_combine_data_and_image(start, end, frequency='Monthly', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # 圆盘月
+    product_combine_data(start, end, frequency='Yearly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    product_combine_data(start, end, frequency='Yearly', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
+    product_combine_data(start, end, frequency='Yearly', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
+    product_combine_data(start, end, frequency='Yearly', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
+    product_combine_data(start, end, frequency='Yearly', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
 
-    # 年：生产数据和绘图
-    product_combine_data_and_image(start, end, frequency='Yearly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # 圆盘年
+    # 轨道：绘图：FY4A
+    start = datetime.strptime('20190410000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190410235959', '%Y%m%d%H%M%S')
+    product_image(start, end, frequency='Orbit', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    product_image(start, end, frequency='Orbit', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
+    product_image(start, end, frequency='Orbit', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
+    product_image(start, end, frequency='Orbit', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
+
+    # 日：绘图：FY4A FY3D
+    product_image(start, end, frequency='Daily', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    product_image(start, end, frequency='Daily', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
+    product_image(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
+    product_image(start, end, frequency='Daily', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
+    product_image(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
+
+    # 月：绘图：FY4A FY3D
+    product_image(start, end, frequency='Monthly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    product_image(start, end, frequency='Monthly', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
+    product_image(start, end, frequency='Monthly', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
+    product_image(start, end, frequency='Monthly', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
+    product_image(start, end, frequency='Monthly', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
+
+    # 年：绘图：FY4A FY3D
+    product_image(start, end, frequency='Yearly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    product_image(start, end, frequency='Yearly', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
+    product_image(start, end, frequency='Yearly', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
+    product_image(start, end, frequency='Yearly', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
+    product_image(start, end, frequency='Yearly', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
