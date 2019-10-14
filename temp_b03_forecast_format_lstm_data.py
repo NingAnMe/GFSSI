@@ -7,7 +7,6 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import re
 import os
-import sys
 import h5py
 import numpy as np
 
@@ -29,12 +28,13 @@ from lib.lib_io import get_files_by_date
 """
 目标，准备（sample，timestep， datashape， channels）的数据
 """
-timestep = 4  # 设置步长
-forecast_step = 4  # 设置预测的时长
-width = 63
-length = 63
+timestep = 5  # 设置步长
+forecast_step = 9  # 设置预测的时长
+width = length = 63  # 数据大小
 channels = 2
 
+hours = 14  # 一共使用每天14个小时的数据
+hour_start = 6  # 从6点开始
 
 # We create a layer which take as input movies of shape
 # (n_frames, width, height, channels) and returns a movie
@@ -54,7 +54,7 @@ def model1():
     seq.add(BatchNormalization())
 
     seq.add(Flatten())
-    seq.add(Dense(2))
+    seq.add(Dense(forecast_step))
     seq.compile(loss='mse', optimizer='adadelta')
     print(seq.summary())
     return seq
@@ -77,7 +77,7 @@ def model2():
     seq.add(MaxPooling3D(pool_size=(1, 3, 3)))
 
     seq.add(Flatten())
-    seq.add(Dense(2))
+    seq.add(Dense(forecast_step))
     seq.compile(loss='mse', optimizer='adadelta')
     print(seq.summary())
     return seq
@@ -96,7 +96,7 @@ def model3():
     seq.add(MaxPooling3D(pool_size=(2, 3, 3)))
 
     seq.add(Flatten())
-    seq.add(Dense(2))
+    seq.add(Dense(forecast_step))
     seq.compile(loss='mse', optimizer='adadelta')
     print(seq.summary())
     return seq
@@ -125,7 +125,8 @@ class FY4AExtractFileLoader:
             return hdf5.get('data_y')[:]
 
 
-root_path = '/content/drive/My Drive/'
+# root_path = '/content/drive/My Drive/'
+root_path = r'C:\D\GoogleDrive'
 in_path = os.path.join(root_path, 'FY4AForecast')
 in_files = get_files_by_date(in_path)
 in_files.sort()
@@ -141,69 +142,86 @@ ssi_scalars = np.zeros((count_files, 1), dtype=np.float32)
 ssi_dates = np.zeros(count_files, dtype=np.object)
 
 result = OrderedDict()
+hours = 14  # 使用每天14个小时的数据
 for i, in_file in enumerate(in_files):
     file_loader = FY4AExtractFileLoader(in_file)
     datetime_ = file_loader.get_datetime()
+    datetime_ = datetime_ + relativedelta(hours=8)  # 修改世界时为北京时
     day = datetime_.timetuple()[7]
+    hour = datetime_.hour
     if result.get(day) is None:
-        result[day] = {
-            'ssi_array': None,
-            'ssi_scalar': None,
-            'ssi_date': None,
-            'g0_array': None,
-        }
+        result[day] = dict()
+    if result[day].get(hour) is None:
+        result[day][hour] = dict()
     ssi_array = file_loader.get_ssi_array()[:]
-    if result[day]['ssi_array'] is None:
-        result[day]['ssi_array'] = ssi_array
-    else:
-        result[day]['ssi_array'] = np.concatenate((result[day]['ssi_array'], ssi_array))
+    result[day][hour]['ssi_array'] = ssi_array
 
     g0_array = file_loader.get_g0_array()[:]
-    if result[day]['g0_array'] is None:
-        result[day]['g0_array'] = g0_array
-    else:
-        result[day]['g0_array'] = np.concatenate((result[day]['g0_array'], g0_array))
+    result[day][hour]['g0_array'] = g0_array
 
     ssi_scalar = file_loader.get_ssi_scalar()
-    if result[day]['ssi_scalar'] is None:
-        result[day]['ssi_scalar'] = ssi_scalar
-    else:
-        result[day]['ssi_scalar'] = np.concatenate((result[day]['ssi_scalar'], ssi_scalar))
+    result[day][hour]['ssi_scalar'] = ssi_scalar
 
-# ########################## 制作训练使用的样本数据 ##########################
-date_start = ssi_dates[0]
-date_end = ssi_dates[-1]
+    result[day][hour]['ssi_date'] = datetime_
 
-samples = 0
-for k, v in result.items():
-    delta = len(v['ssi_scalar']) - forecast_step - timestep
-    if delta > 0:
-        samples += delta
 
-print('样本数量: {}'.format(samples))
-train_x = np.zeros((samples, timestep, width, length, channels), dtype=np.float32)
-train_y = np.zeros((samples, forecast_step))
+# ########################## 制作每日预测训练使用的样本数据 ##########################
+sample_count = len(result)
+print('样本数量: {}'.format(sample_count))
+train_x = np.zeros((sample_count, timestep, width, length, channels), dtype=np.float32)
+train_y = np.zeros((sample_count, forecast_step), dtype=np.float32)
 
 sample = 0
 for k, v in result.items():
-    d_length = len(v['ssi_scalar'])
-    for i in range(d_length):
-        if i + timestep + forecast_step < d_length:
-            ssi_array_tmp = v['ssi_array'][i:i + timestep]
-            g0_array_tmp = v['g0_array'][i:i + timestep]
-            train_y_tmp = v['ssi_scalar'][i + timestep:i + timestep + forecast_step].reshape(-1)
-
-            train_x[sample, ::, ::, ::, 0] = ssi_array_tmp
-            train_x[sample, ::, ::, ::, 1] = g0_array_tmp
-            train_y[sample, ::] = train_y_tmp
-            sample += 1
+    for j in range(hours):
+        hour = j + 6  # 从早上六点开始
+        data_hour = v.get(hour)
+        if data_hour is not None:
+            if hour_start <= hour < hour_start + timestep:
+                train_x[sample, hour-hour_start, ::, ::, 0] = v[hour]['ssi_array']
+                train_x[sample, hour-hour_start, ::, ::, 1] = v[hour]['g0_array']
+            elif hour_start + timestep <= hour < hour_start + forecast_step:
+                train_y[sample, hour-hour_start-timestep] = v[hour]['ssi_scalar']
+    sample += 1
 
 train_x[np.isnan(train_x)] = 0
 train_y[np.isnan(train_y)] = 0
+
+
+# ########################## 制作4小时或者7小时预测训练使用的样本数据 ##########################
+# date_start = ssi_dates[0]
+# date_end = ssi_dates[-1]
+#
+# samples = 0
+# for k, v in result.items():
+#     delta = len(v['ssi_scalar']) - forecast_step - timestep
+#     if delta > 0:
+#         samples += delta
+#
+# print('样本数量: {}'.format(samples))
+# train_x = np.zeros((samples, timestep, width, length, channels), dtype=np.float32)
+# train_y = np.zeros((samples, forecast_step))
+#
+# sample = 0
+# for k, v in result.items():
+#     d_length = len(v['ssi_scalar'])
+#     for i in range(d_length):
+#         if i + timestep + forecast_step < d_length:
+#             ssi_array_tmp = v['ssi_array'][i:i + timestep]
+#             g0_array_tmp = v['g0_array'][i:i + timestep]
+#             train_y_tmp = v['ssi_scalar'][i + timestep:i + timestep + forecast_step].reshape(-1)
+#
+#             train_x[sample, ::, ::, ::, 0] = ssi_array_tmp
+#             train_x[sample, ::, ::, ::, 1] = g0_array_tmp
+#             train_y[sample, ::] = train_y_tmp
+#             sample += 1
+#
+# train_x[np.isnan(train_x)] = 0
+# train_y[np.isnan(train_y)] = 0
 # print(train_x.shape)
 # print(train_x[0])
-print(train_y.shape)
-
+# print(train_y.shape)
+# ########################## 训练模型 ##########################
 model_number = 2
 model_name = 'model{}'.format(model_number)
 model_outfile = os.path.join(root_path, 'model/nice_model{}_step{}.h5'.format(model_number, forecast_step))

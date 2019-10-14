@@ -29,9 +29,9 @@ def extract_from_array(array, index, n):
 
 
 in_path = '/home/gfssi/GFData/SSIData/FY4A/SSI_4KMCorrect/Full/Orbit'
-out_path = '/home/gfssi/GFData/SSIForecastData/FY4A/SSI_4KMCorrect/Full/Orbit'
+out_path = '/home/gfssi/GFData/SSIForecastData/FY4A/SSI_4KMCorrect/Full/Orbit/{}'
 
-infiles = get_files_by_date(in_path, '20190101', '20191231', 'nc', r'.*_NOM_(\d{8})')
+infiles = get_files_by_date(in_path, '20180901', '20191231', 'nc', r'.*_NOM_(\d{8})')
 infiles.sort()
 
 n = 63
@@ -44,38 +44,46 @@ data_length = len(infiles)
 #     'timestamp': (np.zeros((data_length, 1), dtype=np.float64), np.float64),
 # }
 
+
+indexs = {
+    'HangZhou': (601, 1730),  # 杭州 120.1647, 30.2261
+    'KunMing': (601, 1730),  # 杭州 102.65, 25
+}
+
+
 for i, infile in enumerate(infiles):
     data_loader = FY4ASSI(infile)
     itol = data_loader.get_ssi()
     g0 = data_loader.get_g0()
     date = data_loader.get_date_time_orbit(infile)
 
-    index = (601, 1730)  # 杭州 120.1647, 30.2261
+    for fix_name, index in indexs.items():
+        out_path_fix = out_path.format(fix_name)
 
-    result = {
-        'data_x': (np.zeros((1, n, n), dtype=np.float32), np.float32),
-        'data_g0': (np.zeros((1, n, n), dtype=np.float32), np.float32),
-        'data_y': (np.zeros((1, 1), dtype=np.float32), np.float32),
-        'timestamp': (np.zeros((1, 1), dtype=np.float64), np.float64),
-    }
-    data_y = extract_from_array(itol, index, 1)
-    print(data_y)
+        result = {
+            'data_x': (np.zeros((1, n, n), dtype=np.float32), np.float32),
+            'data_g0': (np.zeros((1, n, n), dtype=np.float32), np.float32),
+            'data_y': (np.zeros((1, 1), dtype=np.float32), np.float32),
+            'timestamp': (np.zeros((1, 1), dtype=np.float64), np.float64),
+        }
+        data_y = extract_from_array(itol, index, 1)
+        print(data_y)
 
-    if np.isnan(data_y).all():
-        continue
-    result['data_y'][0][0] = data_y
+        if np.isnan(data_y).all():
+            continue
+        result['data_y'][0][0] = data_y
 
-    data_x = extract_from_array(itol, index, n)
-    data_x[np.isnan(data_x)] = 0
-    result['data_x'][0][0] = data_x
+        data_x = extract_from_array(itol, index, n)
+        data_x[np.isnan(data_x)] = 0
+        result['data_x'][0][0] = data_x
 
-    data_g0 = extract_from_array(g0, index, n)
-    data_g0[np.isnan(data_g0)] = 0
-    result['data_g0'][0][0] = data_g0
+        data_g0 = extract_from_array(g0, index, n)
+        data_g0[np.isnan(data_g0)] = 0
+        result['data_g0'][0][0] = data_g0
 
-    result['timestamp'][0][0] = date.timestamp()
+        result['timestamp'][0][0] = date.timestamp()
 
-    outfile = infile.replace(in_path, out_path)
-    if not os.path.isdir(out_path):
-        os.makedirs(out_path)
-    write_out_file(outfile, result)
+        outfile = infile.replace(in_path, out_path_fix)
+        if not os.path.isdir(out_path_fix):
+            os.makedirs(out_path_fix)
+        write_out_file(outfile, result)

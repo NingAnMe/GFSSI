@@ -16,7 +16,7 @@ from keras.models import load_model
 目标，准备（sample，timestep， datashape， channels）的数据
 """
 timestep = 4  # 设置步长
-forecast_step = 2  # 设置预测的时长
+forecast_step = 7  # 设置预测的时长
 width = 63
 length = 63
 channels = 2
@@ -45,7 +45,7 @@ class FY4AExtractFileLoader:
             return hdf5.get('data_y')[:]
 
 
-in_path = r'C:\D\GoogleDrive\FY4AForecast\20190601'
+in_path = r'C:\D\GoogleDrive\FY4AForecast\20190630'
 in_files = get_files_by_date(in_path)
 in_files.sort()
 
@@ -119,7 +119,7 @@ for k, v in result.items():
 
 train_x[np.isnan(train_x)] = 0
 train_y[np.isnan(train_y)] = 0
-# print(train_x.shape)
+print(train_x.shape)
 # print(train_x[0])
 print(train_y.shape)
 
@@ -127,10 +127,20 @@ google_drive = r'C:\D\GoogleDrive'
 
 model_number = 2
 model_name = 'model{}'.format(model_number)
-model_outfile = os.path.join(google_drive, 'model/nice_model{}.h5'.format(model_number))
+model_outfile = os.path.join(google_drive, 'model/nice_model{}_step{}.h5'.format(model_number, forecast_step))
 model = load_model(model_outfile)
 
+# for x in train_x:
+#     print(x)
+
 result = model.predict(train_x)
-for y_hat, y in zip(result, train_y):
+print(result.shape)
+
+for y, y_hat in zip(train_y, result):
     print()
-    print(y_hat, y)
+    print(y, y_hat)
+
+for y, y_hat in zip(train_y[0], result[0]):
+    print('{:.04f} {:.04f}'.format(y, y_hat))
+# for y, y_hat in zip(train_y[0+forecast_step], result[0+forecast_step]):
+#     print('{:08.04f} {:08.04f}'.format(y, y_hat))
