@@ -15,14 +15,15 @@ from lib.lib_constant import BASEMAP_FY4_4KM
 
 
 def plot_image_disk(*args, **kwargs):
-    if 'fy4a' in kwargs.get('resultid'):
+    resultid = kwargs.get('resultid')
+    if resultid is not None and 'fy4a' in resultid.lower():
         plot_fy4a_image_disk(*args, **kwargs)
     else:
-        print('plot_image_disk不支持此分辨率')
+        print('plot_image_disk不支持此分辨率{}'.format(resultid))
 
 
-def plot_fy4a_image_disk(data, out_file='test.jpg', resolution_type='4km', vmin=0, vmax=1000):
-    if '4km' in resolution_type.lower() and 'fy4a' in resolution_type.lower():
+def plot_fy4a_image_disk(data, out_file='test.jpg', resolution_type='4km', vmin=0, vmax=1000, **kwargs):
+    if '4km' in resolution_type.lower():
         ditu = plt.imread(BASEMAP_FY4_4KM)
         row, col, _ = ditu.shape
         fig = plt.figure(figsize=(col / 100, row / 100), dpi=100)
@@ -40,11 +41,11 @@ def plot_fy4a_image_disk(data, out_file='test.jpg', resolution_type='4km', vmin=
     print('>>> :{}'.format(out_file))
 
 
-def plot_fy3_image_map(data, out_file='test.jpg', resolution_type='1km', vmin=0, vmax=2):
-    if '1km' in resolution_type:
+def plot_fy3_image_map(data, out_file='test.jpg', resolution_type='1km', vmin=0, vmax=2, **kwargs):
+    if '1km' in resolution_type.lower():
         row, col = data.shape
     else:
-        print('不支持的分辨率:{}'.format(resolution_type))
+        print('plot_fy3_image_map:不支持的分辨率:{}'.format(resolution_type))
         return
 
     fig = plt.figure(figsize=(col / 100, row / 100), dpi=100)
@@ -58,16 +59,16 @@ def plot_fy3_image_map(data, out_file='test.jpg', resolution_type='1km', vmin=0,
 
 
 def plot_image_map(*args, **kwargs):
-    res = kwargs['resolution_type']
-    if 'fy4a' in res:
+    resultid = kwargs['resultid']
+    if 'fy4a' in resultid.lower():
         plot_fy4_image_map(*args, **kwargs)
-    elif 'fy3d' in res:
+    elif 'fy3d' in resultid.lower():
         plot_fy3_image_map(*args, **kwargs)
     else:
-        print('不支持的卫星和分辨率: {}')
+        print('plot_image_map:不支持的卫星和分辨率: {}'.format(resultid))
 
 
-def plot_fy4_image_map(data, out_file='test.jpg', resolution_type='4km', vmin=0, vmax=1000, interp=3):
+def plot_fy4_image_map(data, out_file='test.jpg', resolution_type='4km', vmin=0, vmax=1000, interp=3, **kwargs):
     if '4km' in resolution_type.lower():
         projlut = FY4ASSI.get_lonlat_projlut_4km()
     elif '1kmcorrect' in resolution_type.lower():
@@ -115,9 +116,9 @@ def plot_map_full(in_file, vmin=0, vmax=1000, resultid='', planid='', datatime='
     dir_ = os.path.dirname(in_file)
     in_filename = os.path.basename(in_file)
 
-    if 'fy4a' in resultid:
+    if 'fy4a' in resultid.lower():
         datas = FY4ASSI(in_file)
-    elif 'fy3d' in resultid:
+    elif 'fy3d' in resultid.lower():
         datas = FY3DSSI(in_file)
     else:
         print('不支持的卫星：{}'.format(resultid))
@@ -164,22 +165,22 @@ def plot_map_full(in_file, vmin=0, vmax=1000, resultid='', planid='', datatime='
             area_type = 'Full_LATLON'
             out_filename2 = in_filename + '_{}_{}.PNG'.format(area_type, element)
             out_file2 = os.path.join(dir_, out_filename2)
-            try:
-                if not os.path.isfile(out_file2):
-                    plot_image_map(data, out_file=out_file2, resultid=resultid, resolution_type=resolution_type,
-                                   vmin=vmin,
-                                   vmax=vmax)
-                else:
-                    print('文件已经存在，跳过:{}'.format(out_file2))
-                # 入库
-                if os.path.isfile(out_file2) and not exist_result_data(resultid=resultid, datatime=datatime,
-                                                                       resolution_type=resolution_type,
-                                                                       element=element, area_type=area_type):
-                    add_result_data(resultid=resultid, planid=planid, address=out_file2, datatime=datatime,
-                                    resolution_type=resolution_type, area_type=area_type, element=element)
-            except Exception as why:
-                print(why)
-                print('绘制{}图像错误:{}'.format(area_type, out_file2))
+            # try:
+            if not os.path.isfile(out_file2):
+                plot_image_map(data, out_file=out_file2, resultid=resultid, resolution_type=resolution_type,
+                               vmin=vmin,
+                               vmax=vmax)
+            else:
+                print('文件已经存在，跳过:{}'.format(out_file2))
+            # 入库
+            if os.path.isfile(out_file2) and not exist_result_data(resultid=resultid, datatime=datatime,
+                                                                   resolution_type=resolution_type,
+                                                                   element=element, area_type=area_type):
+                add_result_data(resultid=resultid, planid=planid, address=out_file2, datatime=datatime,
+                                resolution_type=resolution_type, area_type=area_type, element=element)
+            # except Exception as why:
+            #     print(why)
+            #     print('绘制{}图像错误:{}'.format(area_type, out_file2))
 
 
 if __name__ == '__main__':
