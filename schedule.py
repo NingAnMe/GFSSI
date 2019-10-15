@@ -23,6 +23,8 @@ from gfssi_b02_ssi_1km import fy4a_ssi_4km_to_1km
 from gfssi_b04_txt2hdf import fy4a_1km_correct_txt2hdf
 from gfssi_b03_envi2hdf import fy3d_envi2hdf
 
+from config import *
+
 from lib.lib_read_ssi import FY4ASSI
 from lib.lib_database import find_result_data, Session, ResultData
 from lib.lib_get_index_by_lonlat import get_point_index
@@ -34,9 +36,7 @@ g_path, _ = os.path.split(os.path.realpath(__file__))
 # 进入该目录
 os.chdir(g_path)
 
-data_root_dir = '/home/gfssi/GFData/'
-
-DEBUG = False
+DEBUG = True
 
 
 def get_hash_utf8(str_hash):
@@ -67,8 +67,8 @@ def make_zip_file(out_file, in_files):
 def fy4a_save_4km_orbit_data_in_database(date_start=None, date_end=None, **kwargs):
     print(date_start)
     print(date_end)
-    source_dir = os.path.join(data_root_dir, 'SourceData', 'FY4A', 'SSI_4KM')
-    ssi_dir = os.path.join(data_root_dir, 'SSIData')
+    source_dir = os.path.join(DATA_ROOT_DIR, 'SourceData', 'FY4A', 'SSI_4KM')
+    ssi_dir = os.path.join(DATA_ROOT_DIR, 'SSIData', 'FY4A', 'SSI_4KM')
     ext = '.NC'
     resultid = 'FY4A_AGRI_L2_SSI_Orbit'
     planid = 1
@@ -115,7 +115,7 @@ def fy4a_save_4km_orbit_data_in_database(date_start=None, date_end=None, **kwarg
 
 
 def fy3d_product_1km_daily_data(date_start=None, date_end=None, thread=2, **kwargs):
-    source_dir = os.path.join(data_root_dir, 'SourceData', 'FY3D', 'SSI_1KM')
+    source_dir = os.path.join(DATA_ROOT_DIR, 'SourceData', 'FY3D', 'SSI_1KM')
     ext = '.dat'
     resultid = 'FY3D_MERSI_L3_SSI_Daily'
     planid = 1
@@ -136,7 +136,7 @@ def fy3d_product_1km_daily_data(date_start=None, date_end=None, thread=2, **kwar
             datatime = datetime.strptime(ymd, "%Y%m%d")
             if (not date_start <= datatime <= date_end) or ('Gc' not in file_name):
                 continue
-            dst_dir = os.path.join(data_root_dir, 'SSIData', 'FY3D', 'SSI_1KM', 'Full', 'Daily', ymd[:6])
+            dst_dir = os.path.join(DATA_ROOT_DIR, 'SSIData', 'FY3D', 'SSI_1KM', 'Full', 'Daily', ymd[:6])
             filename_out = filename_template.format(ymd=ymd, r=resolution_type)
             dst_file = os.path.join(dst_dir, filename_out)
             # p.apply_async(fy3d_envi2hdf, args=(src_file, dst_file, resultid, planid, datatime, resolution_type))
@@ -159,7 +159,7 @@ def product_fy4a_4kmcorrect_disk_full_data_orbit(date_start=None, date_end=None,
     resolution_type_in = '4KM'
     resolution_type = '4KMCorrect'
 
-    out_dir = os.path.join(data_root_dir, 'SSIData/FY4A/SSI_{resolution_type}/Full/{frequency}')
+    out_dir = os.path.join(DATA_ROOT_DIR, 'SSIData/FY4A/SSI_{resolution_type}/Full/{frequency}')
     out_dir = out_dir.format(resolution_type=resolution_type, frequency=frequency)
 
     planid = 1
@@ -202,7 +202,7 @@ def product_fy4a_1km_disk_full_data_orbit(date_start=None, date_end=None, thread
     resolution_type_in = '4KMCorrect'
     resolution_type = '1KM'
 
-    out_dir = os.path.join(data_root_dir, 'SSIData/FY4A/SSI_{resolution_type}/Full/{frequency}')
+    out_dir = os.path.join(DATA_ROOT_DIR, 'SSIData/FY4A/SSI_{resolution_type}/Full/{frequency}')
     out_dir = out_dir.format(resolution_type=resolution_type, frequency=frequency)
 
     planid = 1
@@ -250,7 +250,7 @@ def product_fy4a_1kmcorrect_disk_full_data_orbit(date_start=None, date_end=None,
     resolution_type_in = '1KM'
     resolution_type = '1KMCorrect'
 
-    out_dir = os.path.join(data_root_dir, 'SSIData/FY4A/SSI_{resolution_type}/Full/{frequency}')
+    out_dir = os.path.join(DATA_ROOT_DIR, 'SSIData/FY4A/SSI_{resolution_type}/Full/{frequency}')
     out_dir = out_dir.format(resolution_type=resolution_type, frequency=frequency)
 
     planid = 1
@@ -296,7 +296,7 @@ def product_combine_data(date_start=None, date_end=None, frequency=None, thread=
                          resolution_type=None, sat_sensor=None):
     sat_sensor = sat_sensor.upper()
     sat, sensor = sat_sensor.split('_')
-    out_dir = os.path.join(data_root_dir, 'SSIData/{sat}/SSI_{resolution_type}/Full/{frequency}')
+    out_dir = os.path.join(DATA_ROOT_DIR, 'SSIData/{sat}/SSI_{resolution_type}/Full/{frequency}')
     out_dir = out_dir.format(sat=sat, resolution_type=resolution_type, frequency=frequency)
     if sat == 'FY4A':
         out_name = 'FY4A-_AGRI--_N_DISK_1047E_L3-_SSI-_MULT_NOM_{date}_{resolution_type}_V0001.NC'
@@ -473,8 +473,9 @@ def product_fy4a_disk_area_data(date_start=None, date_end=None, thread=3, left_u
     :return:
     """
     frequency = resultid.split('_')[-1]
-    date_start = datetime.strptime(date_start, '%Y%m%d%H%M%S')
-    date_end = datetime.strptime(date_end, '%Y%m%d%H%M%S')
+    if isinstance(date_start, str):
+        date_start = datetime.strptime(date_start, '%Y%m%d%H%M%S')
+        date_end = datetime.strptime(date_end, '%Y%m%d%H%M%S')
 
     results = find_result_data(resultid=resultid, datatime_start=date_start, datatime_end=date_end,
                                resolution_type=resolution_type)
@@ -483,8 +484,10 @@ def product_fy4a_disk_area_data(date_start=None, date_end=None, thread=3, left_u
     in_files_length = len(in_files)
     print('找到的文件总数:{}'.format(in_files_length))
 
-    out_dir = os.path.join(data_root_dir, 'SSIData/FY4A/SSI_{resolution_type}/Area/{frequency}'.format(
+    out_dir = os.path.join(DATA_ROOT_DIR, 'SSIData/FY4A/SSI_{resolution_type}/Area/{frequency}'.format(
         resolution_type=resolution_type, frequency=frequency))
+    out_dir = os.path.join(out_dir, '{:08.4f}_{:08.4f}_{:08.4f}_{:08.4f}'.format(left_up_lon, left_up_lat,
+                                                                                 right_down_lon, right_down_lat))
 
     print('开始生成区域数据')
     print(left_up_lon, left_up_lat, right_down_lon, right_down_lat)
@@ -509,7 +512,7 @@ def product_fy4a_disk_point_data(date_start=None, date_end=None, lon=None, lat=N
                                  resolution_type=None, resultid=None, element=None, idx=None, ck=None, **kwargs):
     date_s = datetime.strptime(date_start, '%Y%m%d%H%M%S')
     date_e = datetime.strptime(date_end, '%Y%m%d%H%M%S')
-    out_dir = os.path.join(data_root_dir, 'TmpData')
+    out_dir = os.path.join(DATA_ROOT_DIR, 'TmpData')
     outname = 'FY4A-_AGRI--_{lon:07.3f}N_DISK_{lat:07.3f}E_L2-_SSI-_MULT_NOM_' \
               '{date_start}_{date_end}_{resolution_type}_V0001_{site}.TXT'
 
@@ -784,9 +787,9 @@ def product_4km_disk_area_image(date_start=None, date_end=None, thread=3, freque
     right_down_lon = 140
     right_down_lat = 0
 
-    in_dir = os.path.join(data_root_dir, 'SSIData/FY4A/SSI_{resolution_type}/Full/{frequency}'.format(
+    in_dir = os.path.join(DATA_ROOT_DIR, 'SSIData/FY4A/SSI_{resolution_type}/Full/{frequency}'.format(
         resolution_type=resolution_type, frequency=frequency))
-    out_dir = os.path.join(data_root_dir, 'SSIData/FY4A/SSI_{resolution_type}/China/{frequency}'.format(
+    out_dir = os.path.join(DATA_ROOT_DIR, 'SSIData/FY4A/SSI_{resolution_type}/China/{frequency}'.format(
         resolution_type=resolution_type, frequency=frequency))
 
     if frequency == 'Orbit':
@@ -894,78 +897,98 @@ def product_4km_disk_area_image(date_start=None, date_end=None, thread=3, freque
 
 if __name__ == '__main__':
     # 数据入库
-    fy4a_save_4km_orbit_data_in_database()  # FY4A 4KM原始数据入库
+    # fy4a_save_4km_orbit_data_in_database()  # FY4A 4KM原始数据入库
 
     # =================================生产数据==================================
     # 轨道：生产数据：FY4A
-    start = datetime.strptime('20190101000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
-    product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # FY4A 4KMCorrect
-    start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190601235959', '%Y%m%d%H%M%S')
-    product_fy4a_1km_disk_full_data_orbit(start, end)  # FY4A 1KM
-    start = datetime.strptime('20171015000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20171015235959', '%Y%m%d%H%M%S')
-    product_fy4a_1kmcorrect_disk_full_data_orbit(start, end)  # FY4A 1KMCorrect
+    # start = datetime.strptime('20170601000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20191231235959', '%Y%m%d%H%M%S')
+    # product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # FY4A 4KMCorrect
+    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190601235959', '%Y%m%d%H%M%S')
+    # product_fy4a_1km_disk_full_data_orbit(start, end)  # FY4A 1KM
+    # start = datetime.strptime('20171015000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20171015235959', '%Y%m%d%H%M%S')
+    # product_fy4a_1kmcorrect_disk_full_data_orbit(start, end)  # FY4A 1KMCorrect
 
     # 日：生产数据：FY4A FY3D
-    start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
-    product_combine_data(start, end, frequency='Daily', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
-    product_combine_data(start, end, frequency='Daily', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
-    start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190602235959', '%Y%m%d%H%M%S')
-    product_combine_data(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
-    start = datetime.strptime('20171015000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20171015235959', '%Y%m%d%H%M%S')
-    product_combine_data(start, end, frequency='Daily', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
-    start = datetime.strptime('20190501000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190501235959', '%Y%m%d%H%M%S')
-    fy3d_product_1km_daily_data(start, end)  # FY3D 1KM
-
-    # 月：生产数据：FY4A FY3D
-    start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
-    product_combine_data(start, end, frequency='Monthly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
-    product_combine_data(start, end, frequency='Monthly', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
-    product_combine_data(start, end, frequency='Monthly', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
-    product_combine_data(start, end, frequency='Monthly', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
-    product_combine_data(start, end, frequency='Monthly', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
-
-    # 年：生产数据：FY4A FY3D
-    start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
-    product_combine_data(start, end, frequency='Yearly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
-    product_combine_data(start, end, frequency='Yearly', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
-    product_combine_data(start, end, frequency='Yearly', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
-    product_combine_data(start, end, frequency='Yearly', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
-    product_combine_data(start, end, frequency='Yearly', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
-
-    # 轨道：绘图：FY4A
-    start = datetime.strptime('20190410000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190410235959', '%Y%m%d%H%M%S')
-    product_image(start, end, frequency='Orbit', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
-    product_image(start, end, frequency='Orbit', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
-    product_image(start, end, frequency='Orbit', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
-    product_image(start, end, frequency='Orbit', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
-
-    # 日：绘图：FY4A FY3D
-    product_image(start, end, frequency='Daily', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    # product_combine_data(start, end, frequency='Daily', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    # product_combine_data(start, end, frequency='Daily', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
+    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190602235959', '%Y%m%d%H%M%S')
+    # product_combine_data(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
+    # start = datetime.strptime('20171015000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20171015235959', '%Y%m%d%H%M%S')
+    # product_combine_data(start, end, frequency='Daily', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
+    # start = datetime.strptime('20190501000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190501235959', '%Y%m%d%H%M%S')
+    # fy3d_product_1km_daily_data(start, end)  # FY3D 1KM
+    #
+    # # 月：生产数据：FY4A FY3D
+    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    # product_combine_data(start, end, frequency='Monthly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    # product_combine_data(start, end, frequency='Monthly', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
+    # product_combine_data(start, end, frequency='Monthly', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
+    # product_combine_data(start, end, frequency='Monthly', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
+    # product_combine_data(start, end, frequency='Monthly', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
+    #
+    # # 年：生产数据：FY4A FY3D
+    # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190630235959', '%Y%m%d%H%M%S')
+    # product_combine_data(start, end, frequency='Yearly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    # product_combine_data(start, end, frequency='Yearly', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
+    # product_combine_data(start, end, frequency='Yearly', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
+    # product_combine_data(start, end, frequency='Yearly', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
+    # product_combine_data(start, end, frequency='Yearly', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
+    #
+    # # 轨道：绘图：FY4A
+    # start = datetime.strptime('20190410000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190410235959', '%Y%m%d%H%M%S')
+    # product_image(start, end, frequency='Orbit', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    # product_image(start, end, frequency='Orbit', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
+    # product_image(start, end, frequency='Orbit', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
+    # product_image(start, end, frequency='Orbit', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
+    #
+    # # 日：绘图：FY4A FY3D
+    # product_image(start, end, frequency='Daily', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    start = datetime.strptime('20180901000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20180902000000', '%Y%m%d%H%M%S')
     product_image(start, end, frequency='Daily', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
-    product_image(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
-    product_image(start, end, frequency='Daily', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
-    product_image(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
+    # product_image(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
+    # product_image(start, end, frequency='Daily', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
+    # product_image(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
+    #
+    # # 月：绘图：FY4A FY3D
+    # product_image(start, end, frequency='Monthly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    # product_image(start, end, frequency='Monthly', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
+    # product_image(start, end, frequency='Monthly', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
+    # product_image(start, end, frequency='Monthly', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
+    # product_image(start, end, frequency='Monthly', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
+    #
+    # # 年：绘图：FY4A FY3D
+    # product_image(start, end, frequency='Yearly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
+    # product_image(start, end, frequency='Yearly', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
+    # product_image(start, end, frequency='Yearly', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
+    # product_image(start, end, frequency='Yearly', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
+    # product_image(start, end, frequency='Yearly', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
 
-    # 月：绘图：FY4A FY3D
-    product_image(start, end, frequency='Monthly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
-    product_image(start, end, frequency='Monthly', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
-    product_image(start, end, frequency='Monthly', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
-    product_image(start, end, frequency='Monthly', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
-    product_image(start, end, frequency='Monthly', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
-
-    # 年：绘图：FY4A FY3D
-    product_image(start, end, frequency='Yearly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
-    product_image(start, end, frequency='Yearly', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
-    product_image(start, end, frequency='Yearly', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
-    product_image(start, end, frequency='Yearly', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
-    product_image(start, end, frequency='Yearly', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
+    # # 生产区域数据
+    # start = datetime.strptime('20180901000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190930235959', '%Y%m%d%H%M%S')
+    # # 江西
+    # product_fy4a_disk_area_data(start, end, frequency='Daily', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI',
+    #                             left_up_lon=113., left_up_lat=31., right_down_lon=119., right_down_lat=24,
+    #                             resultid='FY4A_AGRI_L3_SSI_Daily')
+    # # 浙江
+    # product_fy4a_disk_area_data(start, end, frequency='Daily', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI',
+    #                             left_up_lon=118., left_up_lat=32., right_down_lon=123., right_down_lat=27.,
+    #                             resultid='FY4A_AGRI_L3_SSI_Daily')
+    # # 湖北
+    # product_fy4a_disk_area_data(start, end, frequency='Daily', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI',
+    #                             left_up_lon=108., left_up_lat=34., right_down_lon=117., right_down_lat=29.,
+    #                             resultid='FY4A_AGRI_L3_SSI_Daily')

@@ -6,7 +6,7 @@ import os
 from flask import Flask, request
 from flask_restful import Resource, Api
 
-from schedule import product_fy4a_disk_area_data, make_zip_file, get_hash_utf8, find_result_data, data_root_dir, \
+from schedule import product_fy4a_disk_area_data, make_zip_file, get_hash_utf8, find_result_data, DATA_ROOT_DIR, \
     product_fy4a_disk_point_data
 
 from lib.lib_constant import KDTREE_LUT_FY4_4KM, KDTREE_LUT_FY4_1KM
@@ -107,7 +107,7 @@ class DownloadData(Resource):
         if in_files is not None and len(in_files) >= 0:
             in_files_length = len(in_files)
             print('找到的文件总数:{}'.format(in_files_length))
-            dir_out = os.path.join(data_root_dir, 'TmpData')
+            dir_out = os.path.join(DATA_ROOT_DIR, 'TmpData')
             out_file = os.path.join(dir_out, '{}.zip'.format(hash_str))
             zip_file = make_zip_file(out_file=out_file, in_files=in_files)
             return {'zip_file': zip_file, 'code': 1}, 201
