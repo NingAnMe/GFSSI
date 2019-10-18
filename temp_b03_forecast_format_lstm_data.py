@@ -127,67 +127,76 @@ class FY4AExtractFileLoader:
 
 # root_path = '/content/drive/My Drive/'
 root_path = r'C:\D\GoogleDrive'
-in_path = os.path.join(root_path, 'FY4AForecast')
-in_files = get_files_by_date(in_path)
-in_files.sort()
+# in_path = os.path.join(root_path, 'FY4AForecast')
+in_path = os.path.join(root_path, 'FY4AForecast_verify')
 
-count_files = len(in_files)
-if count_files <= 0:
-    exit()
-print('文件数量：{}'.format(count_files))
-
-ssi_arrays = np.zeros((count_files, width, length), dtype=np.float32)
-g0_arrays = np.zeros((count_files, width, length), dtype=np.float32)
-ssi_scalars = np.zeros((count_files, 1), dtype=np.float32)
-ssi_dates = np.zeros(count_files, dtype=np.object)
+fix_names = os.listdir(in_path)
 
 result = OrderedDict()
-hours = 14  # 使用每天14个小时的数据
-for i, in_file in enumerate(in_files):
-    file_loader = FY4AExtractFileLoader(in_file)
-    datetime_ = file_loader.get_datetime()
-    datetime_ = datetime_ + relativedelta(hours=8)  # 修改世界时为北京时
-    day = datetime_.timetuple()[7]
-    hour = datetime_.hour
-    if result.get(day) is None:
-        result[day] = dict()
-    if result[day].get(hour) is None:
-        result[day][hour] = dict()
-    ssi_array = file_loader.get_ssi_array()[:]
-    result[day][hour]['ssi_array'] = ssi_array
+for fix_name in fix_names:
+    print(fix_name)
+    in_path_fix = os.path.join(in_path, fix_name)
+    in_files = get_files_by_date(in_path_fix)
+    in_files.sort()
 
-    g0_array = file_loader.get_g0_array()[:]
-    result[day][hour]['g0_array'] = g0_array
+    count_files = len(in_files)
+    if count_files <= 0:
+        exit()
+    print('文件数量：{}'.format(count_files))
 
-    ssi_scalar = file_loader.get_ssi_scalar()
-    result[day][hour]['ssi_scalar'] = ssi_scalar
+    ssi_arrays = np.zeros((count_files, width, length), dtype=np.float32)
+    g0_arrays = np.zeros((count_files, width, length), dtype=np.float32)
+    ssi_scalars = np.zeros((count_files, 1), dtype=np.float32)
+    ssi_dates = np.zeros(count_files, dtype=np.object)
 
-    result[day][hour]['ssi_date'] = datetime_
+    hours = 14  # 使用每天14个小时的数据
+    for i, in_file in enumerate(in_files):
+        file_loader = FY4AExtractFileLoader(in_file)
+        datetime_ = file_loader.get_datetime()
+        datetime_ = datetime_ + relativedelta(hours=8)  # 修改世界时为北京时
+        day = datetime_.timetuple()[7]
+        hour = datetime_.hour
+        if result.get(fix_name) is None:
+            result[fix_name] = dict()
+        if result[fix_name].get(day) is None:
+            result[fix_name][day] = dict()
+        if result[fix_name][day].get(hour) is None:
+            result[fix_name][day][hour] = dict()
+        ssi_array = file_loader.get_ssi_array()[:]
+        result[fix_name][day][hour]['ssi_array'] = ssi_array
 
+        g0_array = file_loader.get_g0_array()[:]
+        result[fix_name][day][hour]['g0_array'] = g0_array
+
+        ssi_scalar = file_loader.get_ssi_scalar()
+        result[fix_name][day][hour]['ssi_scalar'] = ssi_scalar
+
+        result[fix_name][day][hour]['ssi_date'] = datetime_
 
 # ########################## 制作每日预测训练使用的样本数据 ##########################
-sample_count = len(result)
+sample_count = 0
+for fix_name in result.keys():
+    sample_count += len(result[fix_name])
 print('样本数量: {}'.format(sample_count))
 train_x = np.zeros((sample_count, timestep, width, length, channels), dtype=np.float32)
 train_y = np.zeros((sample_count, forecast_step), dtype=np.float32)
 
 sample = 0
-for k, v in result.items():
-    for j in range(hours):
-        hour = j + 6  # 从早上六点开始
-        data_hour = v.get(hour)
-        if data_hour is not None:
-            if hour_start <= hour < hour_start + timestep:
-                train_x[sample, hour-hour_start, ::, ::, 0] = v[hour]['ssi_array']
-                train_x[sample, hour-hour_start, ::, ::, 1] = v[hour]['g0_array']
-            elif hour_start + timestep <= hour < hour_start + forecast_step:
-                train_y[sample, hour-hour_start-timestep] = v[hour]['ssi_scalar']
-    sample += 1
+for fix_name, result_fix in result.items():
+    for k, v in result_fix.items():
+        for j in range(hours):
+            hour = j + 6  # 从早上六点开始
+            data_hour = v.get(hour)
+            if data_hour is not None:
+                if hour_start <= hour < hour_start + timestep:
+                    train_x[sample, hour-hour_start, ::, ::, 0] = v[hour]['ssi_array']
+                    train_x[sample, hour-hour_start, ::, ::, 1] = v[hour]['g0_array']
+                elif hour_start + timestep <= hour < hour_start + timestep + forecast_step:
+                    train_y[sample, hour-hour_start-timestep] = v[hour]['ssi_scalar']
+        sample += 1
 
 train_x[np.isnan(train_x)] = 0
 train_y[np.isnan(train_y)] = 0
-
-
 # ########################## 制作4小时或者7小时预测训练使用的样本数据 ##########################
 # date_start = ssi_dates[0]
 # date_end = ssi_dates[-1]
@@ -221,16 +230,45 @@ train_y[np.isnan(train_y)] = 0
 # print(train_x.shape)
 # print(train_x[0])
 # print(train_y.shape)
-# ########################## 训练模型 ##########################
+
+
+# # ########################## 训练模型 ##########################
+# model_number = 2
+# model_name = 'model{}'.format(model_number)
+# model_outfile = os.path.join(root_path, 'model/nice_model{}_step{}.h5'.format(model_number, forecast_step))
+# if os.path.isfile(model_outfile):
+#     model = load_model(model_outfile)
+# else:
+#     model = eval(model_name)()
+# model.fit(train_x, train_y, batch_size=32,
+#           epochs=150, validation_split=0.1)
+# if not os.path.isdir('model'):
+#     os.makedirs('model')
+# model.save(model_outfile)
+
+
+# ########################### 验证模型 ##########################
+google_drive = r'C:\D\GoogleDrive'
 model_number = 2
 model_name = 'model{}'.format(model_number)
-model_outfile = os.path.join(root_path, 'model/nice_model{}_step{}.h5'.format(model_number, forecast_step))
-if os.path.isfile(model_outfile):
-    model = load_model(model_outfile)
-else:
-    model = eval(model_name)()
-model.fit(train_x, train_y, batch_size=32,
-          epochs=150, validation_split=0.1)
-if not os.path.isdir('model'):
-    os.makedirs('model')
-model.save(model_outfile)
+model_outfile = os.path.join(google_drive, 'model/nice_model{}_step{}.h5'.format(model_number, forecast_step))
+model = load_model(model_outfile)
+result = model.predict(train_x)
+print(result.shape)
+
+for y, y_hat in zip(train_y, result):
+    print()
+    print(y, y_hat)
+
+import matplotlib.pyplot as plt
+for i in range(len(train_y)):
+    print('_' * 10)
+    for y, y_hat in zip(train_y[i], result[i]):
+        print('{:08.04f} {:08.04f}'.format(y, y_hat))
+    plt.plot(train_y[i], label='live')
+    plt.plot(result[i], label='forecast')
+    plt.legend()
+    plt.show()
+    plt.close()
+    print(np.mean(train_y[i]), np.mean(result[i]))
+    print('*' * 10)

@@ -31,7 +31,7 @@ def extract_from_array(array, index, n):
 in_path = '/home/gfssi/GFData/SSIData/FY4A/SSI_4KMCorrect/Full/Orbit'
 out_path = '/home/gfssi/GFData/SSIForecastData/FY4A/SSI_4KMCorrect/Full/Orbit/{}'
 
-infiles = get_files_by_date(in_path, '20180901', '20191231', 'nc', r'.*_NOM_(\d{8})')
+infiles = get_files_by_date(in_path, '20170601', '20191231', 'nc', r'.*_NOM_(\d{8})')
 infiles.sort()
 
 n = 63
@@ -46,8 +46,8 @@ data_length = len(infiles)
 
 
 indexs = {
-    'HangZhou': (601, 1730),  # 杭州 120.1647, 30.2261
-    'KunMing': (601, 1730),  # 杭州 102.65, 25
+    # 'HangZhou': (601, 1730),  # 杭州 120.1647, 30.2261
+    'KunMing': (716, 1323),  # 杭州 102.65, 25
 }
 
 
