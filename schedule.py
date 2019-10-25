@@ -455,9 +455,9 @@ def product_image(date_start=None, date_end=None, frequency=None, thread=2,
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
 
 
-def product_fy4a_disk_area_data(date_start=None, date_end=None, thread=3, left_up_lon=None, left_up_lat=None,
-                                right_down_lon=None, right_down_lat=None, resolution_type=None, resultid=None,
-                                **kwargs):
+def product_area_data(date_start=None, date_end=None, thread=3, left_up_lon=None, left_up_lat=None,
+                      right_down_lon=None, right_down_lat=None, resolution_type=None, resultid=None,
+                      **kwargs):
     """
     生成原始数据的中国区时次数据
     3个产品，每个产品1张图像，共3张图像
@@ -484,8 +484,10 @@ def product_fy4a_disk_area_data(date_start=None, date_end=None, thread=3, left_u
     in_files_length = len(in_files)
     print('找到的文件总数:{}'.format(in_files_length))
 
-    out_dir = os.path.join(DATA_ROOT_DIR, 'SSIData/FY4A/SSI_{resolution_type}/Area/{frequency}'.format(
-        resolution_type=resolution_type, frequency=frequency))
+    sat, sensor = resultid.split('_')[:2]
+
+    out_dir = os.path.join(DATA_ROOT_DIR, 'TmpData', '{sat}/SSI_{resolution_type}/Area/{frequency}'.format(
+        sat=sat, resolution_type=resolution_type, frequency=frequency))
     out_dir = os.path.join(out_dir, '{:08.4f}_{:08.4f}_{:08.4f}_{:08.4f}'.format(left_up_lon, left_up_lat,
                                                                                  right_down_lon, right_down_lat))
 
@@ -498,7 +500,7 @@ def product_fy4a_disk_area_data(date_start=None, date_end=None, thread=3, left_u
         out_file = os.path.join(out_dir, filename)
         out_files.append(out_file)
         p.apply_async(area, args=(in_file, out_file, left_up_lon, left_up_lat, right_down_lon, right_down_lat,
-                                  resolution_type))
+                                  resolution_type, resultid))
     p.close()
     p.join()
 
@@ -515,7 +517,7 @@ def product_point_data(date_start=None, date_end=None, lon=None, lat=None, point
     sat, sensor = sat_sensor.split('_')
     date_s = datetime.strptime(date_start, '%Y%m%d%H%M%S')
     date_e = datetime.strptime(date_end, '%Y%m%d%H%M%S')
-    out_dir = os.path.join(DATA_ROOT_DIR, 'TmpData')
+    out_dir = os.path.join(DATA_ROOT_DIR, 'TmpData', '{}'.format(sat))
     outname = '{sat}-_{sensor}--_{lon:07.3f}N_DISK_{lat:07.3f}E_L2-_SSI-_MULT_NOM_' \
               '{date_start}_{date_end}_{resolution_type}_V0001_{site}.TXT'
     if 'fy3d' in sat.lower():

@@ -8,7 +8,7 @@ import os
 import h5py
 import numpy as np
 
-from lib.lib_read_ssi import FY4ASSI
+from lib.lib_read_ssi import FY4ASSI, FY3DSSI
 from lib.lib_constant import FULL_VALUE
 from lib.lib_get_index_by_lonlat import get_data_by_index, get_area_index
 
@@ -49,7 +49,7 @@ def _write_out_file(out_file, result):
 
 
 def area(in_file, out_file, left_up_lon=None, left_up_lat=None, right_down_lon=None, right_down_lat=None,
-         resolution_type=None):
+         resolution_type=None, resultid=None):
     print('area <<< :{}'.format(in_file))
     if not os.path.isfile(in_file):
         print('数据不存在:{}'.format(in_file))
@@ -59,9 +59,18 @@ def area(in_file, out_file, left_up_lon=None, left_up_lat=None, right_down_lon=N
     if not os.path.isdir(out_path):
         os.makedirs(out_path)
 
-    if '4km' in resolution_type.lower():
+    if 'fy4a' in resultid.lower() and '4km' in resolution_type.lower():
+        loader = FY4ASSI
         lons = FY4ASSI.get_longitude_4km()
         lats = FY4ASSI.get_latitude_4km()
+    elif 'fy4a' in resultid.lower() and '1km' in resolution_type.lower():
+        loader = FY4ASSI
+        lons = FY4ASSI.get_longitude_1km()
+        lats = FY4ASSI.get_latitude_1km()
+    elif 'fy3d' in resultid.lower() and '1km' in resolution_type.lower():
+        loader = FY3DSSI
+        lons = FY3DSSI.get_longitude_1km()
+        lats = FY3DSSI.get_latitude_1km()
     else:
         raise ValueError('不支持此分辨率: {}'.format(resolution_type))
 
@@ -77,7 +86,7 @@ def area(in_file, out_file, left_up_lon=None, left_up_lat=None, right_down_lon=N
     }
 
     try:
-        datas = FY4ASSI(in_file)
+        datas = loader(in_file)
         data_get = {
             'SSI': datas.get_ssi,
             'DirSSI': datas.get_ib,
@@ -85,8 +94,8 @@ def area(in_file, out_file, left_up_lon=None, left_up_lat=None, right_down_lon=N
             'G0': datas.get_g0,
             'Gt': datas.get_gt,
             'DNI': datas.get_dni,
-            'Latitude': datas.get_latitude_4km,
-            'Longitude': datas.get_longitude_4km,
+            'Latitude': lats,
+            'Longitude': lons,
         }
         (row_min, row_max), (col_min, col_max) = get_area_index(lons=lons, lats=lats, left_up_lon=left_up_lon,
                                                                 left_up_lat=left_up_lat, right_down_lon=right_down_lon,

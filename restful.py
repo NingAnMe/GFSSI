@@ -6,7 +6,7 @@ import os
 from flask import Flask, request
 from flask_restful import Resource, Api
 
-from schedule import product_fy4a_disk_area_data, make_zip_file, get_hash_utf8, find_result_data, DATA_ROOT_DIR, \
+from schedule import product_area_data, make_zip_file, get_hash_utf8, find_result_data, DATA_ROOT_DIR, \
     product_point_data
 
 from lib.lib_constant import KDTREE_LUT_FY4_4KM, KDTREE_LUT_FY4_1KM, KDTREE_LUT_FY3_1KM
@@ -68,10 +68,10 @@ class DownloadData(Resource):
                 resolution_type = requests['resolution_type']
                 date_s = requests['date_start']
                 date_e = requests['date_end']
-                in_files = product_fy4a_disk_area_data(date_start=date_s, date_end=date_e, left_up_lon=left_up_lon,
-                                                       left_up_lat=left_up_lat, right_down_lon=right_down_lon,
-                                                       right_down_lat=right_down_lat, resultid=resultid,
-                                                       resolution_type=resolution_type)
+                in_files = product_area_data(date_start=date_s, date_end=date_e, left_up_lon=left_up_lon,
+                                             left_up_lat=left_up_lat, right_down_lon=right_down_lon,
+                                             right_down_lat=right_down_lat, resultid=resultid,
+                                             resolution_type=resolution_type)
                 if in_files is None or len(in_files) <= 0:
                     in_files = None
             except Exception as why:

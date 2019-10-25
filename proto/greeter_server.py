@@ -6,7 +6,7 @@ import grpc
 import gfssi_pb2
 import gfssi_pb2_grpc
 
-from schedule import product_fy4a_disk_area_data
+from schedule import product_area_data
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
@@ -23,15 +23,15 @@ class DownLoad(gfssi_pb2_grpc.DownLoadServicer):
         frequency = request.get('frequency')
         resolution_type = request.get('resolution_type')
         resultid = request.get('resultid')
-        zip_file = product_fy4a_disk_area_data(date_start=date_start,
-                                               date_end=date_end,
-                                               left_up_lon=left_up_lon,
-                                               left_up_lat=left_up_lat,
-                                               right_down_lon=right_down_lon,
-                                               right_down_lat=right_down_lat,
-                                               frequency=frequency,
-                                               resolution_type=resolution_type,
-                                               resultid=resultid, )
+        zip_file = product_area_data(date_start=date_start,
+                                     date_end=date_end,
+                                     left_up_lon=left_up_lon,
+                                     left_up_lat=left_up_lat,
+                                     right_down_lon=right_down_lon,
+                                     right_down_lat=right_down_lat,
+                                     frequency=frequency,
+                                     resolution_type=resolution_type,
+                                     resultid=resultid, )
         return gfssi_pb2.DownLoadAreaDataResponse(code=1, zip_file=zip_file)
 
 
