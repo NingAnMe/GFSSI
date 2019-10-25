@@ -25,7 +25,7 @@ from gfssi_b03_envi2hdf import fy3d_envi2hdf
 
 from config import *
 
-from lib.lib_read_ssi import FY4ASSI
+from lib.lib_read_ssi import FY4ASSI, FY3DSSI
 from lib.lib_database import find_result_data, Session, ResultData
 from lib.lib_get_index_by_lonlat import get_point_index
 from lib.lib_constant import *
@@ -508,22 +508,31 @@ def product_fy4a_disk_area_data(date_start=None, date_end=None, thread=3, left_u
         return
 
 
-def product_fy4a_disk_point_data(date_start=None, date_end=None, lon=None, lat=None, point_file=None,
-                                 resolution_type=None, resultid=None, element=None, idx=None, ck=None, **kwargs):
+def product_point_data(date_start=None, date_end=None, lon=None, lat=None, point_file=None,
+                       resolution_type=None, resultid=None, element=None, idx=None, ck=None,
+                       sat_sensor=None, **kwargs):
+    sat_sensor = sat_sensor.upper()
+    sat, sensor = sat_sensor.split('_')
     date_s = datetime.strptime(date_start, '%Y%m%d%H%M%S')
     date_e = datetime.strptime(date_end, '%Y%m%d%H%M%S')
     out_dir = os.path.join(DATA_ROOT_DIR, 'TmpData')
-    outname = 'FY4A-_AGRI--_{lon:07.3f}N_DISK_{lat:07.3f}E_L2-_SSI-_MULT_NOM_' \
+    outname = '{sat}-_{sensor}--_{lon:07.3f}N_DISK_{lat:07.3f}E_L2-_SSI-_MULT_NOM_' \
               '{date_start}_{date_end}_{resolution_type}_V0001_{site}.TXT'
+    if 'fy3d' in sat.lower():
+        loader = FY4ASSI
+    elif 'fy4a' in sat.lower():
+        loader = FY3DSSI
+    else:
+        raise ValueError('不支持的卫星：{}'.format(sat))
 
     if 'Orbit' in resultid:
-        get_datetime = FY4ASSI.get_date_time_orbit
+        get_datetime = loader.get_date_time_orbit
     elif 'Daily' in resultid:
-        get_datetime = FY4ASSI.get_date_time_daily
+        get_datetime = loader.get_date_time_daily
     elif 'Monthly' in resultid:
-        get_datetime = FY4ASSI.get_date_time_monthly
+        get_datetime = loader.get_date_time_monthly
     elif 'Yearly' in resultid:
-        get_datetime = FY4ASSI.get_date_time_yearly
+        get_datetime = loader.get_date_time_yearly
     else:
         print('不支持的时间频率:{}'.format(resultid))
         return
@@ -593,7 +602,8 @@ def product_fy4a_disk_point_data(date_start=None, date_end=None, lon=None, lat=N
                 print('没有找到有效的点数据')
                 return
         else:  # 返回单点的TXT文件
-            out_file = os.path.join(out_dir, outname.format(lon=lon, lat=lat, date_start=date_start,
+            out_file = os.path.join(out_dir, outname.format(sat=sat, sensor=sensor, lon=lon, lat=lat,
+                                                            date_start=date_start,
                                                             date_end=date_end, resolution_type=resolution_type,
                                                             site=''))
             if len(datas) > 0:
@@ -661,7 +671,8 @@ def product_fy4a_disk_point_data(date_start=None, date_end=None, lon=None, lat=N
                 data_str = '{date}\t{Itol:0.4f}\t{Ib:0.4f}\t{Id:0.4f}\t{G0:0.4f}\t{Gt:0.4f}\t{DNI:0.4f}\n'.format(
                     **data_format)
                 datas.append(data_str)
-            out_file = os.path.join(out_dir, outname.format(lon=lon, lat=lat, date_start=date_start,
+            out_file = os.path.join(out_dir, outname.format(sat=sat, sensor=sensor, lon=lon, lat=lat,
+                                                            date_start=date_start,
                                                             date_end=date_end, resolution_type=resolution_type,
                                                             site=point_name))
             with open(out_file, 'w') as fp:
@@ -956,12 +967,14 @@ if __name__ == '__main__':
     #
     # # 日：绘图：FY4A FY3D
     # product_image(start, end, frequency='Daily', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
-    start = datetime.strptime('20180901000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20180902000000', '%Y%m%d%H%M%S')
-    product_image(start, end, frequency='Daily', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
+    # start = datetime.strptime('20180901000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20180902000000', '%Y%m%d%H%M%S')
+    # product_image(start, end, frequency='Daily', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
     # product_image(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
     # product_image(start, end, frequency='Daily', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
-    # product_image(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
+    start = datetime.strptime('20190101000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190101000000', '%Y%m%d%H%M%S')
+    product_image(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
     #
     # # 月：绘图：FY4A FY3D
     # product_image(start, end, frequency='Monthly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM

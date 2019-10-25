@@ -9,7 +9,7 @@ import os
 import sys
 
 from lib.lib_forecast import forecast_ssi
-from schedule import product_fy4a_disk_point_data
+from schedule import product_point_data
 from restful import kdtree_idx_fy4_4km, kdtree_ck_fy4_4km
 
 idx = kdtree_idx_fy4_4km
@@ -30,11 +30,12 @@ def forecast(date_start, date_end, hour_start, lon, lat, out_dir):
         element = 'Itol'
         resultid = 'FY4A_AGRI_L2_SSI_Orbit'
         resolution_type = '4KMCorrect'
-
-        result = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                              resolution_type=resolution_type, resultid=resultid,
-                                              element=element,
-                                              idx=idx, ck=ck)
+        sat_sensor = 'FY4A_AGRI'
+        result = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                    resolution_type=resolution_type, resultid=resultid,
+                                    element=element,
+                                    idx=idx, ck=ck,
+                                    sat_sensor=sat_sensor)
         if result is not None:
             values = result.pop('values')
             forecast_dates, forecast_values = forecast_ssi(result['date'], values, lon, lat)

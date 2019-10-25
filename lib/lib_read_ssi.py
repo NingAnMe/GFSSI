@@ -38,27 +38,6 @@ class FY3DSSIENVI:
         return lon, lat
 
 
-class FY3DSSI:
-    def __init__(self, in_file):
-        self.in_file = in_file
-
-    @staticmethod
-    def get_latitude_1km():
-        full_value = -999
-        with h5py.File(LON_LAT_LUT_FY3_1KM, 'r') as hdf:
-            dataset = hdf.get('Latitude')[:]
-            dataset[dataset == full_value] = np.nan
-            return dataset
-
-    @staticmethod
-    def get_longitude_1km():
-        full_value = -999
-        with h5py.File(LON_LAT_LUT_FY3_1KM, 'r') as hdf:
-            dataset = hdf.get('Longitude')[:]
-            dataset[dataset == full_value] = np.nan
-            return dataset
-
-
 class FY4ASSI(object):
     def __init__(self, in_file):
         self.in_file = in_file
@@ -304,3 +283,24 @@ class FY4ASSI(object):
                 dataset = hdf.get(k)
                 dataset[...] = v
                 dataset.attrs.modify('units', np.array('KW/m2', dtype=h5py.special_dtype(vlen=str)))
+
+
+class FY3DSSI(FY4ASSI):
+    def __init__(self, in_file):
+        super(FY3DSSI, self).__init__(in_file)
+
+    @staticmethod
+    def get_latitude_1km():
+        full_value = -999
+        with h5py.File(LON_LAT_LUT_FY3_1KM, 'r') as hdf:
+            dataset = hdf.get('Latitude')[:]
+            dataset[dataset == full_value] = np.nan
+            return dataset
+
+    @staticmethod
+    def get_longitude_1km():
+        full_value = -999
+        with h5py.File(LON_LAT_LUT_FY3_1KM, 'r') as hdf:
+            dataset = hdf.get('Longitude')[:]
+            dataset[dataset == full_value] = np.nan
+            return dataset

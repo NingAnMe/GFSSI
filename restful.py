@@ -7,24 +7,29 @@ from flask import Flask, request
 from flask_restful import Resource, Api
 
 from schedule import product_fy4a_disk_area_data, make_zip_file, get_hash_utf8, find_result_data, DATA_ROOT_DIR, \
-    product_fy4a_disk_point_data
+    product_point_data
 
-from lib.lib_constant import KDTREE_LUT_FY4_4KM, KDTREE_LUT_FY4_1KM
+from lib.lib_constant import KDTREE_LUT_FY4_4KM, KDTREE_LUT_FY4_1KM, KDTREE_LUT_FY3_1KM
 from lib.lib_forecast import forecast_ssi
 
 print('读取查找表文件： {}'.format('*' * 10))
 print(':{}'.format(KDTREE_LUT_FY4_4KM))
 print(':{}'.format(KDTREE_LUT_FY4_1KM))
+print(':{}'.format(KDTREE_LUT_FY3_1KM))
 
 if not os.path.isfile(KDTREE_LUT_FY4_4KM):
     raise FileExistsError('{} is not exit'.format(KDTREE_LUT_FY4_4KM))
 if not os.path.isfile(KDTREE_LUT_FY4_1KM):
     raise FileExistsError('{} is not exit'.format(KDTREE_LUT_FY4_1KM))
+if not os.path.isfile(KDTREE_LUT_FY3_1KM):
+    raise FileExistsError('{} is not exit'.format(KDTREE_LUT_FY3_1KM))
 
 with open(KDTREE_LUT_FY4_4KM, 'rb') as fp:
     kdtree_idx_fy4_4km, kdtree_ck_fy4_4km = pickle.load(fp)
 with open(KDTREE_LUT_FY4_1KM, 'rb') as fp:
     kdtree_idx_fy4_1km, kdtree_ck_fy4_1km = pickle.load(fp)
+with open(KDTREE_LUT_FY3_1KM, 'rb') as fp:
+    kdtree_idx_fy3_1km, kdtree_ck_fy3_1km = pickle.load(fp)
 
 app = Flask(__name__)
 api = Api(app)
@@ -78,25 +83,35 @@ class DownloadData(Resource):
             date_e = requests['date_end']
             point_file = requests.get('path')
             if 'FY4' in resultid and '4KM' in resolution_type:
-                print('4KM')
+                print('{} : {}'.format('FY4', '4KM'))
                 idx = kdtree_idx_fy4_4km
                 ck = kdtree_ck_fy4_4km
+                sat_sensor = 'FY4A_AGRI'
             elif 'FY4' in resultid and '1KM' in resolution_type:
-                print('1KM')
+                print('{} : {}'.format('FY4', '1KM'))
                 idx = kdtree_idx_fy4_1km
                 ck = kdtree_ck_fy4_1km
+                sat_sensor = 'FY4A_AGRI'
+            elif 'FY3' in resultid and '1KM' in resolution_type:
+                print('{} : {}'.format('FY3', '1KM'))
+                idx = kdtree_idx_fy3_1km
+                ck = kdtree_ck_fy3_1km
+                sat_sensor = 'FY3D_MERSI'
             else:
                 return {'error': '分辨率错误', 'code': 0}, 200
 
             if point_file is not None:
-                in_files = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, point_file=point_file,
-                                                        resolution_type=resolution_type, resultid=resultid,
-                                                        idx=idx, ck=ck)
+                in_files = product_point_data(date_start=date_s, date_end=date_e, point_file=point_file,
+                                              resolution_type=resolution_type, resultid=resultid,
+                                              idx=idx, ck=ck,
+                                              sat_sensor=sat_sensor)
             else:
                 lon = float(requests['left_up_lon'])
                 lat = float(requests['left_up_lat'])
-                txt = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                                   resolution_type=resolution_type, resultid=resultid, idx=idx, ck=ck)
+                txt = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                         resolution_type=resolution_type, resultid=resultid,
+                                         idx=idx, ck=ck,
+                                         sat_sensor=sat_sensor)
                 if txt is not None:
                     in_files = [txt]
                 else:
@@ -139,13 +154,20 @@ class GetPointData(Resource):
             is_forecast = 'false'
 
         if 'FY4' in resultid and '4KM' in resolution_type:
-            print('4KM')
+            print('{} : {}'.format('FY4', '4KM'))
             idx = kdtree_idx_fy4_4km
             ck = kdtree_ck_fy4_4km
+            sat_sensor = 'FY4A_AGRI'
         elif 'FY4' in resultid and '1KM' in resolution_type:
-            print('1KM')
+            print('{} : {}'.format('FY4', '1KM'))
             idx = kdtree_idx_fy4_1km
             ck = kdtree_ck_fy4_1km
+            sat_sensor = 'FY4A_AGRI'
+        elif 'FY3' in resultid and '1KM' in resolution_type:
+            print('{} : {}'.format('FY3', '1KM'))
+            idx = kdtree_idx_fy3_1km
+            ck = kdtree_ck_fy3_1km
+            sat_sensor = 'FY3D_MERSI'
         else:
             return {'error': '分辨率错误', 'code': 0}, 200
 
@@ -155,19 +177,21 @@ class GetPointData(Resource):
                 date_end = datetime.strptime(date_e, '%Y%m%d%H%M%S')
                 date_e = (date_end - relativedelta(hours=4)).strftime('%Y%m%d%H%M%S')
 
-                result_live = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                                           resolution_type=resolution_type, resultid=resultid,
-                                                           element=element,
-                                                           idx=idx, ck=ck)
+                result_live = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                                 resolution_type=resolution_type, resultid=resultid,
+                                                 element=element,
+                                                 idx=idx, ck=ck,
+                                                 sat_sensor=sat_sensor)
 
                 if result_live is not None:
                     result = dict()
                     result['length'] = len(result_live['date']) - 1
                     date_s = (date_end - relativedelta(hours=5)).strftime('%Y%m%d%H%M%S')
-                    result_forecast = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                                                   resolution_type=resolution_type, resultid=resultid,
-                                                                   element=element,
-                                                                   idx=idx, ck=ck)
+                    result_forecast = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                                         resolution_type=resolution_type, resultid=resultid,
+                                                         element=element,
+                                                         idx=idx, ck=ck,
+                                                         sat_sensor=sat_sensor)
 
                     if result_forecast is not None:
                         values = result_forecast.pop('values')
@@ -177,10 +201,11 @@ class GetPointData(Resource):
                         result['date'] = result_live['date']
                         result['value'] = result_live['value']
             else:
-                result = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                                      resolution_type=resolution_type, resultid=resultid,
-                                                      element=element,
-                                                      idx=idx, ck=ck)
+                result = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                            resolution_type=resolution_type, resultid=resultid,
+                                            element=element,
+                                            idx=idx, ck=ck,
+                                            sat_sensor=sat_sensor)
                 if result is not None:
                     result.pop('values')
                     live_length = len(result['date']) - 1
@@ -191,10 +216,11 @@ class GetPointData(Resource):
                 date_start = date_end - relativedelta(hours=1)
                 date_s = date_start.strftime('%Y%m%d%H%M%S')
 
-                result = product_fy4a_disk_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                                      resolution_type=resolution_type, resultid=resultid,
-                                                      element=element,
-                                                      idx=idx, ck=ck)
+                result = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                            resolution_type=resolution_type, resultid=resultid,
+                                            element=element,
+                                            idx=idx, ck=ck,
+                                            sat_sensor=sat_sensor)
                 if result is not None:
                     values = result.pop('values')
                     forecast_dates, forecast_values = forecast_ssi(result['date'], values, lon, lat)

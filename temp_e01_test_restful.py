@@ -1,7 +1,7 @@
 import requests
 
-start = '20190630000000'
-end = '20190630235959'
+start = '20190501000000'
+end = '20190501235959'
 leftuplon = 70.
 leftuplat = 50.
 rightdownlon = 140.
@@ -34,15 +34,17 @@ rightdownlat = 0.
 auth = {
     'date_start': start,
     'date_end': end,
-    'resolution_type': '4KM',
-    'resultid': 'FY4A_AGRI_L2_SSI_Orbit',
-    'lon': leftuplon,
-    'lat': leftuplat,
-    'element': 'Itol'
+    'resolution_type': '1KM',
+    'resultid': 'FY3D_MERSI_L3_SSI_Daily',
+    'lon': 116.3672,
+    'lat': 40.0781,
+    'element': 'Itol',
+    'is_live': True,
+    'is_forecast': False
 }
 
 # url = 'http://127.0.0.1:5000/get_point_data'
-url = 'http://222.128.59.164:5000/get_point_data'
+url = 'http://127.0.0.1:5000/get_point_data'
 
 
 r = requests.post(
