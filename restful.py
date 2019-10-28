@@ -68,10 +68,24 @@ class DownloadData(Resource):
                 resolution_type = requests['resolution_type']
                 date_s = requests['date_start']
                 date_e = requests['date_end']
-                in_files = product_area_data(date_start=date_s, date_end=date_e, left_up_lon=left_up_lon,
-                                             left_up_lat=left_up_lat, right_down_lon=right_down_lon,
-                                             right_down_lat=right_down_lat, resultid=resultid,
-                                             resolution_type=resolution_type)
+                if left_up_lon == 70 and left_up_lat == 50 and right_down_lon == 140 and right_down_lat == 0:
+                    if '1KM' in resolution_type:
+                        date_start = datetime.strptime(date_s, '%Y%m%d%H%M%S')
+                        date_end = datetime.strptime(date_e, '%Y%m%d%H%M%S')
+                        results = find_result_data(resultid=resultid, datatime_start=date_start, datatime_end=date_end,
+                                                   resolution_type=resolution_type)
+                        in_files = [row.address for row in results]
+                        in_files.sort()
+                    else:
+                        in_files = product_area_data(date_start=date_s, date_end=date_e, left_up_lon=left_up_lon,
+                                                     left_up_lat=left_up_lat, right_down_lon=right_down_lon,
+                                                     right_down_lat=right_down_lat, resultid=resultid,
+                                                     resolution_type=resolution_type)
+                else:
+                    in_files = product_area_data(date_start=date_s, date_end=date_e, left_up_lon=left_up_lon,
+                                                 left_up_lat=left_up_lat, right_down_lon=right_down_lon,
+                                                 right_down_lat=right_down_lat, resultid=resultid,
+                                                 resolution_type=resolution_type)
                 if in_files is None or len(in_files) <= 0:
                     in_files = None
             except Exception as why:
@@ -120,6 +134,8 @@ class DownloadData(Resource):
             return {'error': '不支持的区域类型:{}'.format(area_type), 'code': 0}, 400
 
         if in_files is not None and len(in_files) >= 0:
+            for infile in in_files:
+                print(infile)
             in_files_length = len(in_files)
             print('找到的文件总数:{}'.format(in_files_length))
             dir_out = os.path.join(DATA_ROOT_DIR, 'TmpData')
