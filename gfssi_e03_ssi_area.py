@@ -101,7 +101,11 @@ def area(in_file, out_file, left_up_lon=None, left_up_lat=None, right_down_lon=N
                                                                 left_up_lat=left_up_lat, right_down_lon=right_down_lon,
                                                                 right_down_lat=right_down_lat)
         for dataname in data_all:
-            data_all[dataname] = get_data_by_index(data=data_get[dataname](), row_min=row_min, row_max=row_max,
+            if callable(data_get[dataname]):
+                data = data_get[dataname]()
+            else:
+                data = data_get[dataname]
+            data_all[dataname] = get_data_by_index(data=data, row_min=row_min, row_max=row_max,
                                                    col_min=col_min, col_max=col_max)
     except Exception as why:
         print(why)
@@ -114,3 +118,4 @@ def area(in_file, out_file, left_up_lon=None, left_up_lat=None, right_down_lon=N
         print(why)
         print('输出结果文件错误')
         return
+    return out_file

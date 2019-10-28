@@ -494,15 +494,23 @@ def product_area_data(date_start=None, date_end=None, thread=3, left_up_lon=None
     print('开始生成区域数据')
     print(left_up_lon, left_up_lat, right_down_lon, right_down_lat)
     out_files = []
-    p = Pool(thread)
+
     for in_file in in_files[:]:
         filename = os.path.basename(in_file)
         out_file = os.path.join(out_dir, filename)
-        out_files.append(out_file)
-        p.apply_async(area, args=(in_file, out_file, left_up_lon, left_up_lat, right_down_lon, right_down_lat,
-                                  resolution_type, resultid))
-    p.close()
-    p.join()
+        r = area(in_file, out_file, left_up_lon, left_up_lat, right_down_lon, right_down_lat, resolution_type, resultid)
+        if r is not None:
+            out_files.append(r)
+
+    # p = Pool(thread)
+    # for in_file in in_files[:]:
+    #     filename = os.path.basename(in_file)
+    #     out_file = os.path.join(out_dir, filename)
+    #     out_files.append(out_file)
+    #     p.apply_async(area, args=(in_file, out_file, left_up_lon, left_up_lat, right_down_lon, right_down_lat,
+    #                               resolution_type, resultid))
+    # p.close()
+    # p.join()
 
     if len(out_files) > 0:
         return out_files
