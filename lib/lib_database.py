@@ -10,7 +10,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import sessionmaker
 
-from lib.lib_constant import DATABASE_URL
+from config import DATABASE_URL
 
 engine = create_engine(DATABASE_URL, echo=False, pool_size=30, max_overflow=0)
 Session = sessionmaker(engine)

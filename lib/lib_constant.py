@@ -26,9 +26,6 @@ D_DEM_1KM = os.path.join(aid_path, 'D_DEM.txt')  # 1km校正文件
 EP_TXT = os.path.join(aid_path, 'ep.txt')
 ER_TXT = os.path.join(aid_path, 'er.txt')
 
-# 数据库
-DATABASE_URL = 'mysql+pymysql://root:root@cma07@127.0.0.1:3306/solar'
-
 # 图例范围
 COLORBAR_RANGE_ORBIT_FY4A = (0, 1000)
 COLORBAR_RANGE_DAILY_FY4A = (0, 10)
