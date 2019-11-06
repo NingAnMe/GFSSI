@@ -23,6 +23,9 @@ from lib.lib_read_ssi import FY4ASSI
 from lib.lib_database import add_result_data, exist_result_data
 
 
+G0_Correct = 0.75  # 使用G0订正Itol的系数
+
+
 def cos(x):
     return np.cos(np.radians(x))
 
@@ -223,12 +226,12 @@ def itcal(in_file, out_file, resultid=None, planid=None, datatime=None, resoluti
 
         # 校正G0有效，但是Itol无效的数据
         index_invalid_itol = np.logical_or(Itol > G0, np.logical_and(np.isnan(Itol), np.isfinite(G0)))
-        Itol[index_invalid_itol] = 0.5 * G0[index_invalid_itol]
+        Itol[index_invalid_itol] = G0_Correct * G0[index_invalid_itol]
         Ib[index_invalid_itol] = 0.3 * Itol[index_invalid_itol]
         Id[index_invalid_itol] = 0.7 * Itol[index_invalid_itol]
         DQF[index_invalid_itol] = 2
     else:
-        Itol = 0.5 * G0
+        Itol = G0_Correct * G0
         Ib = 0.3 * Itol
         Id = 0.7 * Itol
 
