@@ -114,6 +114,7 @@ FY3D：1KM原始数据月数据生成
 `python run.py -f product_combine_data -d 20190501000000 -a 20190501000000 -s FY3D_MERSI -r 1KM -e Monthly`
 
 FY3D：1KM原始数据月数据绘图
+
 `python run.py -f product_combine_data -d 20190501000000 -a 20190501000000 -s FY3D_MERSI -r 1KM -e Monthly`
 
 
