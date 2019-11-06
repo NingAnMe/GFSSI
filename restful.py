@@ -91,45 +91,48 @@ class DownloadData(Resource):
             except Exception as why:
                 print('下载区域文件错误: {}'.format(why))
         elif area_type == 'Point':
-            resultid = requests['resultid']
-            resolution_type = requests['resolution_type']
-            date_s = requests['date_start']
-            date_e = requests['date_end']
-            point_file = requests.get('path')
-            if 'FY4' in resultid and '4KM' in resolution_type:
-                print('{} : {}'.format('FY4', '4KM'))
-                idx = kdtree_idx_fy4_4km
-                ck = kdtree_ck_fy4_4km
-                sat_sensor = 'FY4A_AGRI'
-            elif 'FY4' in resultid and '1KM' in resolution_type:
-                print('{} : {}'.format('FY4', '1KM'))
-                idx = kdtree_idx_fy4_1km
-                ck = kdtree_ck_fy4_1km
-                sat_sensor = 'FY4A_AGRI'
-            elif 'FY3' in resultid and '1KM' in resolution_type:
-                print('{} : {}'.format('FY3', '1KM'))
-                idx = kdtree_idx_fy3_1km
-                ck = kdtree_ck_fy3_1km
-                sat_sensor = 'FY3D_MERSI'
-            else:
-                return {'error': '分辨率错误', 'code': 0}, 200
-
-            if point_file is not None:
-                in_files = product_point_data(date_start=date_s, date_end=date_e, point_file=point_file,
-                                              resolution_type=resolution_type, resultid=resultid,
-                                              idx=idx, ck=ck,
-                                              sat_sensor=sat_sensor)
-            else:
-                lon = float(requests['left_up_lon'])
-                lat = float(requests['left_up_lat'])
-                txt = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                         resolution_type=resolution_type, resultid=resultid,
-                                         idx=idx, ck=ck,
-                                         sat_sensor=sat_sensor)
-                if txt is not None:
-                    in_files = [txt]
+            try:
+                resultid = requests['resultid']
+                resolution_type = requests['resolution_type']
+                date_s = requests['date_start']
+                date_e = requests['date_end']
+                point_file = requests.get('path')
+                if 'FY4' in resultid and '4KM' in resolution_type:
+                    print('{} : {}'.format('FY4', '4KM'))
+                    idx = kdtree_idx_fy4_4km
+                    ck = kdtree_ck_fy4_4km
+                    sat_sensor = 'FY4A_AGRI'
+                elif 'FY4' in resultid and '1KM' in resolution_type:
+                    print('{} : {}'.format('FY4', '1KM'))
+                    idx = kdtree_idx_fy4_1km
+                    ck = kdtree_ck_fy4_1km
+                    sat_sensor = 'FY4A_AGRI'
+                elif 'FY3' in resultid and '1KM' in resolution_type:
+                    print('{} : {}'.format('FY3', '1KM'))
+                    idx = kdtree_idx_fy3_1km
+                    ck = kdtree_ck_fy3_1km
+                    sat_sensor = 'FY3D_MERSI'
                 else:
-                    in_files = None
+                    return {'error': '分辨率错误', 'code': 0}, 200
+
+                if point_file is not None:
+                    in_files = product_point_data(date_start=date_s, date_end=date_e, point_file=point_file,
+                                                  resolution_type=resolution_type, resultid=resultid,
+                                                  idx=idx, ck=ck,
+                                                  sat_sensor=sat_sensor)
+                else:
+                    lon = float(requests['left_up_lon'])
+                    lat = float(requests['left_up_lat'])
+                    txt = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                             resolution_type=resolution_type, resultid=resultid,
+                                             idx=idx, ck=ck,
+                                             sat_sensor=sat_sensor)
+                    if txt is not None:
+                        in_files = [txt]
+                    else:
+                        in_files = None
+            except Exception as why:
+                print('下载点数据错误: {}'.format(why))
         else:
             return {'error': '不支持的区域类型:{}'.format(area_type), 'code': 0}, 400
 
@@ -187,72 +190,75 @@ class GetPointData(Resource):
         else:
             return {'error': '分辨率错误', 'code': 0}, 200
 
-        result = None
-        if is_live.lower() == 'true':
-            if is_forecast.lower() == 'true':
-                date_end = datetime.strptime(date_e, '%Y%m%d%H%M%S')
-                date_e = (date_end - relativedelta(hours=4)).strftime('%Y%m%d%H%M%S')
+        try:
+            result = None
+            if is_live.lower() == 'true':
+                if is_forecast.lower() == 'true':
+                    date_end = datetime.strptime(date_e, '%Y%m%d%H%M%S')
+                    date_e = (date_end - relativedelta(hours=4)).strftime('%Y%m%d%H%M%S')
 
-                result_live = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                                 resolution_type=resolution_type, resultid=resultid,
-                                                 element=element,
-                                                 idx=idx, ck=ck,
-                                                 sat_sensor=sat_sensor)
+                    result_live = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                                     resolution_type=resolution_type, resultid=resultid,
+                                                     element=element,
+                                                     idx=idx, ck=ck,
+                                                     sat_sensor=sat_sensor)
 
-                if result_live is not None:
-                    result = dict()
-                    result['length'] = len(result_live['date']) - 1
-                    date_s = (date_end - relativedelta(hours=5)).strftime('%Y%m%d%H%M%S')
-                    result_forecast = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                                         resolution_type=resolution_type, resultid=resultid,
-                                                         element=element,
-                                                         idx=idx, ck=ck,
-                                                         sat_sensor=sat_sensor)
+                    if result_live is not None:
+                        result = dict()
+                        result['length'] = len(result_live['date']) - 1
+                        date_s = (date_end - relativedelta(hours=5)).strftime('%Y%m%d%H%M%S')
+                        result_forecast = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                                             resolution_type=resolution_type, resultid=resultid,
+                                                             element=element,
+                                                             idx=idx, ck=ck,
+                                                             sat_sensor=sat_sensor)
 
-                    if result_forecast is not None:
-                        values = result_forecast.pop('values')
-                        forecast_dates, forecast_values = forecast_ssi(result_forecast['date'], values, lon, lat)
-                        result_live['date'].extend(forecast_dates)
-                        result_live['value'].extend(forecast_values)
-                        result['date'] = result_live['date']
-                        result['value'] = result_live['value']
+                        if result_forecast is not None:
+                            values = result_forecast.pop('values')
+                            forecast_dates, forecast_values = forecast_ssi(result_forecast['date'], values, lon, lat)
+                            result_live['date'].extend(forecast_dates)
+                            result_live['value'].extend(forecast_values)
+                            result['date'] = result_live['date']
+                            result['value'] = result_live['value']
+                else:
+                    result = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                                resolution_type=resolution_type, resultid=resultid,
+                                                element=element,
+                                                idx=idx, ck=ck,
+                                                sat_sensor=sat_sensor)
+                    if result is not None:
+                        result.pop('values')
+                        live_length = len(result['date']) - 1
+                        result['length'] = live_length
             else:
-                result = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                            resolution_type=resolution_type, resultid=resultid,
-                                            element=element,
-                                            idx=idx, ck=ck,
-                                            sat_sensor=sat_sensor)
-                if result is not None:
-                    result.pop('values')
-                    live_length = len(result['date']) - 1
-                    result['length'] = live_length
-        else:
-            if is_forecast.lower() == 'true':
-                date_end = datetime.strptime(date_e, '%Y%m%d%H%M%S')
-                date_start = date_end - relativedelta(hours=1)
-                date_s = date_start.strftime('%Y%m%d%H%M%S')
+                if is_forecast.lower() == 'true':
+                    date_end = datetime.strptime(date_e, '%Y%m%d%H%M%S')
+                    date_start = date_end - relativedelta(hours=1)
+                    date_s = date_start.strftime('%Y%m%d%H%M%S')
 
-                result = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
-                                            resolution_type=resolution_type, resultid=resultid,
-                                            element=element,
-                                            idx=idx, ck=ck,
-                                            sat_sensor=sat_sensor)
-                if result is not None:
-                    values = result.pop('values')
-                    forecast_dates, forecast_values = forecast_ssi(result['date'], values, lon, lat)
-                    result['date'] = forecast_dates
-                    result['value'] = forecast_values
-                    result['length'] = 0
+                    result = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+                                                resolution_type=resolution_type, resultid=resultid,
+                                                element=element,
+                                                idx=idx, ck=ck,
+                                                sat_sensor=sat_sensor)
+                    if result is not None:
+                        values = result.pop('values')
+                        forecast_dates, forecast_values = forecast_ssi(result['date'], values, lon, lat)
+                        result['date'] = forecast_dates
+                        result['value'] = forecast_values
+                        result['length'] = 0
+                else:
+                    print('不支持的类型：is_live 和 is_forecast 不能同时为FALSE')
+                    result = None
+            print(result)
+            if result is not None:
+                result['code'] = 1
+
+                return result, 201
             else:
-                print('不支持的类型：is_live 和 is_forecast 不能同时为FALSE')
-                result = None
-        print(result)
-        if result is not None:
-            result['code'] = 1
-
-            return result, 201
-        else:
-            return {'error': '没有找到任何输入数据', 'code': 0}, 200
+                return {'error': '没有找到任何输入数据', 'code': 0}, 200
+        except Exception as why:
+            print('获取点数据错误: {}'.format(why))
 
 
 api.add_resource(DownloadData, '/download')
