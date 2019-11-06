@@ -114,7 +114,7 @@ def fy4a_save_4km_orbit_data_in_database(date_start=None, date_end=None, **kwarg
     session.close()
 
 
-def fy3d_product_1km_daily_data(date_start=None, date_end=None, thread=2, **kwargs):
+def product_fy3d_1km_daily_data(date_start=None, date_end=None, thread=2, **kwargs):
     source_dir = os.path.join(DATA_ROOT_DIR, 'SourceData', 'FY3D', 'SSI_1KM')
     ext = '.dat'
     resultid = 'FY3D_MERSI_L3_SSI_Daily'
@@ -632,7 +632,7 @@ def product_point_data(date_start=None, date_end=None, lon=None, lat=None, point
         with open(point_file, 'r') as fp:
             fp.readline()
             for row in fp.readlines():
-                point_name, lon, lat = row.strip().split('\t')
+                point_name, lon, lat = row.strip().split()
                 lon = float(lon)
                 lat = float(lat)
                 pre_dist = 0.08

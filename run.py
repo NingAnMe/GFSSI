@@ -15,7 +15,7 @@ resolution_types = {
 }
 functions = {
     'fy4a_save_4km_orbit_data_in_database',
-    'fy3d_product_1km_daily_data',
+    'product_fy3d_1km_daily_data',
     'product_fy4a_4kmcorrect_disk_full_data_orbit',
     'product_fy4a_1km_disk_full_data_orbit',
     'product_fy4a_1kmcorrect_disk_full_data_orbit',

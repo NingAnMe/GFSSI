@@ -37,7 +37,7 @@ if not os.path.isfile(LON_LAT_LUT_FY4_1KM):
 
 if not os.path.isfile(PROJ_LUT_FY4_1KM):
     print('生成FY4 1KM投影经纬度文件')
-    # TODO 这里有一个问题，在Linux生成的查找表的prj_i和prj_j不正确
+    # TODO 这里有一个问题，在Linux生成的查找表的prj_i和prj_j不正确,目前使用的是Windows平台下的结果
     make_disk_projlut_1km(out_file=PROJ_LUT_FY4_1KM)
     print(PROJ_LUT_FY4_1KM)
 
