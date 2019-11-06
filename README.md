@@ -114,8 +114,7 @@ FY3D：1KM原始数据月数据生成
 `python run.py -f product_combine_data -d 20190501000000 -a 20190501000000 -s FY3D_MERSI -r 1KM -e Monthly`
 
 FY3D：1KM原始数据月数据绘图
-
-`python run.py -f product_combine_data -d 20190501000000 -a 20190501000000 -s FY3D_MERSI -r 1KM -e Monthly`
+`python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY3D_MERSI -r 1KM -e Monthly`
 
 
 #### 每年需要运行的命令（年数据基于月数据合成）
@@ -147,4 +146,4 @@ FY3D：1KM原始数据年数据生成
 `python run.py -f product_combine_data -d 20190501000000 -a 20190501000000 -s FY3D_MERSI -r 1KM -e Yearly`
 
 FY3D：1KM原始数据年数据绘图
-`python run.py -f product_combine_data -d 20190501000000 -a 20190501000000 -s FY3D_MERSI -r 1KM -e Yearly`
+`python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY3D_MERSI -r 1KM -e Yearly`
