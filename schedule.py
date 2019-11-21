@@ -92,6 +92,9 @@ def fy4a_save_4km_orbit_data_in_database(date_start=None, date_end=None, **kwarg
                 os.symlink(src_file, dst_file)
                 try:
                     datatime = FY4ASSI.get_date_time_orbit(dst_file)
+                    if date_start is not None and date_end is not None:
+                        if datetime < date_start or datetime > date_end:
+                            continue
                     result_data = ResultData()
                     result_data.resultid = resultid
                     result_data.planid = planid
