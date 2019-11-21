@@ -243,7 +243,7 @@ def itcal(in_file, out_file, resultid=None, planid=None, datatime=None, resoluti
 
     # 校正Gt
     index_invalid_gt = np.logical_and(Gt < 0, np.isfinite(G0))
-    Gt[index_invalid_gt] = 0.8 * G0[index_invalid_gt]
+    Gt[index_invalid_gt] = 0.75 * G0[index_invalid_gt]
     DQF[index_invalid_gt] = 3
 
     # 输出数据
