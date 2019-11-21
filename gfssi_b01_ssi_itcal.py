@@ -245,6 +245,7 @@ def itcal(in_file, out_file, resultid=None, planid=None, datatime=None, resoluti
     index_invalid_gt = np.logical_and(Gt < 0, np.isfinite(G0))
     Gt[index_invalid_gt] = 0.75 * G0[index_invalid_gt]
     DQF[index_invalid_gt] = 3
+    Gt[lats < 0] = np.nan  # 20191121 AnNing 根据用户需求，Gt的数据只生产北半球
 
     # 输出数据
     result = {'G0': G0, 'Gt': Gt, 'DNI': DNI, 'SSI': Itol, 'DirSSI': Ib, 'DifSSI': Id, 'DQF': DQF}
