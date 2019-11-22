@@ -25,6 +25,9 @@ KDTREE_LUT_FY3_1KM = os.path.join(aid_path, 'kdtree_lut_fy3_1km.hdf')  # FY3原�
 D_DEM_1KM = os.path.join(aid_path, 'D_DEM.txt')  # 1km校正文件
 EP_TXT = os.path.join(aid_path, 'ep.txt')
 ER_TXT = os.path.join(aid_path, 'er.txt')
+CHINA_RANGE_MASK_1KM = os.path.join(aid_path, 'china_region_mask_1km.h5')
+STATION_LIST = os.path.join(aid_path, 'StationList.txt')
+
 
 # 图例范围
 COLORBAR_RANGE_ORBIT_FY4A = (0, 1000)
