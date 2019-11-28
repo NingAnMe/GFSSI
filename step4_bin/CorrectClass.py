@@ -14,40 +14,27 @@ import Python_Program
 
 # 获取数据所在目录
 # dirInfo[0]:观测数据， dirInfo[1]:风云4NC数据， dirInfo[2]:结果数据
-def dirInfoGet(install):
-
-    dirInfoMid={}
-    useflagMid = False 
-    dir_infor=open(install+r'/BIN/SourceDir.txt','r')
-    for line in dir_infor.readlines():
-        if line.startswith('O') or line.startswith('S') or line.startswith('R'):
-            mid=line.split('=')
-            if mid[0].strip() not in dirInfoMid : dirInfoMid[ mid[0].strip() ] = mid[1].strip()
-        if line.find('FLAG')>=0:
-            mid=line.split('=')
-            if mid[1].strip() == '1' : useflagMid=True
-    dir_infor.close()
-
-    dirInfo=[install+r'/ObsData', install+r'/SatNcData', install+r'/RetData']
-    if useflagMid:
-        if 'OBSDIR' in dirInfoMid: dirInfo[0]=dirInfoMid['OBSDIR']
-        if 'SATNCDIR' in dirInfoMid: dirInfo[1]=dirInfoMid['SATNCDIR']
-        if 'RESDIR' in dirInfoMid: dirInfo[2]=dirInfoMid['RESDIR']
-
+def dirInfoGet(in_dir, mid_dir):
+    """
+    将输入目录、输出目录改为固定的目录
+    :param in_dir:  输入目录
+    :param mid_dir:  输入目录
+    :return:
+    """
+    dirInfo = [in_dir + r'/ObsData', in_dir + r'/SatNcData', mid_dir + r'/RetData']
     return dirInfo
-
 
 
 # 获取站点信息
 # staInfo[0][0]:站点编号，staInfo[0][1]:纬度，staInfo[0][2]:经度
-def staInfoGet(install):
-
+def staInfoGet(txt_file):
+    # sta_infor = open(install + r'/BIN/StationList.txt', 'r')
     staInfo = []
-    sta_infor=open(install+r'/BIN/StationList.txt','r')
+    sta_infor=open(txt_file,'r')
     for line in sta_infor.readlines():
         mid=line.split(",")
         try:
-            staInfo.append( [mid[0].strip(), float(mid[1]), float(mid[2])] )
+            staInfo.append([mid[0].strip(), float(mid[1]), float(mid[2])])
         except:
             pass
     sta_infor.close()

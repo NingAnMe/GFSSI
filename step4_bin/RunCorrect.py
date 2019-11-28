@@ -4,7 +4,8 @@ import os
 import sys
 import random
 import CorrectClass
-import Python_Program
+import numpy as np
+import pandas as pd
 
 # 经纬度范围,及其循环次数
 # NC的实际经纬度 [0.0, 55.0, 70.0, 140.0]
@@ -15,30 +16,42 @@ step4_dir = os.path.dirname(current_dir)
 gfssi_dir = os.path.dirname(step4_dir)
 sys.path.append(gfssi_dir)
 
-from lib.lib_constant import FY4A_1KM_CORRECT_LAT_LON_RANGE
+from lib.lib_read_ssi import FY4ASSI
+from lib.lib_constant import FY4A_1KM_CORRECT_LAT_LON_RANGE, STATION_LIST
 LatLonRange = FY4A_1KM_CORRECT_LAT_LON_RANGE
 
 
 # 每日数据订正
 # install:BIN文件夹所在目录；runday:所需运行日期
-def ForecastDataPerday(install, runday):
-    nday = 3
+def ForecastDataPerday(obs_dir, mid_dir, runday):
+    """
+    输入：
+        站点的经纬度信息StationList.txt
+        三天站点的观测值ObsData
+    输出：
+        模型输出的校正数据：COR
+    :param obs_dir: Obs数据的输入目录
+    :param mid_dir:  临时结果目录
+    :param runday:  所需运行的日期
+    :return:
+    """
+    nday = 3  # 读代码注释：使用3天的站点数据进行建模
 
     # 获取数据所在目录,获取站点信息,获取建模日期
-    dirInfo = CorrectClass.dirInfoGet(install)
-    staInfo = CorrectClass.staInfoGet(install)
+    dirInfo = CorrectClass.dirInfoGet(obs_dir, mid_dir)
+    staInfo = CorrectClass.staInfoGet(STATION_LIST)
     dateList = CorrectClass.calDateList(runday, nday)
 
     # 站点间关系处理
     staNearList = CorrectClass.staNearListGet(staInfo, dirInfo[0], dateList)
 
     # 在对应目录创建输出文件夹
-    corFileName = install + r"/COR"
+    corFileName = mid_dir + r"/COR"
     if not os.path.exists(corFileName): os.mkdir(corFileName)
     # 删除MID文件夹的中间结果
-    CorrectClass.clearMidDir(install + r"/MID")
+    CorrectClass.clearMidDir(mid_dir + r"/MID")
 
-    corResultFileName = install + r"/COR" + r"/" + runday
+    corResultFileName = mid_dir + r"/COR" + r"/" + runday
     if not os.path.exists(corResultFileName): os.mkdir(corResultFileName)
 
     # 中间结果集
@@ -76,12 +89,12 @@ def ForecastDataPerday(install, runday):
         ## 2 对预测站点做数据预测
         # 当天建模站点生成文件名
         fileTrnName = dirInfo[0] + r'/%s/ObsData_%s_%s.txt' % (dateList[0], ista[0], dateList[0])
-        fileTrnOtCorName = install + r'/COR/%s/%s.txt' % (dateList[0], ista[0])
+        fileTrnOtCorName = mid_dir + r'/COR/%s/%s.txt' % (dateList[0], ista[0])
 
         # 中间文件名
-        filetrnOtName = install + r'/MID/%s_trn.txt' % (ista[1])
-        fileForOtName = install + r'/MID/%s_frt.txt' % (ista[0])
-        fileCorOtName = install + r'/MID/%s_crt.txt' % (ista[0])
+        filetrnOtName = mid_dir + r'/MID/%s_trn.txt' % (ista[1])
+        fileForOtName = mid_dir + r'/MID/%s_frt.txt' % (ista[0])
+        fileCorOtName = mid_dir + r'/MID/%s_crt.txt' % (ista[0])
 
         # 生成预测文件
         forData = []
@@ -126,8 +139,7 @@ def ForecastDataPerday(install, runday):
 
         # 运行EXE获取订正
         if os.path.exists(fileForOtName) and os.path.exists(filetrnOtName):
-            os.system(
-                install + r'/BIN/LRR_dyn_statistic.exe ' + filetrnOtName + " " + fileForOtName + " " + fileCorOtName)
+            os.system(r'LRR_dyn_statistic.exe ' + filetrnOtName + " " + fileForOtName + " " + fileCorOtName)
 
         # 读取订正结果
         if os.path.exists(fileCorOtName):
@@ -178,15 +190,88 @@ def ForecastDataPerday(install, runday):
         fileOut.close()
 
 
+def nc2txt(in_file, out_file):
+
+    data_all = {
+        'SSI': None,
+        'DirSSI': None,
+        'DifSSI': None,
+        'Latitude': None,
+        'Longitude': None,
+    }
+    try:
+        datas = FY4ASSI(in_file)
+        data_get = {
+            'SSI': datas.get_ssi,
+            'DirSSI': datas.get_ib,
+            'DifSSI': datas.get_id,
+        }
+        for dataname, data_getter in data_get:
+            try:
+                data_all[dataname] = data_getter()
+            except:
+                pass
+    except Exception as why:
+        print(why)
+        print('合成数据过程出错，文件为：{}'.format(in_file))
+
+    ssi = data_all['SSI']
+    index_valid = np.isfinite(ssi)
+    if not index_valid.any():
+        print('ERROR:没有有效数据')
+        return
+
+    ssi = ssi[index_valid]
+    dirssi = data_all['DirSSI'][index_valid]
+    difssi = data_all['DifSSI'][index_valid]
+    lons = data_all['Longitude'][index_valid]
+    lats = data_all['Latitude'][index_valid]
+
+    # 计算对应的经度范围
+    lons_min = np.nanmin(lons)
+    lons_max = np.nanmax(lons)
+    lon_arange = np.arange(LatLonRange[2], LatLonRange[3], LatLonRange[4])
+    if np.searchsorted(lon_arange, lons_min) <= np.searchsorted(lon_arange, lons_max) + 10:
+        print('ERROR:经度范围不足')
+        return
+    dataIndex = np.searchsorted(lon_arange, lons_min)
+    minLon = LatLonRange[2] + dataIndex * LatLonRange[4]
+    numLon = np.searchsorted(lon_arange, lons_max)
+
+    # 计算对应的纬度范围
+
+    lats_min = np.nanmin(lats)
+    lats_max = np.nanmax(lats)
+    lat_arange = np.arange(LatLonRange[0], LatLonRange[1], LatLonRange[4])
+    if np.searchsorted(lat_arange, lats_min) <= np.searchsorted(lat_arange, lats_max) + 10:
+        print('ERROR:纬度范围不足')
+        return
+    dataIndex = np.searchsorted(lat_arange, lats_min)
+    minLat = LatLonRange[0] + dataIndex * LatLonRange[4]
+    numLat = np.searchsorted(lat_arange, lats_max)
+
+    d = {
+        'lon': lons,
+        'lat': lats,
+        'ssi': ssi,
+        'dirssi': dirssi,
+        'difssi': difssi
+    }
+
+    df = pd.DataFrame(data=d)
+    df.to_csv(out_file, sep=' ', header=True, index=False, encoding='utf-8')
+
+    return out_file, minLon, numLon, minLat, numLat
+
+
 # 每日NC数据网格
-# install:BIN文件夹所在目录; runday:所需运行日期 ; runhour:所需运行小时 北京时
-def CaculateNCLine(install, runday, runhour):
+# install:BIN文件夹所在目录; runday:所需运行日期 ; runhour:所需运行小时 世界时
+def CaculateNCLine(nc_file, mid_dir, runday, runhour):
     # 删除DIFFMID文件夹的中间结果
-    MidFileName = install + r"/DIFFMID"
+    MidFileName = mid_dir + r"/DIFFMID"
     CorrectClass.clearMidDir(MidFileName)
 
-    # 北京时YYYYMMDDHH
-    runTime = runday + '%02d' % (runhour)
+    runTime = runday + '%02d' % runhour
 
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # 获取NC文件对应的世界时
@@ -194,68 +279,26 @@ def CaculateNCLine(install, runday, runhour):
     # 读取高纬度下的有效经度数值
     # 形成经度网格
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    # 将北京时转化为世界时
-    wordHour = Python_Program.add_hour(int(runday[0:4]), int(runday[4:6]), int(runday[6:8]), int(runhour), -8)
-    yesDate = "%04d%02d%02d" % tuple(wordHour[:3])
-    dirNcInfo = CorrectClass.dirInfoGet(install)[1] + r"/" + yesDate
 
-    # 获取目录下的对应时间的文件,离yesDate00点最近的文件
-    fileName = ""
-    if os.path.exists(dirNcInfo):
-        fileList = []
-        for ifile in os.listdir(dirNcInfo):
-            if ifile.startswith(yesDate + "%02d" % (wordHour[3])):
-                fileList.append(ifile)
-        if len(fileList) > 0:
-            fileList.sort()
-            fileName = fileList[0]
-    print("开始运行:" + runTime + "时段的订正,读取NC文件:" + fileName)
+    source_txt = nc_file + '.txt'
 
-    # 读取对应的NC文件,仅读取高纬度有值数据
-    LonRange = []
-    if len(fileName) > 0:
-        with open(dirNcInfo + r"/" + fileName, 'r') as flieMM:
-            for line in flieMM:
-                pl = line.split()
-                lon = float(pl[0])
-                lat = float(pl[1])
-                obs = float(pl[2])
-                # 纬度:[最大纬度-1, 最大纬度] ; 经度:[最小经度, 最大经度] ; 总辐射: [0, 1500)之间 ;
-                if LatLonRange[1] - 1 < lat < LatLonRange[1] and LatLonRange[2] < lon < LatLonRange[
-                    3] and 0 <= obs < 1500:
-                    LonRange.append(lon)
+    result = nc2txt(nc_file, source_txt)
+    if result is not None:
+        source_txt, minLon, numLon, minLat, numLat = result
+    else:
+        return
 
-    # 计算对应经度范围
-    minLon = 0.0
-    numLon = 0
-    if len(LonRange) > 0:
-        dataIndex = []
-        step = int((LatLonRange[3] - LatLonRange[2]) / LatLonRange[4]) + 2
-        for i in range(step):
-            rangeNum = 0
-            for j in LonRange:
-                if (LatLonRange[2] + i * LatLonRange[4] <= j < LatLonRange[2] + (i + 1) * LatLonRange[4]):
-                    rangeNum = rangeNum + 1
-            if rangeNum > 1: dataIndex.append(i)
-        if len(dataIndex) > 0:
-            minLon = LatLonRange[2] + dataIndex[0] * LatLonRange[4]
-            numLon = dataIndex[-1] - dataIndex[0]
-
-    # 计算对应的纬度范围
-    minLat = LatLonRange[0]
-    numLat = int((LatLonRange[1] - LatLonRange[0]) / LatLonRange[4])
     print("有效经度范围： " + str(minLon) + "-" + str(minLon + LatLonRange[4] * numLon))
     print("有效纬度范围： " + str(minLat) + "-" + str(minLat + LatLonRange[4] * numLat))
-
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # 复制观测与NC文件至DIFFMID目录
     # 生成插值后的结果到DIFFMID目录
     # 生成网格和时间文件到DIFFMID目录
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    # 观测文件数据源
-    obsFileSource = install + r'/COR' + r"/" + runday + r"/" + runTime + "00_station_radiences.txt"
+    # 观测站文件数据源
+    obsFileSource = mid_dir + r'/COR' + r"/" + runday + r"/" + runTime + "00_station_radiences.txt"
     # NC文件数据源
-    ncFileSource = dirNcInfo + r"/" + fileName
+    ncFileSource = source_txt
 
     # 观测和NC源文件正常；经度网格正常
     if os.path.exists(obsFileSource) and os.path.exists(ncFileSource) and minLon > LatLonRange[2] - 0.1 and numLon > 10:
@@ -300,7 +343,7 @@ def CaculateNCLine(install, runday, runhour):
                    str(int(LatLonRange[4] * 1000)),
                    str(numLon),
                    str(numLat)]
-        # os.system( install + r'/BIN/cressman_FY4.exe ' + ' '.join(runData) )
+        os.system(r'cressman_FY4.exe ' + ' '.join(runData))
 
         # 三次样条插值
         totalFile = MidFileName + r"/" + runTime + "00_ssi_cubic_total.txt"
@@ -320,7 +363,7 @@ def CaculateNCLine(install, runday, runhour):
 
         # 插值结果正常生成后，开始变分订正
         if os.path.exists(fileOut) and os.path.exists(ObsFileOutPath):
-            OutDiffResultdir = CorrectClass.dirInfoGet(install)[2] + r"/" + runday
+            OutDiffResultdir = CorrectClass.dirInfoGet(mid_dir, mid_dir)[2] + r"/" + runday
             if not os.path.exists(OutDiffResultdir): os.mkdir(OutDiffResultdir)
             runFile = [ncFileSource,
                        fileOut,
@@ -329,7 +372,10 @@ def CaculateNCLine(install, runday, runhour):
                        ObsFileOutPath,
                        OutDiffResultdir]
 
-            os.system(install + r'/BIN/varify.exe ' + ' '.join(runFile))
+            os.system(r'varify.exe ' + ' '.join(runFile))
+        else:
+            print('ERROR:必要的输入文件不存在')
+            return
 
         print('输出最后的结果00_varify.txt')
         # 变分订正结果正常生成后，开始直散数据计算
@@ -386,12 +432,13 @@ def CaculateNCLine(install, runday, runhour):
 if __name__ == "__main__":
     install_dir = r'/home/gfssi/Project/OM/gfssi/step4'
 
+    OBS_DIR = ''
+    MID_DIR = ''
+
     # runday = '20171015'
     runday = sys.argv[1]
-    ForecastDataPerday(install_dir, runday)
-    # CaculateNCLine(install_dir, runday, 9)
-    for ihour in range(24):
-        try:
-            CaculateNCLine(install_dir, runday, ihour)
-        except:
-            pass
+    ForecastDataPerday(OBS_DIR, MID_DIR, runday)
+
+    NC_FILE = ''
+
+    CaculateNCLine(NC_FILE, MID_DIR, runday, 9)
