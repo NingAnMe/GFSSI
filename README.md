@@ -41,7 +41,7 @@ TODO 由于订正算法程序的特殊性，没有原始数据也可以根据G0�
 FY4A：4KM校正数据绘图（2分钟）
 `python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 4KMCorrect -e Orbit`
 
-FY4A：生产1KM原始数据（输入数据为4KM校正数据）（4分钟）
+FY4A：生产1KM原始数据（输入数据为4KM校正数据）（10分钟）
 `python run.py -f product_fy4a_1km_disk_full_data_orbit -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 1KM -e Orbit`
 
 FY4A：1KM原始数据绘图（2分30秒）
