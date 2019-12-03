@@ -198,10 +198,10 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
       do i=1,ii
-       xg(i)=rminlon+(i-1)*disgrid
+       xg(i)=rminlon+(i-1)*disgrid  ! 插值后的经度
       enddo
       do j=1,jj
-       yg(j)=rminlat+(j-1)*disgrid
+       yg(j)=rminlat+(j-1)*disgrid  ! 插值后的纬度
       enddo
 
       do i=1,numb
@@ -342,7 +342,8 @@
 !       if(k.le.50000 .or. qam.ge.0.00001)goto 500
 !       if(k.le.500000 )goto 500
 !        if(qam.ge.0.00000001)goto 500
-        if(qam.ge.0.001)goto 500
+!        if(qam.ge.0.001)goto 500
+        if(qam.ge.0.025)goto 500  !无法收敛到0.001，改为0.025
         write(*,*)'eul k,qam qmin amin', k,qam,qmin,amin
         do 600 j=1,jj
         do 600 i=1,ii
