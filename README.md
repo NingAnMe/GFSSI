@@ -7,7 +7,7 @@
 
 #### 安装时可能遇到的问题
 
-##### step4 在Linux系统可能出现内存不足的情况，需要执行如下命令：
+##### step4 在Linux系统可能出现内存不足的情况，需要执行如下命令或者将此命令放到~/.bashrc：
 
 `ulimit -s unlimited`
 
@@ -18,6 +18,8 @@
 编译命令
 
 `gfortran-7 nowcasting_10.f90 -o forecast -fdec-math`
+
+step4的程序需要使用ifort
 
 ### 网站功能的启动命令
 `python restfull.py`

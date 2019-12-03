@@ -215,8 +215,8 @@
 
       do i=1,numb
         surval1(i)=surval(i)
-      enddo 
-     
+      enddo
+
       call stt(nsi,nsj,rlon,rlat,numb,rminlon,rminlat,numb,disgrid)
 !     write(*,'(7i4)')(nsi(i),i=1,numb)
 !      write(*,'(7i4)')(nsj(i),i=1,numb)

@@ -20,8 +20,8 @@ from gfssi_e02_ssi_combine import combine_full
 from gfssi_e03_ssi_area import area
 from gfssi_b01_ssi_itcal import itcal
 from gfssi_b02_ssi_1km import fy4a_ssi_4km_to_1km
-from gfssi_b04_txt2hdf import fy4a_1km_correct_txt2hdf
-from gfssi_b03_envi2hdf import fy3d_envi2hdf
+from gfssi_b03_1kmcorrect import fy4a_1km_correct
+from gfssi_b04_envi2hdf import fy3d_envi2hdf
 
 from config import *
 
@@ -250,20 +250,19 @@ def product_fy4a_1kmcorrect_disk_full_data_orbit(date_start=None, date_end=None,
     resultid_out = 'FY4A_AGRI_L2_SSI_Orbit'
 
     frequency = 'Orbit'
-    resolution_type_in = '1KM'
-    resolution_type = '1KMCorrect'
+    resolution_type_in = '4KMCorrect'
+    resolution_type_out = '1KMCorrect'
+
+    obs_dir = DATA_OBS_DIR
+    temp_dir = DATA_TMP_DIR
 
     out_dir = os.path.join(DATA_ROOT_DIR, 'SSIData/FY4A/SSI_{resolution_type}/Full/{frequency}')
-    out_dir = out_dir.format(resolution_type=resolution_type, frequency=frequency)
+    out_dir = out_dir.format(resolution_type=resolution_type_out, frequency=frequency)
 
     planid = 1
-    # results = find_result_data(resultid=resultid_in, datatime_start=date_start, datatime_end=date_end,
-    #                            resolution_type=resolution_type_in)
-    # in_files = [row.address for row in results]
-
-    in_dir = '/home/gfssi/Project/OM/gfssi/step4/RetData/20171015'
-    in_files = os.listdir(in_dir)
-    in_files = [os.path.join(in_dir, in_file) for in_file in in_files if 'finally' in in_file]
+    results = find_result_data(resultid=resultid_in, datatime_start=date_start, datatime_end=date_end,
+                               resolution_type=resolution_type_in)
+    in_files = [row.address for row in results]
 
     in_files.sort()
     in_files_length = len(in_files)
@@ -273,22 +272,19 @@ def product_fy4a_1kmcorrect_disk_full_data_orbit(date_start=None, date_end=None,
     p = Pool(thread)
     for in_file in in_files:
         in_file_name = os.path.basename(in_file)
-        ymdhm = in_file_name[:12]
-        datatime = datetime.strptime(ymdhm, '%Y%m%d%H%M') - relativedelta(hours=8)
-        if not date_start <= datatime <= date_end:
+        date_time = FY4ASSI.get_date_time_orbit(in_file)
+        if date_time.minute != 0:
             continue
-        if datatime.minute != 0:
-            continue
-        date_time = datatime.strftime('%Y%m%d%H%M%S')
-        out_file_name = 'FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_{ymdh}0000_{ymdh}1459_{r}_V0001.NC'.format(
-            ymdh=date_time[0:10], r=resolution_type)
-        # out_file_name = in_file_name.replace(resolution_type_in, resolution_type)
-        out_file = os.path.join(out_dir, date_time[:8], out_file_name)
+        out_file_name = in_file_name.replace(resolution_type_in, resolution_type_out)
+        out_file = os.path.join(out_dir, date_time.strftime('%Y%m%d'), out_file_name)
+        mid_dir = os.path.join(temp_dir, 'FY4A', '1KMCorrect', date_time.strftime("%Y%m%d%H%M%S"))
         if DEBUG:
-            fy4a_1km_correct_txt2hdf(in_file, out_file, resultid_out, planid, datatime, resolution_type)
+            fy4a_1km_correct(in_file, out_file, obs_dir, mid_dir,
+                             resultid_out, planid, date_time, resolution_type_out)
         else:
-            p.apply_async(fy4a_1km_correct_txt2hdf,
-                          args=(in_file, out_file, resultid_out, planid, datatime, resolution_type))
+            p.apply_async(fy4a_1km_correct,
+                          args=(in_file, out_file, obs_dir, mid_dir,
+                                resultid_out, planid, date_time, resolution_type_out))
 
     p.close()
     p.join()

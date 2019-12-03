@@ -9,6 +9,9 @@ DATA_ROOT_DIR = '/home/gfssi/GFData/'
 # SSI原始数据存放目录
 DATA_SOURCE_DIR = '/home/gfssi/GFData/SourceData'
 
+# 站点数据目录
+DATA_OBS_DIR = '/home/gfssi/GFData/SourceData/OBS'
+
 # 临时文件目录（此目录下的文件可以随时删除）
 DATA_TMP_DIR = '/home/gfssi/GFData/TmpData'
 

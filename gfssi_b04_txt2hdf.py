@@ -1,11 +1,9 @@
 import os
-import sys
 import numpy as np
 import h5py
 
 from lib.lib_constant import FY4A_1KM_CORRECT_LAT_LON_RANGE
 from lib.lib_constant import LON_LAT_LUT_FY4_1KM
-from lib.lib_database import *
 
 from gfssi_b02_ssi_1km import _write_out_file
 
@@ -27,18 +25,9 @@ def get_fy4a_1km_correct_txt_lat_lon(in_file):
     return data
 
 
-def fy4a_1km_correct_txt2hdf(in_file, out_file, resultid, planid, datatime, resolution_type):
+def fy4a_1km_correct_txt2hdf(in_file, out_file):
     print('INPUT <<<：{}'.format(LON_LAT_LUT_FY4_1KM))
     print('INPUT <<<：{}'.format(in_file))
-    area_type = 'Full_DISK'
-    if os.path.isfile(out_file):
-        print('数据已经存在: {}'.format(out_file))
-        if not exist_result_data(resultid=resultid, datatime=datatime,
-                                 resolution_type=resolution_type,
-                                 area_type=area_type):
-            add_result_data(resultid=resultid, planid=planid, address=out_file, datatime=datatime,
-                            resolution_type=resolution_type, area_type=area_type, element=None)
-        return
 
     if not os.path.isfile(LON_LAT_LUT_FY4_1KM):
         raise FileExistsError('文件不存在：{}'.format(LON_LAT_LUT_FY4_1KM))
@@ -67,12 +56,6 @@ def fy4a_1km_correct_txt2hdf(in_file, out_file, resultid, planid, datatime, reso
         value[ii, jj] = data
         result[key] = value
     _write_out_file(out_file, result)
-    if os.path.isfile(out_file):
-        if not exist_result_data(resultid=resultid, datatime=datatime,
-                                 resolution_type=resolution_type,
-                                 area_type=area_type):
-            add_result_data(resultid=resultid, planid=planid, address=out_file, datatime=datatime,
-                            resolution_type=resolution_type, area_type=area_type, element=None)
 
 
 # if __name__ == '__main__':
