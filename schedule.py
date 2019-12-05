@@ -15,7 +15,6 @@ import numpy as np
 import threading
 
 from gfssi_p02_ssi_plot_map_full import plot_map_full
-from gfssi_p01_ssi_plot_map_area import plot_map_area
 from gfssi_e02_ssi_combine import combine_full
 from gfssi_e03_ssi_area import area
 from gfssi_b01_ssi_itcal import itcal
@@ -29,14 +28,11 @@ from lib.lib_read_ssi import FY4ASSI, FY3DSSI
 from lib.lib_database import find_result_data, Session, ResultData
 from lib.lib_get_index_by_lonlat import get_point_index
 from lib.lib_constant import *
-from lib.lib_io import get_files_by_date
 
 # 获取程序所在目录位置
 g_path, _ = os.path.split(os.path.realpath(__file__))
 # 进入该目录
 os.chdir(g_path)
-
-DEBUG = True
 
 
 def get_hash_utf8(str_hash):
@@ -117,7 +113,7 @@ def fy4a_save_4km_orbit_data_in_database(date_start=None, date_end=None, **kwarg
     session.close()
 
 
-def product_fy3d_1km_daily_data(date_start=None, date_end=None, thread=2, **kwargs):
+def product_fy3d_1km_daily_data(date_start=None, date_end=None, thread=THREAD, **kwargs):
     source_dir = os.path.join(DATA_ROOT_DIR, 'SourceData', 'FY3D', 'SSI_1KM')
     ext = '.dat'
     resultid = 'FY3D_MERSI_L3_SSI_Daily'
@@ -142,11 +138,17 @@ def product_fy3d_1km_daily_data(date_start=None, date_end=None, thread=2, **kwar
             dst_dir = os.path.join(DATA_ROOT_DIR, 'SSIData', 'FY3D', 'SSI_1KM', 'Full', 'Daily', ymd[:6])
             filename_out = filename_template.format(ymd=ymd, r=resolution_type)
             dst_file = os.path.join(dst_dir, filename_out)
-            # p.apply_async(fy3d_envi2hdf, args=(src_file, dst_file, resultid, planid, datatime, resolution_type))
-            fy3d_envi2hdf(src_file, dst_file, resultid, planid, datatime, resolution_type)
+
+            if DEBUG:
+                fy3d_envi2hdf(src_file, dst_file, resultid, planid, datatime, resolution_type)
+            else:
+                p.apply_async(fy3d_envi2hdf, args=(src_file, dst_file, resultid, planid, datatime, resolution_type))
+    p.close()
+    p.join()
+    print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
 
 
-def product_fy4a_4kmcorrect_disk_full_data_orbit(date_start=None, date_end=None, thread=2, **kwargs):
+def product_fy4a_4kmcorrect_disk_full_data_orbit(date_start=None, date_end=None, thread=THREAD, **kwargs):
     """
     绘制原始4KM数据的图像
     3个产品，每个产品2张图像，共6张图像
@@ -183,13 +185,16 @@ def product_fy4a_4kmcorrect_disk_full_data_orbit(date_start=None, date_end=None,
         date_time = datatime.strftime('%Y%m%d%H%M%S')
         out_file_name = in_file_name.replace(resolution_type_in, resolution_type)
         out_file = os.path.join(out_dir, date_time[:8], out_file_name)
-        p.apply_async(itcal, args=(in_file, out_file, resultid_itcal, planid, datatime, resolution_type))
+        if DEBUG:
+            itcal(in_file, out_file, resultid_itcal, planid, datatime, resolution_type)
+        else:
+            p.apply_async(itcal, args=(in_file, out_file, resultid_itcal, planid, datatime, resolution_type))
     p.close()
     p.join()
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
 
 
-def product_fy4a_1km_disk_full_data_orbit(date_start=None, date_end=None, thread=2, **kwargs):
+def product_fy4a_1km_disk_full_data_orbit(date_start=None, date_end=None, thread=THREAD, **kwargs):
     """
     绘制原始4KM数据的图像
     3个产品，每个产品2张图像，共6张图像
@@ -237,7 +242,7 @@ def product_fy4a_1km_disk_full_data_orbit(date_start=None, date_end=None, thread
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
 
 
-def product_fy4a_1kmcorrect_disk_full_data_orbit(date_start=None, date_end=None, thread=2, **kwargs):
+def product_fy4a_1kmcorrect_disk_full_data_orbit(date_start=None, date_end=None, thread=THREAD, **kwargs):
     """
     绘制原始4KM数据的图像
     3个产品，每个产品2张图像，共6张图像
@@ -250,7 +255,7 @@ def product_fy4a_1kmcorrect_disk_full_data_orbit(date_start=None, date_end=None,
     resultid_out = 'FY4A_AGRI_L2_SSI_Orbit'
 
     frequency = 'Orbit'
-    resolution_type_in = '4KMCorrect'
+    resolution_type_in = '1KM'
     resolution_type_out = '1KMCorrect'
 
     obs_dir = DATA_OBS_DIR
@@ -291,7 +296,7 @@ def product_fy4a_1kmcorrect_disk_full_data_orbit(date_start=None, date_end=None,
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
 
 
-def product_combine_data(date_start=None, date_end=None, frequency=None, thread=2,
+def product_combine_data(date_start=None, date_end=None, frequency=None, thread=THREAD,
                          resolution_type=None, sat_sensor=None):
     sat_sensor = sat_sensor.upper()
     sat, sensor = sat_sensor.split('_')
@@ -374,9 +379,10 @@ def product_combine_data(date_start=None, date_end=None, frequency=None, thread=
         date_tmp += date_relativedelta
     p.close()
     p.join()
+    print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
 
 
-def product_image(date_start=None, date_end=None, frequency=None, thread=2,
+def product_image(date_start=None, date_end=None, frequency=None, thread=THREAD,
                   resolution_type=None, sat_sensor=None, **kwargs):
     sat_sensor = sat_sensor.upper()
     sat, sensor = sat_sensor.split('_')
@@ -454,7 +460,7 @@ def product_image(date_start=None, date_end=None, frequency=None, thread=2,
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
 
 
-def product_area_data(date_start=None, date_end=None, thread=3, left_up_lon=None, left_up_lat=None,
+def product_area_data(date_start=None, date_end=None, thread=THREAD, left_up_lon=None, left_up_lat=None,
                       right_down_lon=None, right_down_lat=None, resolution_type=None, resultid=None,
                       **kwargs):
     """
@@ -494,22 +500,24 @@ def product_area_data(date_start=None, date_end=None, thread=3, left_up_lon=None
     print(left_up_lon, left_up_lat, right_down_lon, right_down_lat)
     out_files = []
 
-    for in_file in in_files[:]:
-        filename = os.path.basename(in_file)
-        out_file = os.path.join(out_dir, filename)
-        r = area(in_file, out_file, left_up_lon, left_up_lat, right_down_lon, right_down_lat, resolution_type, resultid)
-        if r is not None:
-            out_files.append(r)
-
-    # p = Pool(thread)
-    # for in_file in in_files[:]:
-    #     filename = os.path.basename(in_file)
-    #     out_file = os.path.join(out_dir, filename)
-    #     out_files.append(out_file)
-    #     p.apply_async(area, args=(in_file, out_file, left_up_lon, left_up_lat, right_down_lon, right_down_lat,
-    #                               resolution_type, resultid))
-    # p.close()
-    # p.join()
+    if DEBUG:
+        for in_file in in_files[:]:
+            filename = os.path.basename(in_file)
+            out_file = os.path.join(out_dir, filename)
+            r = area(in_file, out_file, left_up_lon, left_up_lat, right_down_lon, right_down_lat, resolution_type,
+                     resultid)
+            if r is not None:
+                out_files.append(r)
+    else:
+        p = Pool(thread)
+        for in_file in in_files[:]:
+            filename = os.path.basename(in_file)
+            out_file = os.path.join(out_dir, filename)
+            out_files.append(out_file)
+            p.apply_async(area, args=(in_file, out_file, left_up_lon, left_up_lat, right_down_lon, right_down_lat,
+                                      resolution_type, resultid))
+        p.close()
+        p.join()
 
     if len(out_files) > 0:
         return out_files
@@ -764,6 +772,8 @@ def _get_point_data(full_file, element, index, get_datetime, resultid,
             else:
                 datas_tmp[element_] = data_tmp
         except Exception as why:
+            if DEBUG:
+                print(why)
             datas_tmp[element_] = 0
 
     date = get_datetime(full_file)
@@ -788,131 +798,6 @@ def _get_point_data(full_file, element, index, get_datetime, resultid,
         datas.append(data_str)
         if datas_tmp.get(element) is not None:
             values.append(datas_tmp)
-
-
-def product_4km_disk_area_image(date_start=None, date_end=None, thread=3, frequency=None, resolution_type=None,
-                                **kwargs):
-    """
-    生成原始数据的中国区时次数据
-    3个产品，每个产品1张图像，共3张图像
-    :param date_start: 开始日期 datetime
-    :param date_end: 结束日期 datetime
-    :param thread:
-    :param frequency:
-    :param resolution_type:
-    :return:
-    """
-    left_up_lon = 70
-    left_up_lat = 50
-    right_down_lon = 140
-    right_down_lat = 0
-
-    in_dir = os.path.join(DATA_ROOT_DIR, 'SSIData/FY4A/SSI_{resolution_type}/Full/{frequency}'.format(
-        resolution_type=resolution_type, frequency=frequency))
-    out_dir = os.path.join(DATA_ROOT_DIR, 'SSIData/FY4A/SSI_{resolution_type}/China/{frequency}'.format(
-        resolution_type=resolution_type, frequency=frequency))
-
-    if frequency == 'Orbit':
-        pattern = r'.*FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_(\d{14})_\d{14}_4000M_V0001'
-        strf_name = '%Y%m%d%H%M%S'
-        date_end_str = date_end.strftime(strf_name)
-        strf_dir = '%Y%m%d'
-        date_relativedelta = relativedelta(days=1)
-        resultid_image = 'FY4A_AGRI_L2_SSI_Orbit_IMG'
-        resultid_data = 'FY4A_AGRI_L2_SSI_Orbit'
-        planid = 1
-        get_date_time = FY4ASSI.get_date_time_orbit
-    elif frequency == 'Daily':
-        pattern = r'.*FY4A-_AGRI--_N_DISK_1047E_L3-_SSI-_MULT_NOM_(\d{8})_4000M_V0001'
-        strf_name = '%Y%m%d'
-        date_end_str = date_end.strftime(strf_name)
-        strf_dir = '%Y%m'
-        date_relativedelta = relativedelta(months=1)
-        resultid_image = 'FY4A_AGRI_L3_SSI_Daily_IMG'
-        resultid_data = 'FY4A_AGRI_L3_SSI_Daily'
-        planid = 1
-        get_date_time = FY4ASSI.get_date_time_daily
-    elif frequency == 'Monthly':
-        pattern = r'.*FY4A-_AGRI--_N_DISK_1047E_L3-_SSI-_MULT_NOM_(\d{6})_4000M_V0001'
-        strf_name = '%Y%m'
-        date_end_str = date_end.strftime(strf_name)
-        strf_dir = '%Y'
-        date_relativedelta = relativedelta(years=1)
-        resultid_image = 'FY4A_AGRI_L3_SSI_China_LATLON_4KM_1Month_{data_id}'
-        resultid_data = 'FY4A_AGRI_L3_SSI_China_DISK_4KM_1Month'
-        planid = 1
-        get_date_time = FY4ASSI.get_date_time_monthly
-    elif frequency == 'Yearly':
-        pattern = r'.*FY4A-_AGRI--_N_DISK_1047E_L3-_SSI-_MULT_NOM_(\d{4})_4000M_V0001'
-        strf_name = '%Y'
-        date_end_str = date_end.strftime(strf_name)
-        strf_dir = None
-        date_relativedelta = None
-        resultid_image = 'FY4A_AGRI_L3_SSI_China_LATLON_4KM_1Year_{data_id}'
-        resultid_data = 'FY4A_AGRI_L3_SSI_China_DISK_4KM_1Year'
-        planid = 1
-        get_date_time = FY4ASSI.get_date_time_yearly
-    else:
-        raise ValueError('不支持的类型：{}'.format(frequency))
-
-    in_files = []
-    date_start_tem = date_start
-    while date_start_tem <= date_end:
-        if strf_dir is not None:
-            date_dir = date_start_tem.strftime(strf_dir)
-        else:
-            date_dir = ''
-        in_dir_tem = os.path.join(in_dir, date_dir)
-        date_start_str = date_start_tem.strftime(strf_name)
-        in_files_tem = get_files_by_date(in_dir_tem, date_start_str, date_end_str, ext='.NC', pattern=pattern)
-        in_files.extend(in_files_tem)
-        if date_relativedelta is not None:
-            date_start_tem += date_relativedelta
-        else:
-            break
-    in_files.sort()
-    in_files_length = len(in_files)
-    print('找到的文件总数:{}'.format(in_files_length))
-
-    print('开始生成中国区数据')
-    p = Pool(thread)
-    for in_file in in_files[:]:
-        out_file = in_file.replace(in_dir, out_dir)
-        datatime = get_date_time(out_file)
-        p.apply_async(area, args=(in_file, out_file, '4km', left_up_lon, left_up_lat, right_down_lon, right_down_lat,
-                                  resultid_data, planid, datatime))
-    p.close()
-    p.join()
-    print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
-
-    in_files = []
-    date_start_tem = date_start
-    while date_start_tem <= date_end:
-        if strf_dir is not None:
-            date_dir = date_start_tem.strftime(strf_dir)
-        else:
-            date_dir = ''
-        in_dir_tem = os.path.join(in_dir, date_dir)
-        date_start_str = date_start_tem.strftime(strf_name)
-        in_files_tem = get_files_by_date(in_dir_tem, date_start_str, date_end_str, ext='.png', pattern=pattern)
-        in_files.extend(in_files_tem)
-        if date_relativedelta is not None:
-            date_start_tem += date_relativedelta
-        else:
-            break
-    in_files_length = len(in_files)
-    print('找到的文件总数:{}'.format(in_files_length))
-
-    print('开始中国区的绘图')
-    p = Pool(thread)
-    for in_file in in_files[:]:
-        out_file = in_file.replace(in_dir, out_dir)
-        datatime = get_date_time(out_file)
-        p.apply_async(plot_map_area, args=(in_file, out_file, '4km', left_up_lon, left_up_lat, right_down_lon,
-                                           right_down_lat, resultid_image, planid, datatime))
-    p.close()
-    p.join()
-    print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
 
 
 if __name__ == '__main__':

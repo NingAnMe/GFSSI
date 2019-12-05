@@ -27,7 +27,7 @@ def fy4a_1km_correct(in_file, out_file, obs_dir, temp_dir,
 
     if not os.path.isdir(temp_dir):
         os.makedirs(temp_dir)
-        ForecastDataPerday(obs_dir=obs_dir, mid_dir=temp_dir, runday=runday)
+    ForecastDataPerday(obs_dir=obs_dir, mid_dir=temp_dir, runday=runday)
 
     CaculateNCLine(nc_file=in_file, mid_dir=temp_dir, out_file=out_file, runday=runday, runhour=runhour)
 

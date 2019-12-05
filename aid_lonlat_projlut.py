@@ -78,7 +78,7 @@ def make_disk_projlut_1km(out_file=None):
     print(lons.min(), lons.max())
     print(lons)
     projstr = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
-    proj = ProjCore(projstr, res_degree, unit="deg", pt_tl=(69.9951, 54.995), pt_br=(139.9951, 9.995))  # 角点也要放在格点中心位置
+    proj = ProjCore(projstr, res_degree, unit="deg", pt_tl=(69.995, 54.995), pt_br=(139.995, 9.995))  # 角点也要放在格点中心位置
     result = proj.create_lut(lats=lats, lons=lons)
     proj.grid_lonslats()
     result['Longitude'] = proj.lons

@@ -16,9 +16,7 @@ def get_fy4a_1km_correct_txt_lat_lon(in_file):
     indexs = {
         'Latitude': 0,
         'Longitude': 1,
-        'SSI': 5,
-        'DirSSI': 6,
-        'DifSSI': 7,
+        'SSI': 2,
     }
     for name, index in indexs.items():
         data[name] = datas[:, index]

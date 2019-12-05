@@ -343,6 +343,9 @@
 !       if(k.le.500000 )goto 500
 !        if(qam.ge.0.00000001)goto 500
 !        if(qam.ge.0.001)goto 500
+        if(MOD(k, 100)==0)then
+            print *, qam
+        end if
         if(qam.ge.0.025)goto 500  !无法收敛到0.001，改为0.025
         write(*,*)'eul k,qam qmin amin', k,qam,qmin,amin
         do 600 j=1,jj
