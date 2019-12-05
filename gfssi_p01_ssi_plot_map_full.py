@@ -6,12 +6,27 @@
 """
 import os
 
+import h5py
 import matplotlib.pyplot as plt
 import numpy as np
+
 from lib.lib_read_ssi import FY4ASSI, FY3DSSI
 from lib.lib_database import add_result_data, exist_result_data
 from lib.lib_proj import fill_points_2d_nan
-from lib.lib_constant import BASEMAP_FY4_4KM
+from lib.lib_constant import BASEMAP_FY4_4KM, CHINA_RANGE_MASK_1KM
+
+
+def get_china_mask_projlut_fy4_1km():
+    """
+    中国区的shape掩码
+    :return:
+    """
+    with h5py.File(CHINA_RANGE_MASK_1KM, 'r') as hdf:
+        mask_china = hdf.get('Mask')[:]
+        shape = (4501, 7001)
+        mask = np.zeros(shape, dtype=np.int8)
+        mask[100:100+3600, 301:301+6200] = mask_china
+        return mask > 0
 
 
 def plot_image_disk(*args, **kwargs):
@@ -71,11 +86,14 @@ def plot_image_map(*args, **kwargs):
 def plot_fy4_image_map(data, out_file='test.jpg', resolution_type='4km', vmin=0, vmax=1000, interp=3, **kwargs):
     if '4km' in resolution_type.lower():
         projlut = FY4ASSI.get_lonlat_projlut_4km()
+        mask = None
     elif '1kmcorrect' in resolution_type.lower():
         projlut = FY4ASSI.get_lonlat_projlut_1km()
-        interp = 0
+        interp = 1
+        mask = get_china_mask_projlut_fy4_1km()
     elif '1km' in resolution_type.lower():
         projlut = FY4ASSI.get_lonlat_projlut_1km()
+        mask = get_china_mask_projlut_fy4_1km()
     else:
         raise ValueError('plot_image_map 不支持此分辨率: {}'.format(resolution_type))
     row, col = projlut['row_col']
@@ -98,6 +116,10 @@ def plot_fy4_image_map(data, out_file='test.jpg', resolution_type='4km', vmin=0,
 
     for i in range(interp):
         fill_points_2d_nan(image_data)
+
+    # 对1KM数据使用china的shape掩码
+    if mask is not None:
+        image_data[~mask] = np.nan
 
     fig.figimage(image_data, vmin=vmin, vmax=vmax, cmap='jet')
     fig.patch.set_alpha(0)

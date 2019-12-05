@@ -14,7 +14,7 @@ from multiprocessing import Pool
 import numpy as np
 import threading
 
-from gfssi_p02_ssi_plot_map_full import plot_map_full
+from gfssi_p01_ssi_plot_map_full import plot_map_full
 from gfssi_e02_ssi_combine import combine_full
 from gfssi_e03_ssi_area import area
 from gfssi_b01_ssi_itcal import itcal
