@@ -390,7 +390,7 @@ def product_image(date_start=None, date_end=None, frequency=None, thread=THREAD,
     if frequency == 'Orbit':
         resultid_data_in = '{}_L2_SSI_Orbit'.format(sat_sensor)
         if sat == 'FY4A':
-            vmin, vmax = COLORBAR_RANGE_ORBIT_FY4A
+            vmin, vmax, _ = COLORBAR_RANGE_ORBIT_FY4A
         else:
             print('此时间分辨率={}不支持卫星={}'.format(frequency, sat_sensor))
             return
@@ -399,9 +399,9 @@ def product_image(date_start=None, date_end=None, frequency=None, thread=THREAD,
     elif frequency == 'Daily':
         resultid_data_in = '{}_L3_SSI_Daily'.format(sat_sensor)
         if sat == 'FY4A':
-            vmin, vmax = COLORBAR_RANGE_DAILY_FY4A
+            vmin, vmax, _ = COLORBAR_RANGE_DAILY_FY4A
         elif sat == 'FY3D':
-            vmin, vmax = COLORBAR_RANGE_DAILY_FY3D
+            vmin, vmax, _ = COLORBAR_RANGE_DAILY_FY3D
         else:
             print('此时间分辨率={}不支持卫星={}'.format(frequency, sat_sensor))
             return
@@ -410,9 +410,9 @@ def product_image(date_start=None, date_end=None, frequency=None, thread=THREAD,
     elif frequency == 'Monthly':
         resultid_data_in = '{}_L3_SSI_Monthly'.format(sat_sensor)
         if sat == 'FY4A':
-            vmin, vmax = COLORBAR_RANGE_MONTHLY_FY4A
+            vmin, vmax, _ = COLORBAR_RANGE_MONTHLY_FY4A
         elif sat == 'FY3D':
-            vmin, vmax = COLORBAR_RANGE_MONTHLY_FY3D
+            vmin, vmax, _ = COLORBAR_RANGE_MONTHLY_FY3D
         else:
             print('此时间分辨率={}不支持卫星={}'.format(frequency, sat_sensor))
             return
@@ -421,9 +421,9 @@ def product_image(date_start=None, date_end=None, frequency=None, thread=THREAD,
     elif frequency == 'Yearly':
         resultid_data_in = '{}_L3_SSI_Yearly'.format(sat_sensor)
         if sat == 'FY4A':
-            vmin, vmax = COLORBAR_RANGE_YEARLY_FY4A
+            vmin, vmax, _ = COLORBAR_RANGE_YEARLY_FY4A
         elif sat == 'FY3D':
-            vmin, vmax = COLORBAR_RANGE_MONTHLY_FY3D
+            vmin, vmax, _ = COLORBAR_RANGE_MONTHLY_FY3D
         else:
             print('此时间分辨率={}不支持卫星={}'.format(frequency, sat_sensor))
             return

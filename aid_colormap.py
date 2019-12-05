@@ -44,14 +44,14 @@ for k, r in kwargs.items():
     fig, ax = plt.subplots(figsize=(8, 1))
     fig.subplots_adjust(bottom=0.5)
     cmap = plt.get_cmap('jet')
-    vmin, vmax = r
+    vmin, vmax, label = r
     # orientation = 'vertical'
     orientation = 'horizontal'
     norm = plt.Normalize(vmin=vmin, vmax=vmax)
     cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap,
                                     norm=norm,
                                     orientation=orientation)
-    # cb1.set_label('Kwh/m^2')
+    cb1.set_label(label)
     plt.tight_layout()
     alpha = 0
     fig.patch.set_alpha(alpha)
