@@ -5,9 +5,9 @@
 @Author  : AnNing
 """
 import tarfile
-from aid_lonlat_projlut import make_disk_projlut_4km, make_disk_projlut_1km
-from aid_basemap import make_basemap_fy4a
-from aid_lonlat_lut import make_lonlat_lut_1km, make_lonlat_lut_fy3d_1km
+from lib.aid_lonlat_projlut import make_disk_projlut_4km, make_disk_projlut_1km
+from lib.aid_basemap import make_basemap_fy4a
+from lib.aid_lonlat_lut import make_lonlat_lut_1km, make_lonlat_lut_fy3d_1km
 from lib.lib_constant import *
 from lib.lib_read_ssi import FY4ASSI, FY3DSSIENVI
 from lib.lib_get_index_by_lonlat import make_point_index_lut

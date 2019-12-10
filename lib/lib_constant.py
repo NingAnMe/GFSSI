@@ -41,6 +41,10 @@ COLORBAR_RANGE_YEARLY_FY3D = (0, 400, '$kw/m^2$')
 # FY4A 1KM Correct程序的经纬度范围，需要和1KM对应
 FY4A_1KM_CORRECT_LAT_LON_RANGE = [9.995, 54.995, 69.995, 139.995, 0.01]
 
-# 预报程序
-INTERP_EXE = os.path.join(GFSSI_DIR, 'step5', 'interp')
-FORECAST_EXE = os.path.join(GFSSI_DIR, 'step5', 'forecast')
+# 1KM校正的二进制程序
+VARIFY_EXE = os.path.join(GFSSI_DIR, 'bin', 'varify.exe')
+STATISTICS_EXE = os.path.join(GFSSI_DIR, 'bin', 'LRR_dyn_statistic.exe')
+
+# 预报的二进制程序
+INTERP_EXE = os.path.join(GFSSI_DIR, 'bin', 'interp.exe')
+FORECAST_EXE = os.path.join(GFSSI_DIR, 'bin', 'forecast.exe')

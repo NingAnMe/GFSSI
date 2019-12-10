@@ -5,6 +5,11 @@
 2. 安装Python3
 3. 安装命令`python3 install.py`
 
+### Python库依赖
+```
+arrow configobj pykdtree pymysql sqlalchemy gdal basemap grpcio grpcio-tools flask-resultful pyproj scipy Pillow 
+```
+
 #### 安装时可能遇到的问题
 
 ##### step4 在Linux系统可能出现内存不足的情况，需要执行如下命令或者将此命令放到~/.bashrc：

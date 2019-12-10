@@ -4,7 +4,7 @@
 # @Author  : NingAnMe <ninganme@qq.com>
 import os
 from lib.lib_database import exist_result_data, add_result_data
-from step4_bin.RunCorrect import ForecastDataPerday, CaculateNCLine
+from correct.RunCorrect import ForecastDataPerday, CaculateNCLine
 
 
 def fy4a_1km_correct(in_file, out_file, obs_dir, temp_dir,

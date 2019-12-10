@@ -4,9 +4,25 @@
 @Time    : 2018/10/17
 @Author  : AnNing
 """
+import datetime
+from dateutil.relativedelta import relativedelta
 import numpy as np
 
-from PB.pb_time import is_day_timestamp_and_lon
+
+def is_day_timestamp_and_lon(timestamp, lon):
+    """
+    根据距离 1970-01-01 年的时间戳和经度计算是否为白天
+    :param timestamp: 距离 1970-01-01 年的时间戳
+    :param lon: 经度
+    :return:
+    """
+    zone = int(lon / 15.)
+    stime = datetime.utcfromtimestamp(timestamp)
+    hh = (stime + relativedelta(hours=zone)).strftime('%H')
+    if 6 <= int(hh) <= 18:
+        return True
+    else:
+        return False
 
 
 def filter_data_by_delta_sigma(x, y, w=None, n=8):
