@@ -9,8 +9,9 @@ from flask_restful import Resource, Api
 from schedule import product_area_data, make_zip_file, get_hash_utf8, find_result_data, DATA_ROOT_DIR, \
     product_point_data
 
-from lib.lib_constant import KDTREE_LUT_FY4_4KM, KDTREE_LUT_FY4_1KM, KDTREE_LUT_FY3_1KM
+from lib.lib_constant import KDTREE_LUT_FY4_4KM, KDTREE_LUT_FY4_1KM, KDTREE_LUT_FY3_1KM, RESTFUL_POST
 from lib.lib_forecast import forecast_ssi
+from config import DEBUG
 
 print('读取查找表文件： {}'.format('*' * 10))
 print(':{}'.format(KDTREE_LUT_FY4_4KM))
@@ -232,10 +233,10 @@ class GetPointData(Resource):
                         result['length'] = live_length
             else:
                 if is_forecast.lower() == 'true':
+
                     date_end = datetime.strptime(date_e, '%Y%m%d%H%M%S')
                     date_start = date_end - relativedelta(hours=1)
                     date_s = date_start.strftime('%Y%m%d%H%M%S')
-
                     result = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
                                                 resolution_type=resolution_type, resultid=resultid,
                                                 element=element,
@@ -265,8 +266,6 @@ api.add_resource(DownloadData, '/download')
 api.add_resource(GetPointData, '/get_point_data')
 
 if __name__ == '__main__':
-    # host = '222.128.59.164'
-    post = 5000
     # host = '0.0.0.0'
     # app.run(debug=True, host=host, port=5000)
-    app.run(debug=True, port=5000)
+    app.run(debug=DEBUG, port=RESTFUL_POST)

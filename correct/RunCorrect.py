@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 import os
 import sys
 import random
-import step4_bin.CorrectClass as CorrectClass
+import correct.CorrectClass as CorrectClass
 import numpy as np
 import h5py
 import shutil

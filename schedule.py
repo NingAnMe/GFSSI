@@ -63,11 +63,16 @@ def make_zip_file(out_file, in_files):
 def fy4a_save_4km_orbit_data_in_database(date_start=None, date_end=None, **kwargs):
     print(date_start)
     print(date_end)
-    source_dir = os.path.join(DATA_ROOT_DIR, 'SourceData', 'FY4A', 'SSI_4KM')
-    ssi_dir = os.path.join(DATA_ROOT_DIR, 'SSIData', 'FY4A', 'SSI_4KM')
+    source_dir = os.path.join('/FY4/FY4A/AGRI/L2/SSI/DISK/NOM')
+    ssi_dir = os.path.join(DATA_ROOT_DIR, 'SSIData', 'FY4A', 'SSI_4KM', 'Full', 'Orbit')
     ext = '.NC'
     resultid = 'FY4A_AGRI_L2_SSI_Orbit'
     planid = 1
+
+    results = find_result_data(resultid=resultid, datatime_start=date_start, datatime_end=date_end,
+                               resolution_type='4KM')
+    results_files = [row.address for row in results]
+    results_files = set(results_files)
 
     session = Session()
     count = 0
@@ -78,37 +83,41 @@ def fy4a_save_4km_orbit_data_in_database(date_start=None, date_end=None, **kwarg
                     ext = '.' + ext
                 if os.path.splitext(file_name)[1].lower() != ext.lower():
                     continue
-            src_file = os.path.join(root, file_name)
-            dst_file = src_file.replace(source_dir, ssi_dir)
-            dst_file = dst_file.replace('4000M', '4KM')
-            if not os.path.isfile(dst_file):
-                dst_dir = os.path.dirname(dst_file)
-                if not os.path.isdir(dst_dir):
-                    os.makedirs(dst_dir)
-                os.symlink(src_file, dst_file)
-                try:
-                    datatime = FY4ASSI.get_date_time_orbit(dst_file)
-                    if date_start is not None and date_end is not None:
-                        if datetime < date_start or datetime > date_end:
-                            continue
-                    result_data = ResultData()
-                    result_data.resultid = resultid
-                    result_data.planid = planid
-                    result_data.address = dst_file
-                    result_data.datatime = datatime
-                    result_data.createtime = datetime.now()
-                    result_data.resolution_type = '4KM'
-                    result_data.area_type = 'Full_DISK'
-                    result_data.element = None
-                    session.add(result_data)
-                    count += 1
-                    print('{} -----> {}'.format(src_file, dst_file))
-                    if count >= 500:
-                        session.commit()
-                        count = 0
-                except Exception as why:
-                    print(why)
-                    os.remove(dst_file)
+            try:
+                src_file = os.path.join(root, file_name)
+                datatime = FY4ASSI.get_date_time_orbit(src_file)
+                if date_start is not None and date_end is not None:
+                    if not date_start <= datatime <= date_end:
+                        continue
+                yyyymmdd = datatime.strftime("%Y%m%d")
+                dst_file = os.path.join(ssi_dir, yyyymmdd, file_name)
+                dst_file = dst_file.replace('4000M', '4KM')
+                if not os.path.isfile(dst_file):
+                    dst_dir = os.path.dirname(dst_file)
+                    if not os.path.isdir(dst_dir):
+                        os.makedirs(dst_dir)
+                    os.symlink(src_file, dst_file)
+                if dst_file in results_files:
+                    continue
+
+                result_data = ResultData()
+                result_data.resultid = resultid
+                result_data.planid = planid
+                result_data.address = dst_file
+                result_data.datatime = datatime
+                result_data.createtime = datetime.now()
+                result_data.resolution_type = '4KM'
+                result_data.area_type = 'Full_DISK'
+                result_data.element = None
+                session.add(result_data)
+                count += 1
+                print('{} -----> {}'.format(src_file, dst_file))
+                if count >= 500:
+                    session.commit()
+                    count = 0
+            except Exception as why:
+                print(why)
+                os.remove(dst_file)
     session.commit()
     session.close()
 
@@ -532,6 +541,8 @@ def product_point_data(date_start=None, date_end=None, lon=None, lat=None, point
     sat, sensor = sat_sensor.split('_')
     date_s = datetime.strptime(date_start, '%Y%m%d%H%M%S')
     date_e = datetime.strptime(date_end, '%Y%m%d%H%M%S')
+    date_start_beijing = (date_s + relativedelta(hours=8)).strftime("%Y%m%d%H%M%S")
+    date_end_beijing = (date_e + relativedelta(hours=8)).strftime("%Y%m%d%H%M%S")
     out_dir = os.path.join(DATA_ROOT_DIR, 'TmpData', '{}'.format(sat))
     outname = '{sat}-_{sensor}--_{lon:07.3f}N_DISK_{lat:07.3f}E_L2-_SSI-_MULT_NOM_' \
               '{date_start}_{date_end}_{resolution_type}_V0001_{site}.TXT'
@@ -620,8 +631,8 @@ def product_point_data(date_start=None, date_end=None, lon=None, lat=None, point
                 return
         else:  # 返回单点的TXT文件
             out_file = os.path.join(out_dir, outname.format(sat=sat, sensor=sensor, lon=lon, lat=lat,
-                                                            date_start=date_start,
-                                                            date_end=date_end, resolution_type=resolution_type,
+                                                            date_start=date_start_beijing,
+                                                            date_end=date_end_beijing, resolution_type=resolution_type,
                                                             site=''))
             if len(datas) > 0:
                 with open(out_file, 'w') as fp:
@@ -688,9 +699,10 @@ def product_point_data(date_start=None, date_end=None, lon=None, lat=None, point
                 data_str = '{date}\t{Itol:0.4f}\t{Ib:0.4f}\t{Id:0.4f}\t{G0:0.4f}\t{Gt:0.4f}\t{DNI:0.4f}\n'.format(
                     **data_format)
                 datas.append(data_str)
+
             out_file = os.path.join(out_dir, outname.format(sat=sat, sensor=sensor, lon=lon, lat=lat,
-                                                            date_start=date_start,
-                                                            date_end=date_end, resolution_type=resolution_type,
+                                                            date_start=date_start_beijing,
+                                                            date_end=date_end_beijing, resolution_type=resolution_type,
                                                             site=point_name))
             with open(out_file, 'w') as fp:
                 header = "Date\tItol\tIb\tId\tG0\tGt\tDNI\n"

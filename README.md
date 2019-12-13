@@ -32,33 +32,34 @@ step4的程序需要使用ifort
 ### 数据手动生产操作，命令行
 查看帮助信息
 `python run.py -h`
-
+FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_20190604020000_20190604021459_4KM_V0001.NC_Full_LATLON_Itol.PNG
+FY4A-_AGRI--_N_DISK_1047E_L2-_SSI-_MULT_NOM_20190604020000_20190604021459_4KM_V0001.NC_Full_LATLON_Itol.PNG 
 #### 每个时次需要运行的命令（）
 FY4A：4KM原始数据入库
-`python run.py -f fy4a_save_4km_orbit_data_in_database -d 20010203000000 -a 20191231000000 -s FY4A_AGRI -r 4KM -e Orbit`
+`python run.py -f fy4a_save_4km_orbit_data_in_database -d 20191212000000 -a 20191213070000 -s FY4A_AGRI -r 4KM -e Orbit`
 
 FY4A：4KM原始数据绘图（1分钟）
-`python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 4KM -e Orbit`
+`python run.py -f product_image -d 20191212000000 -a 20191213070000 -s FY4A_AGRI -r 4KM -e Orbit`
 
 FY4A：生产4KM校正数据（输入数据为4KM原始数据）（10s）
 TODO 由于订正算法程序的特殊性，没有原始数据也可以根据G0计算生成4KM校正数据，所以要考虑数据缺失的判断问题（整点数据多久未到达判断为缺失）
 当前方案：日合成之前，重新获取，然后缺失的数据使用订正程序生成
-`python run.py -f product_fy4a_4kmcorrect_disk_full_data_orbit -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 4KMCorrect -e Orbit`
+`python run.py -f product_fy4a_4kmcorrect_disk_full_data_orbit -d 20191212000000 -a 20191213070000 -s FY4A_AGRI -r 4KMCorrect -e Orbit`
 
 FY4A：4KM校正数据绘图（2分钟）
-`python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 4KMCorrect -e Orbit`
+`python run.py -f product_image -d 20191212000000 -a 20191213070000 -s FY4A_AGRI -r 4KMCorrect -e Orbit`
 
 FY4A：生产1KM原始数据（输入数据为4KM校正数据）（10分钟）
-`python run.py -f product_fy4a_1km_disk_full_data_orbit -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 1KM -e Orbit`
+`python run.py -f product_fy4a_1km_disk_full_data_orbit -d 20191212000000 -a 20191213070000 -s FY4A_AGRI -r 1KM -e Orbit`
 
 FY4A：1KM原始数据绘图（2分30秒）
-`python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 1KM -e Orbit`
+`python run.py -f product_image -d 20191212000000 -a 20191213070000 -s FY4A_AGRI -r 1KM -e Orbit`
 
 FY4A：生产1KM校正数据（输入数据为1KM原始数据和CIMISS辅助数据）（1分30秒）
-`python run.py -f product_fy4a_1kmcorrect_disk_full_data_orbit -d 20171015000000 -a 20171015230000 -s FY4A_AGRI -r 1KMCorrect -e Orbit`
+`python run.py -f product_fy4a_1kmcorrect_disk_full_data_orbit -d 20191212000000 -a 20191213070000 -s FY4A_AGRI -r 1KMCorrect -e Orbit`
 
 FY4A：1KM校正数据绘图（1分15秒）
-`python run.py -f product_image -d 20171015000000 -a 20171015230000 -s FY4A_AGRI -r 1KMCorrect -e Orbit`
+`python run.py -f product_image -d 20191212000000 -a 20191213070000 -s FY4A_AGRI -r 1KMCorrect -e Orbit`
 
 
 #### 每天需要运行的命令（日数据基于时次数据合成）（合成前需要补数据）

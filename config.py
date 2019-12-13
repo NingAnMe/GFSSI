@@ -19,7 +19,8 @@ DATA_OBS_DIR = '/home/gfssi/GFData/SourceData/OBS'
 DATA_TMP_DIR = '/home/gfssi/GFData/TmpData'
 
 # 数据库
-DATABASE_URL = 'mysql+pymysql://root:root@cma07@127.0.0.1:3306/solar'
+# DATABASE_URL = 'mysql+pymysql://root:root@cma07@127.0.0.1:3306/solar'
+DATABASE_URL = 'mysql+pymysql://root:gfssi@localhost:3306/solar'
 
 # 生产使用的并行数量
-THREAD = 3
+THREAD = 10

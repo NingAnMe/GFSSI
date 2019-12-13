@@ -48,3 +48,6 @@ STATISTICS_EXE = os.path.join(GFSSI_DIR, 'bin', 'LRR_dyn_statistic.exe')
 # 预报的二进制程序
 INTERP_EXE = os.path.join(GFSSI_DIR, 'bin', 'interp.exe')
 FORECAST_EXE = os.path.join(GFSSI_DIR, 'bin', 'forecast.exe')
+
+# 网站服务器的端口
+RESTFUL_POST = 5000

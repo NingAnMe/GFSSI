@@ -8,7 +8,7 @@
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from lib.lib_constant import *
+from lib_constant import *
 
 aid_path = get_aid_path()
 
@@ -41,7 +41,7 @@ kwargs = {
 
 
 for k, r in kwargs.items():
-    fig, ax = plt.subplots(figsize=(8, 1))
+    fig, ax = plt.subplots(figsize=(8, 1), dpi=1000)
     fig.subplots_adjust(bottom=0.5)
     cmap = plt.get_cmap('jet')
     vmin, vmax, label = r
@@ -51,8 +51,13 @@ for k, r in kwargs.items():
     cb1 = mpl.colorbar.ColorbarBase(ax, cmap=cmap,
                                     norm=norm,
                                     orientation=orientation)
-    cb1.set_label(label)
+    cb1.ax.tick_params(labelsize=16)
+    font = {'family': 'serif',
+            'weight': 'normal',
+            'size': 16,
+            }
+    cb1.set_label(label, fontdict=font)
     plt.tight_layout()
     alpha = 0
     fig.patch.set_alpha(alpha)
-    fig.savefig(os.path.join(aid_path, 'colormap_{}.png'.format(k)))
+    fig.savefig(os.path.join(aid_path, 'colormap_{}.png'.format(k)), dpi=1000)
