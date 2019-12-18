@@ -148,7 +148,7 @@ def product_fy3d_1km_daily_data(date_start=None, date_end=None, thread=THREAD, *
             filename_out = filename_template.format(ymd=ymd, r=resolution_type)
             dst_file = os.path.join(dst_dir, filename_out)
 
-            if DEBUG:
+            if DEBUG or thread == 1:
                 fy3d_envi2hdf(src_file, dst_file, resultid, planid, datatime, resolution_type)
             else:
                 p.apply_async(fy3d_envi2hdf, args=(src_file, dst_file, resultid, planid, datatime, resolution_type))
@@ -194,7 +194,7 @@ def product_fy4a_4kmcorrect_disk_full_data_orbit(date_start=None, date_end=None,
         date_time = datatime.strftime('%Y%m%d%H%M%S')
         out_file_name = in_file_name.replace(resolution_type_in, resolution_type)
         out_file = os.path.join(out_dir, date_time[:8], out_file_name)
-        if DEBUG:
+        if DEBUG or thread == 1:
             itcal(in_file, out_file, resultid_itcal, planid, datatime, resolution_type)
         else:
             p.apply_async(itcal, args=(in_file, out_file, resultid_itcal, planid, datatime, resolution_type))
@@ -240,7 +240,7 @@ def product_fy4a_1km_disk_full_data_orbit(date_start=None, date_end=None, thread
         date_time = datatime.strftime('%Y%m%d%H%M%S')
         out_file_name = in_file_name.replace(resolution_type_in, resolution_type)
         out_file = os.path.join(out_dir, date_time[:8], out_file_name)
-        if DEBUG:
+        if DEBUG or thread == 1:
             fy4a_ssi_4km_to_1km(in_file, out_file, resultid_out, planid, datatime, resolution_type)
         else:
             p.apply_async(fy4a_ssi_4km_to_1km,
@@ -292,7 +292,7 @@ def product_fy4a_1kmcorrect_disk_full_data_orbit(date_start=None, date_end=None,
         out_file_name = in_file_name.replace(resolution_type_in, resolution_type_out)
         out_file = os.path.join(out_dir, date_time.strftime('%Y%m%d'), out_file_name)
         mid_dir = os.path.join(temp_dir, 'FY4A', '1KMCorrect', date_time.strftime("%Y%m%d%H%M%S"))
-        if DEBUG:
+        if DEBUG or thread == 1:
             fy4a_1km_correct(in_file, out_file, obs_dir, mid_dir,
                              resultid_out, planid, date_time, resolution_type_out)
         else:
@@ -378,7 +378,7 @@ def product_combine_data(date_start=None, date_end=None, frequency=None, thread=
         out_name_tmp = out_name.format(date=date_name, resolution_type=resolution_type)
         out_file = os.path.join(out_dir, date_dir, out_name_tmp)
         datatime = get_date_time(out_file)
-        if DEBUG:
+        if DEBUG or thread == 1:
             combine_full(in_files, out_file, daily, resultid_combine, planid, datatime,
                          resolution_type)
         else:
@@ -459,7 +459,7 @@ def product_image(date_start=None, date_end=None, frequency=None, thread=THREAD,
     p = Pool(thread)
     for in_file in in_files[:]:
         datatime = get_date_time(in_file)
-        if DEBUG:
+        if DEBUG or thread == 1:
             plot_map_full(in_file, vmin, vmax, resultid_image, planid, datatime, resolution_type)
         else:
             p.apply_async(plot_map_full,
@@ -509,7 +509,7 @@ def product_area_data(date_start=None, date_end=None, thread=THREAD, left_up_lon
     print(left_up_lon, left_up_lat, right_down_lon, right_down_lat)
     out_files = []
 
-    if DEBUG:
+    if DEBUG or thread == 1:
         for in_file in in_files[:]:
             filename = os.path.basename(in_file)
             out_file = os.path.join(out_dir, filename)
