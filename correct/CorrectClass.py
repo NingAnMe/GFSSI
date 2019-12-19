@@ -48,7 +48,6 @@ def staNearListGet(staInfo, dirInfo, dataList):
     forStaList = []
     trnStaList = []
     for ista in staInfo:
-
         # 计算forecastData的数据量
         forDataNum = 0
         frtFileName = dirInfo + r"/" + dataList[0] + r"/" + "ObsData_%s_%s.txt" % (ista[0], dataList[0])
@@ -77,7 +76,6 @@ def staNearListGet(staInfo, dirInfo, dataList):
                 forStaList.append(ista)
             else:
                 trnStaList.append(ista)
-
     StaNearList = []
     for ista in forStaList:
         lstStaName = []

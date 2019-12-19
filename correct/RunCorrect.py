@@ -5,6 +5,7 @@ from dateutil.relativedelta import relativedelta
 import os
 import sys
 import random
+import time
 import correct.CorrectClass as CorrectClass
 import numpy as np
 import h5py
@@ -19,10 +20,23 @@ from lib.lib_read_ssi import FY4ASSI
 from lib.lib_constant import FY4A_1KM_CORRECT_LAT_LON_RANGE, STATION_LIST
 from lib.lib_constant import FULL_VALUE
 from lib.lib_constant import VARIFY_EXE, STATISTICS_EXE
+from lib.lib_cimiss import get_cimiss_ssi_ssh_tem_data
 
 from config import DEBUG
 
 LatLonRange = FY4A_1KM_CORRECT_LAT_LON_RANGE
+
+
+def get_cimiss(dateList, obs_dir):
+    for ymd in dateList[:]:
+        if not os.path.isdir(os.path.join(obs_dir, ymd)):
+            os.makedirs(os.path.join(obs_dir, ymd))
+        print("<<<   : {}".format(os.path.join(obs_dir, ymd)))
+        if len(os.listdir(os.path.join(obs_dir, ymd))) > 2000:
+            continue
+        get_cimiss_ssi_ssh_tem_data(ymd, os.path.join(obs_dir, ymd), copy_file=False)
+        time.sleep(1)
+    return False
 
 
 # 每日数据订正
@@ -47,17 +61,16 @@ def ForecastDataPerday(obs_dir, mid_dir, runday):
 
     # 站点间关系处理
     staNearList = CorrectClass.staNearListGet(staInfo, obs_dir, dateList)
+    if not staNearList:
+        return False
 
     # 在对应目录创建输出文件夹
     corFileName = mid_dir + r"/COR"
     if not os.path.exists(corFileName):
         os.mkdir(corFileName)
-    # 删除MID文件夹的中间结果
     MID_dir = mid_dir + r"/MID"
     if not os.path.exists(MID_dir):
         os.mkdir(MID_dir)
-    else:
-        return
 
     corResultFileName = mid_dir + r"/COR" + r"/" + runday
     if not os.path.exists(corResultFileName):
@@ -194,6 +207,10 @@ def ForecastDataPerday(obs_dir, mid_dir, runday):
             fileOut.write(
                 '%10s  %12.3f  %12.3f  %12.3f\n' % (idata, OutLine[idata][0], OutLine[idata][1], OutLine[idata][2]))
         fileOut.close()
+    if len(os.listdir(mid_dir + r"/MID")) <= 100:
+        return False
+    else:
+        return True
 
 
 def georaster(in_file):
@@ -439,12 +456,11 @@ def CaculateNCLine(nc_file, mid_dir, out_file, runday, runhour):
                        MidFileName + r'/grid_info.txt',
                        ObsFileOutPath,
                        OutDiffResultdir]
-            if not os.path.isfile(fileDiffResult):
-                exe = VARIFY_EXE
-                print()
-                print(exe + " " + ' '.join(runFile))
-                print()
-                os.system(exe + " " + ' '.join(runFile))
+            exe = VARIFY_EXE
+            print()
+            print(exe + " " + ' '.join(runFile))
+            print()
+            os.system(exe + " " + ' '.join(runFile))
         else:
             print('ERROR:必要的输入文件不存在')
             return
