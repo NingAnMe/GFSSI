@@ -4,7 +4,7 @@
 # @Author  : NingAnMe <ninganme@qq.com>
 import os
 
-keys = ["soloarTask", "restful"]
+keys = ["soloarTask", "restful", "download_cimiss"]
 
 print("！！！！     ： 开始终止程序")
 for key in keys:
@@ -19,9 +19,9 @@ for key in keys:
 print("！！！！     ： 开始启动程序")
 cmds = [
     "/home/gfssi/business/jetty-distribution-9.2.9.v20150224/bin/jetty.sh restart",  # 重启web
-    "nohup java -jar /home/gfssi/business/tool/soloarTask-1.0-SNAPSHOT.jar > /home/gfssi/business/tool/nohup.log 2>&1 &",  # 重启实时业务
-    "nohup python /home/gfssi/Project/OM/gfssi/restful.py > /home/gfssi/Project/OM/gfssi/nohup.log 2>&1 &"  # 重启网站功能
+    "nohup java -jar /home/gfssi/business/tool/soloarTask-1.0-SNAPSHOT.jar > /GFData/TmpData/soloarTask.log 2>&1 &",  # 重启实时业务
+    "nohup python /home/gfssi/Project/OM/gfssi/restful.py > /GFData/TmpData/restful.log 2>&1 &"  # 重启网站功能
+    "nohup python /home/gfssi/Project/OM/gfssi/download_cimiss.py > /GFData/TmpData/download_cimiss.log 2>&1 &"  # 重启网站功能
 ]
 for cmd in cmds:
-    r = os.popen(cmd).readlines()
-    print(r)
+    os.system(cmd)
