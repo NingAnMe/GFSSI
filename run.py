@@ -3,9 +3,12 @@
 # @Time    : 2019/10/12 11:27
 # @Author  : AnNing
 import argparse
+from warnings import filterwarnings
 
 from schedule import *
 
+
+filterwarnings("ignore")
 
 resolution_types = {
     '1KM',
