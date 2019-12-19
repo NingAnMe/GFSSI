@@ -4,7 +4,7 @@
 # @Author  : AnNing
 
 # 是否开启DEBUG模式
-DEBUG = True
+DEBUG = False
 
 # 数据根目录
 DATA_ROOT_DIR = '/home/gfssi/GFData/'
@@ -22,5 +22,10 @@ DATA_TMP_DIR = '/home/gfssi/GFData/TmpData'
 # DATABASE_URL = 'mysql+pymysql://root:root@cma07@127.0.0.1:3306/solar'
 DATABASE_URL = 'mysql+pymysql://root:gfssi@localhost:3306/solar'
 
-# 生产使用的并行数量
-THREAD = 10
+# 补数据使用的并行数量
+THREAD = 5
+
+# CIMISS Download
+CIMISS_IP = "10.1.64.154"
+CIMISS_USER = "PMSC_FNTY_liyangongfu"  # liyan-gongfu
+CIMISS_PASSWORD = "fnzxxn121"  # fnzx-xn121
