@@ -10,11 +10,11 @@ print("！！！！     ： 开始终止程序")
 for key in keys:
     cmd = "ps -ef| grep gfssi | grep {}".format(key)
     r = os.popen(cmd).readlines()
-    print(r)
-    for line in r:
+    for line in r[:-2]:
+        print(line)
         pid = line.split()[1]
         r = os.popen("kill -9 {}".format(pid))
-        print(r)
+        print("kill -9 {}".format(pid))
 
 print("！！！！     ： 开始启动程序")
 cmds = [
@@ -24,4 +24,5 @@ cmds = [
     "nohup python /home/gfssi/Project/OM/gfssi/download_cimiss.py > /GFData/TmpData/download_cimiss.log 2>&1 &"  # 重启网站功能
 ]
 for cmd in cmds:
+    print(cmd)
     os.system(cmd)

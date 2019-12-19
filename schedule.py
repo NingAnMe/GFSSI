@@ -123,7 +123,7 @@ def fy4a_save_4km_orbit_data_in_database(date_start=None, date_end=None, **kwarg
 
 
 def product_fy3d_1km_daily_data(date_start=None, date_end=None, thread=THREAD, **kwargs):
-    source_dir = os.path.join(DATA_ROOT_DIR, 'SourceData', 'FY3D', 'SSI_1KM')
+    source_dir = os.path.join(DATA_ROOT_DIR, 'SourceData', 'FY3D', 'SSI_1KM', 'Daily')
     ext = '.dat'
     resultid = 'FY3D_MERSI_L3_SSI_Daily'
     planid = 1

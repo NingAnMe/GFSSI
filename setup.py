@@ -46,3 +46,8 @@ setup(
     ext_modules=cythonize(get_extensions('lib'),
                           build_dir=os.path.join("build/tmp"))
 )
+
+
+os.system("rm lib lib.bak")
+os.system("cp -rf build/lib.linux-x86_64-3.7 lib")
+os.system("touch lib/__init__.py")
