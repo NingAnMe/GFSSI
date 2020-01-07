@@ -48,6 +48,9 @@ setup(
 )
 
 
-os.system("rm lib lib.bak")
+os.system("mv lib lib.bak")
 os.system("cp -rf build/lib.linux-x86_64-3.7 lib")
+os.system("cp -rf lib.bak/*.mplstyle lib")
 os.system("touch lib/__init__.py")
+os.system("rm -rf lib.bak")
+print("success")
