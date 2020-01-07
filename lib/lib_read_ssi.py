@@ -161,6 +161,36 @@ class FY4ASSI(object):
                 data[index] = np.nan
                 return data
 
+    def get_rgb_ref(self):
+        dn = {}
+        ref = {}
+        channels = ["NOMChannel01", "NOMChannel02", "NOMChannel03"]  # 0.47  0.65   0.83
+        luts = ["CALChannel01", "CALChannel02", "CALChannel03"]
+        rgbs = ["b", "g", "r"]
+
+        with h5py.File(self.in_file, 'r') as hdf:
+            for channel, lut, color in zip(channels, luts, rgbs):
+                dataset = hdf.get(channel)
+                if dataset is not None:
+                    data = dataset[:]
+                    index = np.logical_or(data <= 0, data >= 4095)
+                    data[index] = 0
+                    dn = data.astype(np.int16)
+                dataset = hdf.get(lut)
+                if dataset is not None:
+                    data = dataset[:]
+                    ref[color] = data[dn][:, :, np.newaxis]
+            rgb = np.concatenate((ref['r'], ref['g'], ref['b']), axis=2)
+            rgb[rgb <= 0] = np.nan
+            nan = np.isnan(rgb)
+            for i in range(1, 3):
+                mask = np.logical_or.reduce((nan[:, :, 0], nan[:, :, 1], nan[:, :, 2]))
+            ones = np.ones_like(mask)[:, :, np.newaxis]
+            rgb[mask, :] = np.nan
+            rgb = np.concatenate((rgb, ones), axis=2)
+            rgb[mask, 3] = 0
+            return rgb
+
     @staticmethod
     def get_latitude_4km():
         # -81, 81

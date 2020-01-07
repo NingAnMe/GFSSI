@@ -23,8 +23,11 @@ frequencys = {
 }
 
 cmds_orbit = [
+    "python {home}/download_cimiss.py -s {d_s} -e {d_e}",
     "python {home}/run.py -f fy4a_save_4km_orbit_data_in_database -d {d_s} -a {d_e} -s FY4A_AGRI -r 4KM -e {f} -t {t}",
     "python {home}/run.py -f product_image -d {d_s} -a {d_e} -s FY4A_AGRI -r 4KM -e {f} -t {t}",
+    "python {home}/run.py -f fy4a_save_4km_orbit_ref_data_in_database -d {d_s} -a {d_e} -s FY4A_AGRI -r 4KM -e {f} -t {t}",
+    "python {home}/run.py -f product_cloud_image -d {d_s} -a {d_e} -s FY4A_AGRI -r 4KM -e {f} -t {t}",
     "python {home}/run.py -f product_fy4a_4kmcorrect_disk_full_data_orbit -d {d_s} -a {d_e} -s FY4A_AGRI -r 4KMCorrect -e {f} -t {t}",
     "python {home}/run.py -f product_image -d {d_s} -a {d_e} -s FY4A_AGRI -r 4KMCorrect -e {f} -t {t}",
     "python {home}/run.py -f product_fy4a_1km_disk_full_data_orbit -d {d_s} -a {d_e} -s FY4A_AGRI -r 1KM -e {f} -t {t}",

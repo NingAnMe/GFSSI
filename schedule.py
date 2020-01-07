@@ -15,6 +15,7 @@ import numpy as np
 import threading
 
 from gfssi_p01_ssi_plot_map_full import plot_map_full
+from gfssi_p02_cloud_plot_map_full import plot_map_full as plot_cloud_full
 from gfssi_e02_ssi_combine import combine_full
 from gfssi_e03_ssi_area import area
 from gfssi_b01_ssi_itcal import itcal
@@ -91,6 +92,70 @@ def fy4a_save_4km_orbit_data_in_database(date_start=None, date_end=None, **kwarg
                         continue
                 yyyymmdd = datatime.strftime("%Y%m%d")
                 dst_file = os.path.join(ssi_dir, yyyymmdd, file_name)
+                dst_file = dst_file.replace('4000M', '4KM')
+                if not os.path.isfile(dst_file):
+                    dst_dir = os.path.dirname(dst_file)
+                    if not os.path.isdir(dst_dir):
+                        os.makedirs(dst_dir)
+                    os.symlink(src_file, dst_file)
+                if dst_file in results_files:
+                    continue
+
+                result_data = ResultData()
+                result_data.resultid = resultid
+                result_data.planid = planid
+                result_data.address = dst_file
+                result_data.datatime = datatime
+                result_data.createtime = datetime.now()
+                result_data.resolution_type = '4KM'
+                result_data.area_type = 'Full_DISK'
+                result_data.element = None
+                session.add(result_data)
+                count += 1
+                print('{} -----> {}'.format(src_file, dst_file))
+                if count >= 500:
+                    session.commit()
+                    count = 0
+            except Exception as why:
+                print(why)
+                os.remove(dst_file)
+    session.commit()
+    session.close()
+
+
+def fy4a_save_4km_orbit_ref_data_in_database(date_start=None, date_end=None, **kwargs):
+    print(date_start)
+    print(date_end)
+    source_dir = os.path.join('/FY4/FY4A/AGRI/L1/FDI/DISK')
+    fdi_dir = os.path.join(DATA_ROOT_DIR, 'FDIData', 'FY4A', 'FDI_4KM', 'Full', 'Orbit')
+    ext = '.HDF'
+    resultid = 'FY4A_AGRI_L1_FDI_Orbit'
+    planid = 1
+
+    results = find_result_data(resultid=resultid, datatime_start=date_start, datatime_end=date_end,
+                               resolution_type='4KM')
+    results_files = [row.address for row in results]
+    results_files = set(results_files)
+
+    session = Session()
+    count = 0
+    for root, dirs, files in os.walk(source_dir):
+        for file_name in files:
+            if ext is not None:
+                if '.' not in ext:
+                    ext = '.' + ext
+                if os.path.splitext(file_name)[1].lower() != ext.lower():
+                    continue
+                if "4000M" not in file_name or "FDI" not in file_name:
+                    continue
+            try:
+                src_file = os.path.join(root, file_name)
+                datatime = FY4ASSI.get_date_time_orbit(src_file)
+                if date_start is not None and date_end is not None:
+                    if not date_start <= datatime <= date_end:
+                        continue
+                yyyymmdd = datatime.strftime("%Y%m%d")
+                dst_file = os.path.join(fdi_dir, yyyymmdd, file_name)
                 dst_file = dst_file.replace('4000M', '4KM')
                 if not os.path.isfile(dst_file):
                     dst_dir = os.path.dirname(dst_file)
@@ -464,6 +529,51 @@ def product_image(date_start=None, date_end=None, frequency=None, thread=THREAD,
         else:
             p.apply_async(plot_map_full,
                           args=(in_file, vmin, vmax, resultid_image, planid, datatime, resolution_type))
+    p.close()
+    p.join()
+    print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))
+
+
+def product_cloud_image(date_start=None, date_end=None, frequency=None, thread=THREAD,
+                  resolution_type=None, sat_sensor=None, **kwargs):
+    sat_sensor = sat_sensor.upper()
+    sat, sensor = sat_sensor.split('_')
+
+    if frequency == 'Orbit':
+        resultid_data_in = '{}_L1_FDI_Orbit'.format(sat_sensor)
+        if sat == 'FY4A':
+            vmin, vmax, _ = COLORBAR_RANGE_ORBIT_FY4A
+        else:
+            print('此时间分辨率={}不支持卫星={}'.format(frequency, sat_sensor))
+            return
+        planid = 1
+        get_date_time = FY4ASSI.get_date_time_orbit
+    else:
+        raise ValueError('不支持的类型：{}'.format(frequency))
+
+    resultid_image = resultid_data_in + '_IMG'
+
+    try:
+        results = find_result_data(resultid=resultid_data_in, datatime_start=date_start, datatime_end=date_end,
+                                   resolution_type=resolution_type)
+    except Exception as why:
+        print(why)
+        return
+
+    in_files = [row.address for row in results]
+    in_files.sort()
+    in_files_length = len(in_files)
+    print('找到的文件总数:{}'.format(in_files_length))
+
+    print('开始绘图')
+    p = Pool(thread)
+    for in_file in in_files[:]:
+        datatime = get_date_time(in_file)
+        if DEBUG or thread == 1:
+            plot_cloud_full(in_file, resultid_image, planid, datatime, resolution_type)
+        else:
+            p.apply_async(plot_cloud_full,
+                          args=(in_file, resultid_image, planid, datatime, resolution_type))
     p.close()
     p.join()
     print('完成全部的任务:{}'.format(sys._getframe().f_code.co_name))

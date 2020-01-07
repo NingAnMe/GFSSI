@@ -31,14 +31,18 @@ DELL服务器有开机按钮，连接电源可直接打开。
 #### 后台功能
 
 ##### 启动or重新启动
-登录系统的gfssi用户，打开“终端”：输入python /home/gfssi/Project/OM/gfssi/restart.py 。
+登录系统的gfssi用户，打开“终端”：输入
+`python /home/gfssi/Project/OM/gfssi/restart.py` 
 
 ##### 补缺失数据
-登录系统的gfssi用户，打开“终端”：输入python /home/gfssi/Project/OM/gfssi/make_up.py -s 2019110100000 -e 20191101000000 -f Orbit。
+登录系统的gfssi用户，打开“终端”：输入
+`python /home/gfssi/Project/OM/gfssi/make_up.py -s 2019110100000 -e 20191101000000 -f Orbit`
 参数说明：
 -s ：后面跟的参数是开始时间YYYYmmddHHMMSS，年月日时分秒
 -e ：后面跟的参数是结束时间YYYYmmddHHMMSS，年月日时分秒
 -f ：后面跟的参数是数据类型：Orbit是时次，Daily是日，Monthly是月，Yearly是年
+
+##### 
 
 # GFSSI 软件说明文档
 ##### 系统版本
@@ -70,30 +74,36 @@ Python 3.7.5
 
 #### 每个时次需要运行的命令（）
 FY4A：4KM原始数据入库
-`python run.py -f fy4a_save_4km_orbit_data_in_database -d 20190901000000 -a 20190901000000 -s FY4A_AGRI -r 4KM -e Orbit`
+`python run.py -f fy4a_save_4km_orbit_data_in_database -d 20200101000000 -a 20200102230000 -s FY4A_AGRI -r 4KM -e Orbit`
 
 FY4A：4KM原始数据绘图（1分钟）
-`python run.py -f product_image -d 20190901000000 -a 20190901000000 -s FY4A_AGRI -r 4KM -e Orbit`
+`python run.py -f product_image -d 20200101000000 -a 20200102230000 -s FY4A_AGRI -r 4KM -e Orbit`
+
+FY4A：4KM L1反射率数据入库
+`python run.py -f fy4a_save_4km_orbit_ref_data_in_database -d 20200101000000 -a 20200102230000 -s FY4A_AGRI -r 4KM -e Orbit`
+
+FY4A：4KM云图绘图（1分钟）
+`python run.py -f product_cloud_image -d 20200101000000 -a 20200102230000 -s FY4A_AGRI -r 4KM -e Orbit`
 
 FY4A：生产4KM校正数据（输入数据为4KM原始数据）（10s）
 TODO 由于订正算法程序的特殊性，没有原始数据也可以根据G0计算生成4KM校正数据，所以要考虑数据缺失的判断问题（整点数据多久未到达判断为缺失）
 当前方案：日合成之前，重新获取，然后缺失的数据使用订正程序生成
-`python run.py -f product_fy4a_4kmcorrect_disk_full_data_orbit -d 20190901000000 -a 20190901000000 -s FY4A_AGRI -r 4KMCorrect -e Orbit`
+`python run.py -f product_fy4a_4kmcorrect_disk_full_data_orbit -d 20200101000000 -a 20200102230000 -s FY4A_AGRI -r 4KMCorrect -e Orbit`
 
 FY4A：4KM校正数据绘图（2分钟）
-`python run.py -f product_image -d 20190901000000 -a 20190901000000 -s FY4A_AGRI -r 4KMCorrect -e Orbit`
+`python run.py -f product_image -d 20200101000000 -a 20200102230000 -s FY4A_AGRI -r 4KMCorrect -e Orbit`
 
 FY4A：生产1KM原始数据（输入数据为4KM校正数据）（10分钟）
-`python run.py -f product_fy4a_1km_disk_full_data_orbit -d 20190901000000 -a 20190901000000 -s FY4A_AGRI -r 1KM -e Orbit`
+`python run.py -f product_fy4a_1km_disk_full_data_orbit -d 20200101000000 -a 20200102230000 -s FY4A_AGRI -r 1KM -e Orbit`
 
 FY4A：1KM原始数据绘图（2分30秒）
-`python run.py -f product_image -d 20190901000000 -a 20190901000000 -s FY4A_AGRI -r 1KM -e Orbit`
+`python run.py -f product_image -d 20200101000000 -a 20200102230000 -s FY4A_AGRI -r 1KM -e Orbit`
 
 FY4A：生产1KM校正数据（输入数据为1KM原始数据和CIMISS辅助数据）（1分30秒）
-`python run.py -f product_fy4a_1kmcorrect_disk_full_data_orbit -d 20190901000000 -a 20190901000000 -s FY4A_AGRI -r 1KMCorrect -e Orbit`
+`python run.py -f product_fy4a_1kmcorrect_disk_full_data_orbit -d 20200107000000 -a 20200107000000 -s FY4A_AGRI -r 1KMCorrect -e Orbit`
 
 FY4A：1KM校正数据绘图（1分15秒）
-`python run.py -f product_image -d 20190901000000 -a 20190901000000 -s FY4A_AGRI -r 1KMCorrect -e Orbit`
+`python run.py -f product_image -d 20200101000000 -a 20190901000000 -s FY4A_AGRI -r 1KMCorrect -e Orbit`
 
 
 #### 每天需要运行的命令（日数据基于时次数据合成）（合成前需要补数据）
