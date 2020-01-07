@@ -52,10 +52,13 @@ def download_today():
         date_now = datetime.now()
         ymd_now = date_now.strftime("%Y%m%d")
         if date_now.minute % 15 == 5:
-            os.system("rm -rf {}".format(os.path.join(DATA_OBS_DIR, ymd_now)))
-            success = download_cimiss(ymd_now)
-            if success:
-                time.sleep(60)
+            try:
+                os.system("rm -rf {}".format(os.path.join(DATA_OBS_DIR, ymd_now)))
+                success = download_cimiss(ymd_now)
+                if success:
+                    time.sleep(60)
+            except Exception as why:
+                print(why)
         else:
             time.sleep(60)
 
