@@ -46,10 +46,10 @@ def download_cimiss(ymd):
     return success
 
 
-def download_today():
+def download_yesterday():
     print(f"({datetime.now()})启动CIMISS实时下载")
     while True:
-        date_now = datetime.now()
+        date_now = datetime.now() - relativedelta(days=1)
         ymd_now = date_now.strftime("%Y%m%d")
         if date_now.minute % 15 == 5:
             try:
@@ -61,6 +61,39 @@ def download_today():
                 print(why)
         else:
             time.sleep(60)
+
+
+def download_today():
+    print(f"({datetime.now()})启动CIMISS实时下载")
+    tmp_minute = -1
+    tmp_hour = -1
+    while True:
+        date_now = datetime.now()
+        ymd_now = date_now.strftime("%Y%m%d")
+        if date_now.minute % 20 == 5 and date_now.minute != tmp_minute:
+            try:
+                tmp_minute = date_now.minute
+                os.system("rm -rf {}".format(os.path.join(DATA_OBS_DIR, ymd_now)))
+                success = download_cimiss(ymd_now)
+                if success:
+                    time.sleep(60)
+            except Exception as why:
+                print(why)
+        else:
+            time.sleep(20)
+
+        date_now = datetime.now() - relativedelta(days=1)
+        ymd_now = date_now.strftime("%Y%m%d")
+        hours = {5, 6, 7}
+        if date_now.hour in hours and date_now.hour != tmp_hour:
+            try:
+                tmp_hour = date_now.hour
+                os.system("rm -rf {}".format(os.path.join(DATA_OBS_DIR, ymd_now)))
+                success = download_cimiss(ymd_now)
+                if success:
+                    time.sleep(60)
+            except Exception as why:
+                print(why)
 
 
 if __name__ == '__main__':

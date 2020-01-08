@@ -15,16 +15,29 @@ from lib.lib_constant import STATION_LIST
 from lib.lib_constant import CONFIG_FILE
 from config import DEBUG, DATA_OBS_DIR
 
-with open(CONFIG_FILE, 'r') as f:
-    CONFIG = json.load(f)
+
+def get_cimiss_ip():
+    with open(CONFIG_FILE, 'r') as f:
+        CONFIG = json.load(f)
+    return CONFIG["cimissIP"]
 
 
-CIMISS_IP = CONFIG["cimissIP"]
-CIMISS_USER = CONFIG["cimissUser"]
-CIMISS_PASSWORD = CONFIG["cimissPassword"]
+def get_cimiss_user():
+    with open(CONFIG_FILE, 'r') as f:
+        CONFIG = json.load(f)
+    return CONFIG["cimissUser"]
 
 
-API = f"http://{CIMISS_IP}/cimiss-web/api"
+def get_cimiss_password():
+    with open(CONFIG_FILE, 'r') as f:
+        CONFIG = json.load(f)
+    return CONFIG["cimissPassword"]
+
+
+def get_api():
+    CIMISS_IP = get_cimiss_ip()
+    API = f"http://{CIMISS_IP}/cimiss-web/api"
+    return API
 
 
 def copy_cimiss(date2):
@@ -52,9 +65,9 @@ def download_cimiss_ssi_ssh(ymdhms_start, ymdhms_end, stations):
     data_format = "json"
     time_range = f"[{ymdhms_start},{ymdhms_end}]"
     station_id = f"{','.join(stations)}"
-    url = f'{API}?\
-userId={CIMISS_USER}\
-&pwd={CIMISS_PASSWORD}\
+    url = f'{get_api()}?\
+userId={get_cimiss_user()}\
+&pwd={get_cimiss_password()}\
 &interfaceId={interface_id}\
 &dataCode={data_code}\
 &elements={elements}\
@@ -87,9 +100,9 @@ def download_cimiss_tem(ymdhms_start, ymdhms_end, stations):
     time_range = f"[{ymdhms_start},{ymdhms_end}]"
     station_id = f"{','.join(stations)}"
 
-    url = f'{API}?\
-userId={CIMISS_USER}\
-&pwd={CIMISS_PASSWORD}\
+    url = f'{get_api()}?\
+userId={get_cimiss_user()}\
+&pwd={get_cimiss_password()}\
 &interfaceId={interface_id}\
 &dataCode={data_code}\
 &elements={elements}\
@@ -152,6 +165,8 @@ def format_cimiss(ymdhms, data_ssi_ssh, data_tem, out_dir):
     for k1, v1 in data_format.items():
         if bool(re.search('[a-zA-Z]', k1)):
             return
+        if not os.path.isdir(out_dir):
+            os.makedirs(out_dir)
         out_file = os.path.join(out_dir, f"ObsData_{k1}_{ymd}.txt")
         try:
             with open(out_file, 'w') as f:
