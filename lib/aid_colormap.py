@@ -9,8 +9,9 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from lib_constant import *
+from lib_path import get_cfg_path
 
-aid_path = get_aid_path()
+out_path = get_cfg_path()
 
 kwargs = {
     'Orbit_FY4A': COLORBAR_RANGE_ORBIT_FY4A,
@@ -60,4 +61,4 @@ for k, r in kwargs.items():
     plt.tight_layout()
     alpha = 0
     fig.patch.set_alpha(alpha)
-    fig.savefig(os.path.join(aid_path, 'colormap_{}.png'.format(k)), dpi=1000)
+    fig.savefig(os.path.join(out_path, 'colormap_{}.png'.format(k)), dpi=1000)
