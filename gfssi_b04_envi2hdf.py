@@ -23,15 +23,19 @@ def fy3d_envi2hdf(in_file, out_file, resultid, planid, datatime, resolution_type
         return
     print('<<< fy3d_envi2hdf: {}'.format(in_file))
 
-    in_file_gc = in_file
-    in_file_bc = in_file_gc.replace('Gc', 'Bc')
-    in_file_dc = in_file_gc.replace('Gc', 'Dc')
-    in_file_sz = in_file_gc.replace('Gc', 'Sz')
+    try:
+        in_file_gc = in_file
+        in_file_bc = in_file_gc.replace('Gc', 'Bc')
+        in_file_dc = in_file_gc.replace('Gc', 'Dc')
+        in_file_sz = in_file_gc.replace('Gc', 'Sz')
 
-    ssi = FY3DSSIENVI(in_file_gc)
-    dirssi = FY3DSSIENVI(in_file_bc)
-    difssi = FY3DSSIENVI(in_file_dc)
-    sz = FY3DSSIENVI(in_file_sz)
+        ssi = FY3DSSIENVI(in_file_gc)
+        dirssi = FY3DSSIENVI(in_file_bc)
+        difssi = FY3DSSIENVI(in_file_dc)
+        sz = FY3DSSIENVI(in_file_sz)
+    except Exception as why:
+        print(why)
+        return
 
     result = {
         'SSI': (ssi.get_data() / 1000., np.float),
