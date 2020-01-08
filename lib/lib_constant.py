@@ -51,3 +51,6 @@ FORECAST_EXE = os.path.join(GFSSI_DIR, 'bin', 'forecast.exe')
 
 # 网站服务器的端口
 RESTFUL_POST = 5000
+
+# 网站服务器的端口
+CONFIG_FILE = os.path.join(GFSSI_DIR, 'cfg', 'config.json')

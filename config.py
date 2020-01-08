@@ -24,8 +24,3 @@ DATABASE_URL = 'mysql+pymysql://root:gfssi@localhost:3306/solar'
 
 # 补数据使用的并行数量
 THREAD = 5
-
-# CIMISS Download
-CIMISS_IP = "10.1.64.154"
-CIMISS_USER = "PMSC_FNTY_liyangongfu"  # liyan-gongfu
-CIMISS_PASSWORD = "fnzxxn121"  # fnzx-xn121

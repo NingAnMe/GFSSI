@@ -8,10 +8,21 @@ from math import ceil
 import random
 import pandas
 import requests
+import json
 from shutil import copyfile
 
-from config import CIMISS_IP, CIMISS_USER, CIMISS_PASSWORD, DEBUG, DATA_OBS_DIR
 from lib.lib_constant import STATION_LIST
+from lib.lib_constant import CONFIG_FILE
+from config import DEBUG, DATA_OBS_DIR
+
+with open(CONFIG_FILE, 'r') as f:
+    CONFIG = json.load(f)
+
+
+CIMISS_IP = CONFIG["cimissIP"]
+CIMISS_USER = CONFIG["cimissUser"]
+CIMISS_PASSWORD = CONFIG["cimissPassword"]
+
 
 API = f"http://{CIMISS_IP}/cimiss-web/api"
 
@@ -41,7 +52,6 @@ def download_cimiss_ssi_ssh(ymdhms_start, ymdhms_end, stations):
     data_format = "json"
     time_range = f"[{ymdhms_start},{ymdhms_end}]"
     station_id = f"{','.join(stations)}"
-
     url = f'{API}?\
 userId={CIMISS_USER}\
 &pwd={CIMISS_PASSWORD}\
