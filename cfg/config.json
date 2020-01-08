@@ -1,0 +1,10 @@
+{
+   "######网站账号密码#######": 1,
+   "webUser": "root",
+   "webPassword": "11111111",
+
+   "######CIMISS账号密码#######": 2,
+   "cimissIP": "10.1.64.154",
+   "cimissUser": "PMSC_FNTY_liyangongfu",
+   "cimissPassword": "fnzxxn121"
+}
