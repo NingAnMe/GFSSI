@@ -28,6 +28,8 @@ def fy4a_1km_correct(in_file, out_file, obs_dir, temp_dir,
     if not os.path.isdir(temp_dir):
         os.makedirs(temp_dir)
     flag = ForecastDataPerday(obs_dir=obs_dir, mid_dir=temp_dir, runday=runday)
+    if not flag:
+        print(f'没有足够的MID数据：{runday}{runhour}0000')
 
     if flag:
         CaculateNCLine(nc_file=in_file, mid_dir=temp_dir, out_file=out_file, runday=runday, runhour=runhour)
