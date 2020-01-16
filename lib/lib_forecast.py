@@ -71,9 +71,12 @@ def forecast_ssi(dates, values, lon, lat):
                     continue
                 value = float(row.strip())
                 date = date_start.strftime('%Y%m%d%H%M%S')
-                print(date, value)
+                print(date, value, value < 0)
                 dates.append(date)
-                values.append(value)
+                if value < 0:
+                    values.append(0)
+                else:
+                    values.append(value)
     except:
         print('读取forecast结果文件错误')
     return dates, values
