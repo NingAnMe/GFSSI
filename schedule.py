@@ -3,6 +3,8 @@
 """
 @Time    : 2019/8/1
 @Author  : AnNing
+
+2020-05-15：增加卫星数据入库
 """
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -64,7 +66,8 @@ def make_zip_file(out_file, in_files):
 def fy4a_save_4km_orbit_data_in_database(date_start=None, date_end=None, **kwargs):
     print(date_start)
     print(date_end)
-    source_dir = os.path.join('/FY4/FY4A/AGRI/L2/SSI/DISK/NOM')
+    # source_dir = os.path.join('/FY4/FY4A/AGRI/L2/SSI/DISK/NOM')
+    source_dir = os.path.join('/home/gfssi/GFData/SourceData/FY4A/SSI_4KM/Full/Orbit')
     ssi_dir = os.path.join(DATA_ROOT_DIR, 'SSIData', 'FY4A', 'SSI_4KM', 'Full', 'Orbit')
     ext = '.NC'
     resultid = 'FY4A_AGRI_L2_SSI_Orbit'
@@ -497,7 +500,7 @@ def product_image(date_start=None, date_end=None, frequency=None, thread=THREAD,
         if sat == 'FY4A':
             vmin, vmax, _ = COLORBAR_RANGE_YEARLY_FY4A
         elif sat == 'FY3D':
-            vmin, vmax, _ = COLORBAR_RANGE_MONTHLY_FY3D
+            vmin, vmax, _ = COLORBAR_RANGE_YEARLY_FY3D
         else:
             print('此时间分辨率={}不支持卫星={}'.format(frequency, sat_sensor))
             return
@@ -535,7 +538,7 @@ def product_image(date_start=None, date_end=None, frequency=None, thread=THREAD,
 
 
 def product_cloud_image(date_start=None, date_end=None, frequency=None, thread=THREAD,
-                  resolution_type=None, sat_sensor=None, **kwargs):
+                        resolution_type=None, sat_sensor=None, **kwargs):
     sat_sensor = sat_sensor.upper()
     sat, sensor = sat_sensor.split('_')
 
@@ -924,19 +927,23 @@ def _get_point_data(full_file, element, index, get_datetime, resultid,
 
 if __name__ == '__main__':
     # 数据入库
-    # fy4a_save_4km_orbit_data_in_database()  # FY4A 4KM原始数据入库
+    start = datetime.strptime('20190101000000', '%Y%m%d%H%M%S')
+    end = datetime.strptime('20190102235959', '%Y%m%d%H%M%S')
+    fy4a_save_4km_orbit_data_in_database(start, end)  # FY4A 4KM原始数据入库
+    # fy4a_save_4km_orbit_ref_data_in_database(start, end)  # FY4A 卫星数据入库
 
     # =================================生产数据==================================
     # 轨道：生产数据：FY4A
     # start = datetime.strptime('20170601000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20191231235959', '%Y%m%d%H%M%S')
-    # product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # FY4A 4KMCorrect
+    product_fy4a_4kmcorrect_disk_full_data_orbit(start, end)  # FY4A 4KMCorrect
     # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190601235959', '%Y%m%d%H%M%S')
     # product_fy4a_1km_disk_full_data_orbit(start, end)  # FY4A 1KM
     # start = datetime.strptime('20171015000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20171015235959', '%Y%m%d%H%M%S')
     # product_fy4a_1kmcorrect_disk_full_data_orbit(start, end)  # FY4A 1KMCorrect
+    # product_cloud_image(start, end, frequency='Orbit', resolution_type='4KM', sat_sensor='FY4A_AGRI')
 
     # 日：生产数据：FY4A FY3D
     # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
@@ -951,9 +958,9 @@ if __name__ == '__main__':
     # start = datetime.strptime('20171015000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20171015235959', '%Y%m%d%H%M%S')
     # product_combine_data(start, end, frequency='Daily', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
-    # start = datetime.strptime('20190501000000', '%Y%m%d%H%M%S')
+    # start = datetime.strptime('20180501000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190501235959', '%Y%m%d%H%M%S')
-    # fy3d_product_1km_daily_data(start, end)  # FY3D 1KM
+    # product_fy3d_1km_daily_data(start, end)  # FY3D 1KM
     #
     # # 月：生产数据：FY4A FY3D
     # start = datetime.strptime('20190601000000', '%Y%m%d%H%M%S')
@@ -977,7 +984,7 @@ if __name__ == '__main__':
     # start = datetime.strptime('20190410000000', '%Y%m%d%H%M%S')
     # end = datetime.strptime('20190410235959', '%Y%m%d%H%M%S')
     # product_image(start, end, frequency='Orbit', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM
-    # product_image(start, end, frequency='Orbit', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
+    product_image(start, end, frequency='Orbit', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
     # product_image(start, end, frequency='Orbit', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
     # product_image(start, end, frequency='Orbit', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
     #
@@ -988,9 +995,9 @@ if __name__ == '__main__':
     # product_image(start, end, frequency='Daily', resolution_type='4KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 4KMCorrect
     # product_image(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY4A_AGRI')  # FY4A 1KM
     # product_image(start, end, frequency='Daily', resolution_type='1KMCorrect', sat_sensor='FY4A_AGRI')  # FY4A 1KMCorrect
-    start = datetime.strptime('20190101000000', '%Y%m%d%H%M%S')
-    end = datetime.strptime('20190101000000', '%Y%m%d%H%M%S')
-    product_image(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
+    # start = datetime.strptime('20190101000000', '%Y%m%d%H%M%S')
+    # end = datetime.strptime('20190101000000', '%Y%m%d%H%M%S')
+    # product_image(start, end, frequency='Daily', resolution_type='1KM', sat_sensor='FY3D_MERSI')  # FY3D 1KM
     #
     # # 月：绘图：FY4A FY3D
     # product_image(start, end, frequency='Monthly', resolution_type='4KM', sat_sensor='FY4A_AGRI')  # FY4A 4KM

@@ -3,6 +3,8 @@
 """
 @Time    : 2019/8/15
 @Author  : AnNing
+
+2020-05-15：可溢出的线程数增加为30
 """
 from datetime import datetime
 from sqlalchemy import create_engine
@@ -12,7 +14,7 @@ from sqlalchemy.orm import sessionmaker
 
 from config import DATABASE_URL
 
-engine = create_engine(DATABASE_URL, echo=False, pool_size=30, max_overflow=0)
+engine = create_engine(DATABASE_URL, echo=False, pool_size=30, max_overflow=-1)
 Session = sessionmaker(engine)
 
 Base = declarative_base()
@@ -68,14 +70,16 @@ def add_result_data(resultid=None, planid=None, resolution_type=None, area_type=
 
 def find_result_data(resultid=None, datatime_start=None, datatime_end=None, resolution_type=None):
     session = Session()
-    results = session.query(ResultData).filter(ResultData.resultid == resultid,
-                                               ResultData.resolution_type == resolution_type,
-                                               ResultData.datatime >= datatime_start,
-                                               ResultData.datatime <= datatime_end)
-    results_count = results.count()
+    results = session.query(ResultData)
+    if results:
+        results = results.filter(ResultData.resultid == resultid,
+                                 ResultData.resolution_type == resolution_type,
+                                 ResultData.datatime >= datatime_start,
+                                 ResultData.datatime <= datatime_end)
+        results_count = results.count()
+        print(resultid, datatime_start, datatime_end, resolution_type)
+        print('共找到结果:{}'.format(results_count))
     session.close()
-    print(resultid, datatime_start, datatime_end, resolution_type)
-    print('共找到结果:{}'.format(results_count))
     return results
 
 

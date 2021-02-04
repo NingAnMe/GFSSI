@@ -3,6 +3,8 @@
 """
 @Time    : 2019/7/15
 @Author  : AnNing
+
+2020-05-15：日合成的时候，只使用整点数据
 """
 from __future__ import print_function, division
 
@@ -108,6 +110,11 @@ def combine_full(in_files, out_file, day=False, resultid=None, planid=None, data
         print('combine <<< :{}'.format(in_file))
         try:
             datas = FY4ASSI(in_file)
+            # 日合成的时候，只使用整点数据
+            if day:
+                date_time = FY4ASSI.get_date_time_orbit(in_file)
+                if date_time.minute != 0:
+                    continue
             data_get = {
                 'SSI': datas.get_ssi,
                 'DirSSI': datas.get_ib,

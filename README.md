@@ -16,7 +16,7 @@
 登录系统的root用户，打开“终端”：输入  passwd root 。然后输入两遍新密码。（注意！！！！一定要记住新密码。）
 
 ### 系统
-
+  
 #### 开机
 DELL服务器有开机按钮，连接电源可直接打开。
 
@@ -73,10 +73,10 @@ Python 3.7.5
 `python run.py -h`
 
 #### 每个时次需要运行的命令（）
-FY4A：4KM原始数据入库
+FY4A：4KM原始光伏数据入库
 `python run.py -f fy4a_save_4km_orbit_data_in_database -d 20200101000000 -a 20200102230000 -s FY4A_AGRI -r 4KM -e Orbit`
 
-FY4A：4KM原始数据绘图（1分钟）
+FY4A：4KM原始光伏数据绘图（1分钟）
 `python run.py -f product_image -d 20200101000000 -a 20200102230000 -s FY4A_AGRI -r 4KM -e Orbit`
 
 FY4A：4KM L1反射率数据入库
@@ -113,10 +113,10 @@ FY4A：4KM原始数据合成日数据（2分30秒）
 FY4A：4KM原始数据日数据绘图
 `python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 4KM -e Daily`
 
-FY4A：4KM校正数据合成日数据
+FY4A：4KMCorrect校正数据合成日数据
 `python run.py -f product_combine_data -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 4KMCorrect -e Daily`
 
-FY4A：4KM校正数据日数据绘图
+FY4A：4KMCorrect校正数据日数据绘图
 `python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 4KMCorrect -e Daily`
 
 FY4A：1KM原始数据合成日数据
@@ -125,10 +125,10 @@ FY4A：1KM原始数据合成日数据
 FY4A：1KM原始数据日数据绘图
 `python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 1KM -e Daily`
 
-FY4A：1KM校正数据合成日数据
+FY4A：1KMCorrect校正数据合成日数据
 `python run.py -f product_combine_data -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 1KMCorrect -e Daily`
 
-FY4A：1KM校正数据日数据绘图
+FY4A：1KMCorrect校正数据日数据绘图
 `python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 1KMCorrect -e Daily`
 
 FY3D：1KM原始数据日数据生成
@@ -145,10 +145,10 @@ FY4A：4KM原始数据合成月数据（3分钟）
 FY4A：4KM原始数据月数据绘图
 `python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 4KM -e Monthly`
 
-FY4A：4KM校正数据合成月数据
+FY4A：4KMCorrect校正数据合成月数据
 `python run.py -f product_combine_data -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 4KMCorrect -e Monthly`
 
-FY4A：4KM校正数据月数据绘图
+FY4A：4KMCorrect校正数据月数据绘图
 `python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 4KMCorrect -e Monthly`
 
 FY4A：1KM原始数据合成月数据
@@ -157,10 +157,10 @@ FY4A：1KM原始数据合成月数据
 FY4A：1KM原始数据月数据绘图
 `python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 1KM -e Monthly`
 
-FY4A：1KM校正数据合成月数据
+FY4A：1KMCorrect校正数据合成月数据
 `python run.py -f product_combine_data -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 1KMCorrect -e Monthly`
 
-FY4A：1KM校正数据月数据绘图
+FY4A：1KMCorrect校正数据月数据绘图
 `python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 1KMCorrect -e Monthly`
 
 FY3D：1KM原始数据月数据生成
@@ -177,10 +177,10 @@ FY4A：4KM原始数据合成年数据（2分钟）
 FY4A：4KM原始数据年数据绘图
 `python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 4KM -e Yearly`
 
-FY4A：4KM校正数据合成年数据
+FY4A：4KMCorrect校正数据合成年数据
 `python run.py -f product_combine_data -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 4KMCorrect -e Yearly`
 
-FY4A：4KM校正数据年数据绘图
+FY4A：4KMCorrect校正数据年数据绘图
 `python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 4KMCorrect -e Yearly`
 
 FY4A：1KM原始数据合成年数据
@@ -189,10 +189,10 @@ FY4A：1KM原始数据合成年数据
 FY4A：1KM原始数据年数据绘图
 `python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 1KM -e Yearly`
 
-FY4A：1KM校正数据合成年数据
+FY4A：1KMCorrect校正数据合成年数据
 `python run.py -f product_combine_data -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 1KMCorrect -e Yearly`
 
-FY4A：1KM校正数据年数据绘图
+FY4A：1KMCorrect校正数据年数据绘图
 `python run.py -f product_image -d 20190501000000 -a 20190501000000 -s FY4A_AGRI -r 1KMCorrect -e Yearly`
 
 FY3D：1KM原始数据年数据生成
@@ -200,3 +200,4 @@ FY3D：1KM原始数据年数据生成
 
 FY3D：1KM原始数据年数据绘图
 `python run.py -f product_image -d 20180501000000 -a 20190531000000 -s FY3D_MERSI -r 1KM -e Yearly`
+

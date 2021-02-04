@@ -266,6 +266,20 @@ api.add_resource(DownloadData, '/download')
 api.add_resource(GetPointData, '/get_point_data')
 
 if __name__ == '__main__':
-    # host = '0.0.0.0'
-    # app.run(debug=True, host=host, port=5000)
+    host = '0.0.0.0'
+    app.run(debug=True, host=host, port=5000)
     app.run(debug=DEBUG, port=RESTFUL_POST)
+    # date_s = "20190101000000"
+    # date_e = "20190102235959"
+    # lon = 117.3
+    # lat = 31.78
+    # resolution_type = '4KM'
+    # resultid = 'FY4A_AGRI_L2_SSI_Orbit'
+    # idx = kdtree_idx_fy4_4km
+    # ck = kdtree_ck_fy4_4km
+    # sat_sensor = 'FY4A_AGRI'
+    # out_file = product_point_data(date_start=date_s, date_end=date_e, lon=lon, lat=lat,
+    #                    resolution_type=resolution_type, resultid=resultid,
+    #                    idx=idx, ck=ck,
+    #                    sat_sensor=sat_sensor)
+    # print(out_file)

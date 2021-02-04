@@ -281,3 +281,14 @@ def itcal(in_file, out_file, resultid=None, planid=None, datatime=None, resoluti
 # in_file = os.path.join(in_dir, file_name)
 # out_file = os.path.join(out_dir, file_name)
 # itcal(in_file, out_file)
+
+
+# if __name__ == '__main__':
+#
+#     y, m, d, hr, minus = assignTime(date_time)
+#     e = assignE(y, m, d)
+#     doy = calDoy(y, m, d)
+#     delta = calDelta(doy)
+#     Omega = calOmega(hr, minus, lons, e)
+#     cos_the_taz = calCosThetaz(lats, delta, Omega)
+#     G0 = calG0(doy, cos_the_taz)
